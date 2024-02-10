@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	{%include 'head.html' %}
+</head>
+
+<body>
+	<div class="wrapper">
+		{%include 'sidebar.html'%}
+
+		<div class="main">
+			{%include 'navbar.html'%}
+			<div class=" text-center rounded-0">
+				<h1 class="h3 my-3">Ecological Conditions In Real Time</h1>
+			</div>
+			<main class="content" style="background-image: url('/img/sprinklerirrigation.jpg') !important;">
+
+				<div class="container-fluid p-0">
+
+					<div class="my-3 pb-3">
+						<div class="d-flex justify-content-end">
+							<div class="h3 fw-bold">25 Degrees Celcius</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xl-4 col-xxl-7">
+							<div class=" flex-fill w-100">
+
+								<div class="d-flex w-100 py-2">
+									<div class="align-self-center chart chart-sm">
+										<canvas id="soil-moisture-pie-chart"></canvas>
+									</div>
+								</div>
+								<div class="text-center h2 fw-bold" style=" color: rgb(175, 240, 240);">Soil Moisture
+								</div>
+							</div>
+						</div>
+						<div class="col-xl-4 col-xxl-7">
+							<div class="flex-fill w-100">
+								<div class="d-flex w-100 py-2">
+									<div class="chart chart-sm">
+										<canvas id="humidity-pie-chart"></canvas>
+									</div>
+								</div>
+							</div>
+							<div class="text-center h2 fw-bold" style=" color: #ede0dd;">Humidity</div>
+
+						</div>
+						<div class="col-xl-4 col-xxl-7">
+							<div class="flex-fill w-100">
+
+								<div class="d-flex w-100 py-2">
+									<div class="chart chart-sm">
+										<canvas id="rainfall-pie-chart"></canvas>
+									</div>
+								</div>
+							</div>
+							<div class="text-center h2 fw-bold" style=" color: #f0cb26;">Rainfall</div>
+
+						</div>
+					</div>
+
+
+
+				</div>
+			</main>
+
+			{%include "footer.html"%}
+		</div>
+	</div>
+
+
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+
+			var plugin = {
+				beforeDraw: function (chart) {
+					var width = chart.width,
+						height = chart.height,
+						ctx = chart.ctx;
+
+					ctx.restore();
+					var fontSize = (height / 114).toFixed(2);
+					ctx.font = fontSize + "em sans-serif";
+					ctx.textBaseline = "middle";
+
+					var text = chart.config.data.datasets[0].data[1] + "%",
+						textX = Math.round((width - ctx.measureText(text).width) / 2),
+						textY = height / 2;
+
+					ctx.fillText(text, textX, textY);
+					ctx.save();
+				}
+			}
+			/**
+			 * To draw soil moisture chart
+			 * 
+			 **/
+			var v = new Chart(document.getElementById("soil-moisture-pie-chart"), {
+				type: "doughnut",
+				data: {
+					labels: ["-", "Moisture"],
+					datasets: [{
+						data: [(100 - 71), 71],
+						backgroundColor: [
+							"#e6eded",
+							"rgb(175, 240, 240)"
+						],
+						borderWidth: 0
+					}]
+				},
+				plugins: [plugin],
+				options: {
+					plugins: {
+						legend: {
+							display: false,
+						}
+					},
+					responsive: !window.MSInputMethodContext,
+					maintainAspectRatio: false,
+					cutout: 90
+				}
+			});
+			/**
+				 * To draw humidity chart
+				 * 
+				 **/
+			var s = new Chart(document.getElementById("humidity-pie-chart"), {
+				type: "doughnut",
+				data: {
+					labels: ["-", "Humidity"],
+					datasets: [{
+						data: [(100 - 58), 58],
+						backgroundColor: [
+							"#5e0585",
+							"#ede0dd"
+						],
+						borderWidth: 0
+					}]
+				},
+				plugins: [plugin],
+				options: {
+					responsive: !window.MSInputMethodContext,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							display: false,
+						}
+					},
+					cutout: 90
+				}
+			});
+
+			/**
+			 * To draw rainfall chart
+			 * 
+			 **/
+			var d = new Chart(document.getElementById("rainfall-pie-chart"), {
+				type: "doughnut",
+				data: {
+					labels: ["-", "Rainfall"],
+					datasets: [{
+						data: [(100 - 26), 26],
+						backgroundColor: [
+							"#9dfaab",
+							"#f0cb26"
+						],
+						borderWidth: 0
+					}]
+				},
+				plugins: [plugin],
+				options: {
+					responsive: !window.MSInputMethodContext,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							display: false,
+						}
+					},
+					cutout: 90
+				}
+			});
+
+		});
+	</script>
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,53 @@
+<style>
+    :root {
+        --primary-color: #4EA685;
+        --secondary-color: #00f7ff;
+    }
+
+    .sidebar,.sidebar-content,.sidebar-nav {
+        background-image: linear-gradient(-45deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+</style>
+<nav id="sidebar" class="sidebar js-sidebar ">
+    <div class="sidebar-content js-simplebar" style="display:flex !important;">
+        <a class="sidebar-brand" href="index.html">
+            <span class="align-middle">FarmAdmin</span>
+        </a>
+
+        <ul class="sidebar-nav">
+
+
+            <li class="sidebar-item {{'active' if page=='index'}}">
+                <a class="sidebar-link" href="index.html">
+                    <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{'active' if page=='irrigation'}}">
+                <a class="sidebar-link" href="irrigation">
+                    <i class="align-middle" data-feather="cloud-drizzle"></i> <span class="align-middle">Irrigation</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{'active' if page=='drainage'}}">
+                <a class="sidebar-link" href="drainage">
+                    <i class="align-middle" data-feather="droplet"></i> <span class="align-middle">Drainage</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{'active' if page=='ecological-factors'}}">
+                <a class="sidebar-link" href="ecological-factors">
+                    <i class="align-middle" data-feather="sun"></i> <span class="align-middle">Ecological
+                        Factors</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="reports">
+                    <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Reports</span>
+                </a>
+            </li>
+        </ul>
+        
+    </div>
+</nav>

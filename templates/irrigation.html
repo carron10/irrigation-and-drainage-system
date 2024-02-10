@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	{%include 'head.html' %}
+</head>
+
+<body>
+	<div class="wrapper">
+		{%include 'sidebar.html'%}
+
+		<div class="main">
+			{%include 'navbar.html'%}
+			<div class=" text-center rounded-0">
+				<h1 class="h3 my-3">Irrigation</h1>
+			</div>
+			<div class=" border-top d-flex justify-content-center">
+				<ul class="nav d-flex flex-row rounded-0 border-left  my-1 mx-1" id="list-tab" role="tablist">
+					<li class="nav-item me-1 py-1 ">
+						<a class="nav-link  active general-btn" style="background-color: rgb(90, 223, 50);"
+							data-bs-toggle="list" href="#manual" role="tab">
+							<div class="h2 fw-bolder text-danger">Manual Controls</div>
+						</a>
+					</li>
+					<li class="nav-item me-1  py-1">
+						<a class="nav-link general-btn" style="background-color: rgb(217, 253, 12);"
+							data-bs-toggle="list" href="#history" role="tab">
+							<div class="h2 fw-bolder text-dark">History</div>
+						</a>
+					</li>
+					<li class="nav-item me-1   py-1">
+						<a class="nav-link general-btn" style=" background-color: rgb(74, 156, 228);"
+							data-bs-toggle="list" href="#status" role="tab">
+							<div class="h2 fw-bolder text-dark">Status</div>
+						</a>
+					</li>
+					<li class="nav-item  me-1  py-1">
+						<a class="nav-link general-btn" style=" background-color: rgb(153, 243, 172);"
+							data-bs-toggle="list" href="#schedules" role="tab">
+							<div class="h2 fw-bolder text-dark">Schedules</div>
+						</a>
+					</li>
+
+				</ul>
+			</div>
+			<main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
+
+				<div class="container-fluid p-0">
+					<div class="tab-content sub-form">
+						<div class="tab-pane fade hide_if_grouped show active " id="manual" role="tabpanel"
+							titleledby="general1-list">
+
+							<div class="container px-lg-6 mx-auto d-table h-100">
+								<div class="d-table-cell align-middle">
+									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
+										<div class="text-center ">
+											<h1 class="h2 fw-bold">Manual Controls</h1>
+											<p class="lead">
+												Turn off and On Irrigation
+											</p>
+											<div class="py-4">
+
+												<div class="button r" id="button-1">
+													<input type="checkbox" class="checkbox" />
+													<div class="knobs"></div>
+													<div class="layer"></div>
+												</div>
+
+											</div>
+											<div>
+												<select class=" form-select form-select-sm">
+													<option>Entire Field</option>
+													<option>25cm Pivot</option>
+													<option>50m Uphill From center</option>
+													<option>50m Downhill From Center</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+
+						</div>
+						<div class="tab-pane fade hide_if_grouped  " id="history" role="tabpanel"
+							titleledby="general1-list">
+							--History Here
+						</div>
+						<div class="tab-pane fade hide_if_grouped" id="status" role="tabpanel"
+							titleledby="general1-list">
+							--Status Here
+						</div>
+						<div class="tab-pane fade hide_if_grouped" id="schedules" role="tabpanel"
+							titleledby="general1-list">
+							--Schedules comes here
+						</div>
+					</div>
+
+				</div>
+				<div class="modal" id="IrrigationStatusModal" tabindex="-1">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">Irrigation Turned On</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal"
+									aria-label="Close"></button>
+							</div>
+							<div class="modal-body">
+								<p>
+									You have successfully turned on Irrigation!
+									
+								</p>
+								<p class="text-danger">You will receive a reminder to turn it off after 30mins</p>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+								<!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+
+			{%include "footer.html"%}
+		</div>
+	</div>
+
+
+
+
+	<script>
+		document.querySelector('.checkbox').addEventListener("change", function (e) {
+			var on = e.target.checked;
+			if (on) {
+				$("#IrrigationStatusModal").modal("show");
+				// console.log(new window.bootstrap.Modal(document.getElementById("#exampleModal")));
+
+			}
+		})
+	</script>
+
+</body>
+
+</html>

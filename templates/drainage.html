@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	{%include 'head.html' %}
+</head>
+
+<body>
+	<div class="wrapper">
+		{%include 'sidebar.html'%}
+
+		<div class="main">
+			{%include 'navbar.html'%}
+			<div class=" text-center rounded-0">
+				<h1 class="h3 my-3 fw-bold">Drainage </h1>
+			</div>
+			<div class=" border-top d-flex justify-content-center">
+				<ul class="nav d-flex flex-row rounded-0 border-left  my-1 mx-1" id="list-tab" role="tablist">
+					<li class="nav-item me-1 py-1 ">
+						<a class="nav-link  active general-btn" style="background-color: rgb(204, 17, 211);"
+							data-bs-toggle="list" href="#manual" role="tab">
+							<div class="h2 fw-bolder text-dark">Manual Controls</div>
+						</a>
+					</li>
+					<li class="nav-item me-1  py-1">
+						<a class="nav-link general-btn" style="background-color: rgb(168, 192, 29);"
+							data-bs-toggle="list" href="#history" role="tab">
+							<div class="h2 fw-bolder text-danger">History</div>
+						</a>
+					</li>
+					<li class="nav-item me-1   py-1">
+						<a class="nav-link general-btn" style=" background-color: rgb(74, 156, 228);"
+							data-bs-toggle="list" href="#status" role="tab">
+							<div class="h2 fw-bolder text-dark">Status</div>
+						</a>
+					</li>
+					<li class="nav-item  me-1  py-1">
+						<a class="nav-link general-btn" style=" background-color: rgb(219, 224, 220);"
+							data-bs-toggle="list" href="#schedules" role="tab">
+							<div class="h2 fw-bolder text-dark">Restrictions</div>
+						</a>
+					</li>
+
+				</ul>
+			</div>
+			<main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
+
+				<div class="container-fluid p-0">
+					<div class="tab-content sub-form">
+						<div class="tab-pane fade hide_if_grouped show active " id="manual" role="tabpanel"
+							titleledby="general1-list">
+
+							<div class="container px-lg-6 mx-auto d-table h-100">
+								<div class="d-table-cell align-middle">
+									<div class="card flex-fill w-100">
+										<div class="card-header">
+
+											<h5 class="card-title mb-0">Drainage for the Last Week</h5>
+										</div>
+										<div class="card-body d-flex w-100">
+											<div class="align-self-center chart chart-sm">
+												<canvas id="drainage-weekly-chart"></canvas>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+
+						</div>
+						<div class="tab-pane fade hide_if_grouped  " id="history" role="tabpanel"
+							titleledby="general1-list">
+							--History Here
+						</div>
+						<div class="tab-pane fade hide_if_grouped" id="status" role="tabpanel"
+							titleledby="general1-list">
+							--Status Here
+						</div>
+						<div class="tab-pane fade hide_if_grouped" id="schedules" role="tabpanel"
+							titleledby="general1-list">
+							--Schedules comes here
+						</div>
+					</div>
+
+				</div>
+
+			</main>
+
+			{%include "footer.html"%}
+		</div>
+	</div>
+
+
+
+
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var ctx = document.getElementById("drainage-weekly-chart").getContext("2d");
+			new Chart(document.getElementById("drainage-weekly-chart"), {
+				type: "scatter",
+				data: {
+					labels: ["S", "M", "T", "W", "T", "F", "S"],
+					datasets: [{
+						type: "bar",
+						label: "Water in access Drained",
+						fill: true,
+						backgroundColor: "#8403fc",
+						data: [
+							700,
+							1000,
+							1300,
+							1892,
+							1587,
+							1223,
+							800
+						]
+					}, {
+						type: "line",
+						label: "Rainfall(mm)",
+						borderColor:'#034efc',
+						backgroundColor:'#034efc',
+						tension: 0.2,
+						pointRadius:0,
+						data: [
+							740,
+							1200,
+							1330,
+							1892,
+							1687,
+							1223,
+							800
+						]
+					}]
+				},
+				options: {
+					bezierCurve: true,
+					responsive: true,
+					maintainAspectRatio: false,
+					legend: {
+						display: false
+					}
+				}
+
+			});
+		});
+	</script>
+
+</body>
+
+</html>
