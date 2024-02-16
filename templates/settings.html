@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	{%include 'head.html' %}
+</head>
+
+<body>
+	<div class="wrapper">
+		{%include 'sidebar.html'%}
+
+		<div class="main">
+			{%include 'navbar.html'%}
+			<div class=" text-center rounded-0">
+				<h1 class="h3 my-2">Settings</h1>
+			</div>
+			<style>
+				.nav-link{
+					color: white;
+				}
+				.nav-link.active{
+					background-color: white !important;
+					color: dark !important;
+				}
+				
+			</style>
+			<div class=" border-bottom border-top pt-2 d-flex justify-content-center">
+				<div class="nav nav-tabs me-3 setting-tabs" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+					<button class=" mx-1 bg-danger nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#user-accounts" type="button" role="tab" aria-controls="user-accounts"
+						aria-selected="false">User Accounts</button>
+					<button class="bg-danger nav-link  border active mx-1" id="products-tab" data-bs-toggle="pill"
+						data-bs-target="#soil-type" type="button" role="tab" aria-controls="soil-type"
+						aria-selected="false">Set Soil Type</button>
+					<button class="bg-danger nav-link  border mx-1" id="tax-tab" data-bs-toggle="pill" data-bs-target="#status"
+						type="button" role="tab" aria-selected="false">Crop Status</button>
+
+					<button class="bg-danger nav-link  " id="hardware-tab" data-bs-toggle="pill" data-bs-target="#hardware"
+						type="button" role="tab" aria-controls="hardware" aria-selected="true">Hardware</button>
+				</div>
+			</div>
+			<main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
+
+				<div class="container-fluid p-0">
+					<div class="tab-content sub-form">
+						<div class="tab-pane fade  " id="user-accounts" role="tabpanel" titleledby="general1-list">
+							---User account settings
+						</div>
+						<div class="tab-pane fade  show active" id="soil-type" role="tabpanel"
+							titleledby="general1-list">
+							<div class="container px-lg-6 mx-auto d-table h-100">
+								<div class="d-table-cell align-middle">
+									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
+										<div class="">
+											<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
+											<label for="field_type">Field Zone</label>
+											<select name="field_type" class=" form-select form-select-sm">
+												<option>Entire Field</option>
+												<option>25cm Pivot</option>
+												<option>50m Uphill From center</option>
+												<option>50m Downhill From Center</option>
+											</select>
+											<label for="soil-type">Soil Type</label>
+											<input type="text" class=" form-control form-control-sm" name="soil-type">
+											<label for="texture">Texture</label>
+											<input type="text" class=" form-control form-control-sm" name="texture">
+											<label for="gradient">Gradient</label>
+											<input type="text" class=" form-control form-control-sm" name="gradient">
+											<button class=" btn btn-success w-25 my-2">Set</button>
+										</div>
+									</div>
+								</div>
+							</div>
+
+						</div>
+						<div class="tab-pane fade " id="status" role="tabpanel" titleledby="general1-list">
+							--Status Here
+						</div>
+						<div class="tab-pane fade " id="hardware" role="tabpanel" titleledby="general1-list">
+							--hardware comes here
+						</div>
+					</div>
+
+				</div>
+				<div class="modal" id="IrrigationStatusModal" tabindex="-1">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">Irrigation Turned On</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal"
+									aria-label="Close"></button>
+							</div>
+							<div class="modal-body">
+								<p>
+									You have successfully turned on Irrigation!
+
+								</p>
+								<p class="text-danger">You will receive a reminder to turn it off after 30mins</p>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+								<!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+
+			{%include "footer.html"%}
+		</div>
+	</div>
+
+
+
+
+	<script>
+		document.querySelector('.checkbox').addEventListener("change", function (e) {
+			var on = e.target.checked;
+			if (on) {
+				$("#IrrigationStatusModal").modal("show");
+				// console.log(new window.bootstrap.Modal(document.getElementById("#exampleModal")));
+
+			}
+		})
+	</script>
+
+</body>
+
+</html>

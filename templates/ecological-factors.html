@@ -24,6 +24,8 @@
 						</div>
 					</div>
 					<div class="row">
+
+						<!-- Draw pie chart for Soil moiture -->
 						<div class="col-xl-4 col-xxl-7">
 							<div class=" flex-fill w-100">
 
@@ -36,6 +38,12 @@
 								</div>
 							</div>
 						</div>
+
+
+
+
+						<!-- Draw pie chart for Humidity -->
+
 						<div class="col-xl-4 col-xxl-7">
 							<div class="flex-fill w-100">
 								<div class="d-flex w-100 py-2">
@@ -98,7 +106,7 @@
 			 * 
 			 **/
 			var v = new Chart(document.getElementById("soil-moisture-pie-chart"), {
-				type: "doughnut",
+				type: "pie",
 				data: {
 					labels: ["-", "Moisture"],
 					datasets: [{

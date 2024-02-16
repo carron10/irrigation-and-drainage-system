@@ -887,7 +887,7 @@ a.list-group-item {
     }
 
     .navbar-expand .navbar-nav .dropdown-menu-lg {
-        min-width: 100%
+        min-width: 16rem;
     }
 
     .nav-item .nav-link:after {
@@ -929,7 +929,7 @@ body {
 }
 
 .sidebar, .sidebar-content {
-    background-image: linear-gradient(90deg, rgba(6, 226, 215, 0.1), rgba(35, 231, 84, 0.088) 50%, transparent);
+    /* background-image: linear-gradient(90deg, rgba(6, 226, 215, 0.1), rgba(35, 231, 84, 0.088) 50%, transparent); */
     transition: margin-left .35s ease-in-out, left .35s ease-in-out, margin-right .35s ease-in-out, right .35s ease-in-out
 }
 
@@ -947,7 +947,7 @@ body {
 }
 
 .sidebar-link, a.sidebar-link {
-    background-image: linear-gradient(90deg, rgba(6, 226, 215, 0.1), rgba(35, 231, 84, 0.088) 50%, transparent);
+    /* background-image: linear-gradient(90deg, rgba(6, 226, 215, 0.1), rgba(35, 231, 84, 0.088) 50%, transparent); */
     border-left: 3px solid transparent;
     color:black;
     cursor: pointer;
@@ -966,22 +966,24 @@ body {
 }
 
 .sidebar-link:focus {
-    outline: 0
+    outline: 0;
 }
 
 .sidebar-link:hover {
-    background: #222e3c;
+    background: rgb(212, 205, 205);
     border-left-color: transparent
 }
 
 .sidebar-link:hover, .sidebar-link:hover i, .sidebar-link:hover svg {
-    color: rgba(233, 236, 239, .75)
+    color: rgba(10, 10, 10, 0.75)
 }
 
 .sidebar-item.active .sidebar-link:hover, .sidebar-item.active>.sidebar-link {
-   background-image: linear-gradient(90deg, rgba(6, 226, 215, 0.1), rgba(35, 231, 84, 0.088) 50%, transparent);
+   /* background-image: linear-gradient(90deg, rgba(6, 226, 215, 0.1), rgba(35, 231, 84, 0.088) 50%, transparent);
+    */
+    background: #222e3c;
     border-left-color: #3b7ddd;
-    color: black;
+    color: rgb(240, 237, 237);
 }
 
 .sidebar-item.active .sidebar-link:hover i, .sidebar-item.active .sidebar-link:hover svg, .sidebar-item.active>.sidebar-link i, .sidebar-item.active>.sidebar-link svg {
@@ -989,7 +991,7 @@ body {
 }
 
 .sidebar-brand {
-    color: #f8f9fa;
+    color: #0d0d0e;
     display: block;
     font-size: 1.15rem;
     font-weight: 600;

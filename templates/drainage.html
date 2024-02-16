@@ -14,34 +14,36 @@
 			<div class=" text-center rounded-0">
 				<h1 class="h3 my-3 fw-bold">Drainage </h1>
 			</div>
+			<style>
+				.nav-link{
+					color: white;
+				}
+				.nav-link.active{
+					background-color: white !important;
+					color: dark !important;
+				}
+				
+			</style>
 			<div class=" border-top d-flex justify-content-center">
-				<ul class="nav d-flex flex-row rounded-0 border-left  my-1 mx-1" id="list-tab" role="tablist">
-					<li class="nav-item me-1 py-1 ">
-						<a class="nav-link  active general-btn" style="background-color: rgb(204, 17, 211);"
-							data-bs-toggle="list" href="#manual" role="tab">
-							<div class="h2 fw-bolder text-dark">Manual Controls</div>
-						</a>
-					</li>
-					<li class="nav-item me-1  py-1">
-						<a class="nav-link general-btn" style="background-color: rgb(168, 192, 29);"
-							data-bs-toggle="list" href="#history" role="tab">
-							<div class="h2 fw-bolder text-danger">History</div>
-						</a>
-					</li>
-					<li class="nav-item me-1   py-1">
-						<a class="nav-link general-btn" style=" background-color: rgb(74, 156, 228);"
-							data-bs-toggle="list" href="#status" role="tab">
-							<div class="h2 fw-bolder text-dark">Status</div>
-						</a>
-					</li>
-					<li class="nav-item  me-1  py-1">
-						<a class="nav-link general-btn" style=" background-color: rgb(219, 224, 220);"
-							data-bs-toggle="list" href="#schedules" role="tab">
-							<div class="h2 fw-bolder text-dark">Restrictions</div>
-						</a>
-					</li>
+				<div class="nav nav-tabs me-3 pt-2" id="list-tab" role="tablist">
+					<button class="bg-danger mx-1 nav-link active " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#manual" type="button" role="tab" aria-selected="false">
+						Manual Controls
+					</button>
+					<button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#history" type="button">
+						History
+					</button>
+					<button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#status" type="button">
+						Status
+					</button><button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#schedules" type="button">
+						Restrictions
+					</button>
 
-				</ul>
+
+				</div>
 			</div>
 			<main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
 
@@ -117,10 +119,10 @@
 					}, {
 						type: "line",
 						label: "Rainfall(mm)",
-						borderColor:'#034efc',
-						backgroundColor:'#034efc',
+						borderColor: '#034efc',
+						backgroundColor: '#034efc',
 						tension: 0.2,
-						pointRadius:0,
+						pointRadius: 0,
 						data: [
 							740,
 							1200,

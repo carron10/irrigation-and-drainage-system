@@ -15,36 +15,38 @@
 				<h1 class="h3 my-3">Irrigation</h1>
 			</div>
 			<div class=" border-top d-flex justify-content-center">
-				<ul class="nav d-flex flex-row rounded-0 border-left  my-1 mx-1" id="list-tab" role="tablist">
-					<li class="nav-item me-1 py-1 ">
-						<a class="nav-link  active general-btn" style="background-color: rgb(90, 223, 50);"
-							data-bs-toggle="list" href="#manual" role="tab">
-							<div class="h2 fw-bolder text-danger">Manual Controls</div>
-						</a>
-					</li>
-					<li class="nav-item me-1  py-1">
-						<a class="nav-link general-btn" style="background-color: rgb(217, 253, 12);"
-							data-bs-toggle="list" href="#history" role="tab">
-							<div class="h2 fw-bolder text-dark">History</div>
-						</a>
-					</li>
-					<li class="nav-item me-1   py-1">
-						<a class="nav-link general-btn" style=" background-color: rgb(74, 156, 228);"
-							data-bs-toggle="list" href="#status" role="tab">
-							<div class="h2 fw-bolder text-dark">Status</div>
-						</a>
-					</li>
-					<li class="nav-item  me-1  py-1">
-						<a class="nav-link general-btn" style=" background-color: rgb(153, 243, 172);"
-							data-bs-toggle="list" href="#schedules" role="tab">
-							<div class="h2 fw-bolder text-dark">Schedules</div>
-						</a>
-					</li>
+				<div class="nav nav-tabs me-3 pt-2" id="list-tab" role="tablist">
+					<button class="bg-danger mx-1 nav-link active " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#manual" type="button" role="tab" aria-selected="false">
+						Manual Controls
+					</button>
+					<button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#history" type="button">
+						History
+					</button>
+					<button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#status" type="button">
+						Status
+					</button><button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#schedules" type="button">
+						Schedules
+					</button>
 
-				</ul>
+
+				</div>
 			</div>
-			<main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
 
+			<main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
+				<style>
+					.nav-link{
+						color: white;
+					}
+					.nav-link.active{
+						background-color: white !important;
+						color: dark !important;
+					}
+					
+				</style>
 				<div class="container-fluid p-0">
 					<div class="tab-content sub-form">
 						<div class="tab-pane fade hide_if_grouped show active " id="manual" role="tabpanel"
@@ -54,7 +56,7 @@
 								<div class="d-table-cell align-middle">
 									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
 										<div class="text-center ">
-											<h1 class="h2 fw-bold">Manual Controls</h1>
+											<h1 class="h6 fw-bold">Manual Controls</h1>
 											<p class="lead">
 												Turn off and On Irrigation
 											</p>

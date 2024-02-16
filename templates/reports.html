@@ -7,44 +7,376 @@
 
 <body>
 	<div class="wrapper">
-	{%include 'sidebar.html'%}
+		{%include 'sidebar.html'%}
 
 		<div class="main">
 			{%include 'navbar.html'%}
 
-			<main class="content" style="background-image: url('/img/farming-irrigation-system-1000x1000.webp') !important;">
+			<main class="content"
+				style="background-image: url('/img/farming-irrigation-system-1000x1000.webp') !important;">
 
 				<div class="container-fluid p-0">
 
 					<div class=" text-center rounded-0">
 						<h1 class="h3 my-3 fw-bold">Reports </h1>
-						<p>This page will be updated once contents have been planned!!</p>
+						<p>View Reports Here</p>
 					</div>
-					<div class="mb-2 order-0">
-						<div class="alert card mx-1 alert-white p-0  fade show " style="border-left: solid blue; "
-							role="alert">
-							<div class="d-flex align-items-end row">
-								<div class="col-sm-7">
-									<div class="card-body">
-										<!-- <h5 class="card-title text-primary h4">👋WELCOME CYNTHIA 🙋</h5> -->
-										<p class="mb-4">We are in the progress to develop this site
-											You can check around on the layout and features that will be included here.
-											All information included here are for decoration
-										</p>
-									</div>
-								</div>
-								<div class="col-sm-5 text-center text-sm-left d-none d-sm-inline-block">
-									<div class="card-body pb-0 px-0 px-md-4">
-										<img src="/img/man-with-laptop-light.png" height="140" alt="View Badge User">
+					<div class="row">
+						<div class="col-xl-4 col-xxl-7 pt-2">
+							<div class="card flex-fill w-100">
+								<!-- <div class="card-header">
+
+									<h5 class="card-title mb-0">Irrigation for the last week</h5>
+								</div> -->
+								<div class="card-body d-flex w-100">
+									<div class="align-self-center chart chart-sm">
+										<canvas id="irrigation-bar-chart"></canvas>
 									</div>
 								</div>
 							</div>
+						</div>
+						<div class="col-xl-4 col-xxl-7 pt-2">
+							<div class="card flex-fill w-100">
+								<!-- <div class="card-header">
+									<h5 class="card-title mb-0">Drainage for the last Week</h5>
+								</div> -->
+								<div class="card-body py-3">
+									<div class="chart chart-sm">
+										<canvas id="drainage-bar-chart"></canvas>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-xl-4 col-xxl-7 pt-2">
+							<div class="card flex-fill w-100">
+								<!-- <div class="card-header">
+
+									<h5 class="card-title mb-0">Soil Moisture levels for the past week</h5>
+								</div> -->
+								<div class="card-body py-3">
+									<div class="chart chart-sm">
+										<canvas id="soil-moisture-line-chart"></canvas>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row py-3">
+
+						<!-- Draw pie chart for Soil moiture -->
+						<div class="col-xl-4 col-xxl-7">
+							<div class=" flex-fill w-100">
+
+								<div class="d-flex w-100 py-2">
+									<div class="align-self-center chart chart-sm">
+										<canvas id="soil-moisture-pie-chart"></canvas>
+									</div>
+								</div>
+								<div class="text-center h2 fw-bold" style=" color: rgb(175, 240, 240);">Soil Moisture
+								</div>
+							</div>
+						</div>
+
+
+
+
+						<!-- Draw pie chart for Humidity -->
+
+						<div class="col-xl-4 col-xxl-7">
+							<div class="flex-fill w-100">
+								<div class="d-flex w-100 py-2">
+									<div class="chart chart-sm">
+										<canvas id="humidity-pie-chart"></canvas>
+									</div>
+								</div>
+							</div>
+							<div class="text-center h2 fw-bold" style=" color: #ede0dd;">Humidity</div>
+
+						</div>
+						<div class="col-xl-4 col-xxl-7">
+							<div class="flex-fill w-100">
+
+								<div class="d-flex w-100 py-2">
+									<div class="chart chart-sm">
+										<canvas id="rainfall-pie-chart"></canvas>
+									</div>
+								</div>
+							</div>
+							<div class="text-center h2 fw-bold" style=" color: #f0cb26;">Rainfall</div>
 
 						</div>
 					</div>
-					
 				</div>
 			</main>
+			<script>
+				//y=a+bx
+				function calculateLineFunction(data) {
+					var x = data.x, y = data.y, total_x = 0, total_y = 0, x_bar = 0, y_bar = 0, a, b, sum_xy = 0, sum_x_squared = 0;
+					for (let i = 0; i < data.x.length; i++) {
+						total_y += data.y[i];
+						total_x += data.x[i];
+						sum_xy += data.x[i] * data.y[i];
+						sum_x_squared += Math.pow(data.x[i], 2);
+					}
+
+					b = (sum_xy - ((total_x * total_y) / data.x.length)) / (sum_x_squared - (Math.pow(total_x, 2) / data.x.length));
+
+					x_bar = total_x / data.x.length;
+					y_bar = total_y / data.y.length;
+
+					a = y_bar - b * x_bar;
+					var predicted_data = [];
+					for (let i = 0; i < data.x.length; i++) {
+						predicted_data[i] = a + b * data.x[i];
+					}
+					return {
+						slope: b, intersept: a, predicted: predicted_data
+					}
+
+				}
+
+				document.addEventListener("DOMContentLoaded", function () {
+					// Bar chart
+					new Chart(document.getElementById("soil-moisture-line-chart"), {
+						type: "line",
+						data: {
+							labels: ["S", "M", "T", "W", "T", "F", "S"],
+							datasets: [{
+								tension: 0.2,
+								label: "Drainage for the last Week",
+								backgroundColor: window.theme.primary,
+								borderColor: window.theme.primary,
+								hoverBackgroundColor: window.theme.primary,
+								hoverBorderColor: window.theme.primary,
+								data: [54, 67, 41, 55, 62, 45, 55],
+								pointRadius: 0,
+							}, {
+								label: "Line Slope",
+								pointRadius: 0,
+								borderColor: "green",
+								data: calculateLineFunction({
+									x: [1, 2, 3, 4, 5, 6, 7],
+									y: [54, 67, 41, 55, 62, 45, 55]
+								}).predicted,
+								tension: 0.2
+							}]
+						},
+						options: {
+							maintainAspectRatio: false,
+							scales: {
+								yAxes: [{
+									gridLines: {
+										display: false
+									},
+									stacked: false,
+									ticks: {
+										stepSize: 20
+									}
+								}],
+								xAxes: [{
+									stacked: false,
+									gridLines: {
+										color: "transparent"
+									}
+								}]
+							}
+						}
+					});
+					new Chart(document.getElementById("drainage-bar-chart"), {
+						type: "bar",
+						data: {
+							labels: ["S", "M", "T", "W", "T", "F", "S"],
+							datasets: [{
+								label: "Drainage for the last Week",
+								backgroundColor: window.theme.primary,
+								borderColor: window.theme.primary,
+								hoverBackgroundColor: window.theme.primary,
+								hoverBorderColor: window.theme.primary,
+								data: [54, 67, 41, 55, 62, 45, 55],
+								barPercentage: .75,
+								categoryPercentage: .5
+							}]
+						},
+						options: {
+							maintainAspectRatio: false,
+							legend: {
+								display: false
+							},
+							scales: {
+								yAxes: [{
+									gridLines: {
+										display: false
+									},
+									stacked: false,
+									ticks: {
+										stepSize: 20
+									}
+								}],
+								xAxes: [{
+									stacked: false,
+									gridLines: {
+										color: "transparent"
+									}
+								}]
+							}
+						}
+					});
+					new Chart(document.getElementById("irrigation-bar-chart"), {
+						type: "bar",
+						data: {
+							labels: ["S", "M", "T", "W", "T", "F", "S"],
+							datasets: [{
+								label: "Irrigation for the last week",
+								backgroundColor: window.theme.primary,
+								borderColor: window.theme.primary,
+								hoverBackgroundColor: window.theme.primary,
+								hoverBorderColor: window.theme.primary,
+								data: [54, 67, 41, 55, 62, 45, 55],
+								barPercentage: .75,
+								categoryPercentage: .5
+							}]
+						},
+						options: {
+							maintainAspectRatio: false,
+							legend: {
+								display: false
+							},
+							scales: {
+								yAxes: [{
+									gridLines: {
+										display: false
+									},
+									stacked: false,
+									ticks: {
+										stepSize: 20
+									}
+								}],
+								xAxes: [{
+									stacked: false,
+									gridLines: {
+										color: "transparent"
+									}
+								}]
+							}
+						}
+					});
+				});
+			</script>
+			
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+
+			var plugin = {
+				beforeDraw: function (chart) {
+					var width = chart.width,
+						height = chart.height,
+						ctx = chart.ctx;
+
+					ctx.restore();
+					var fontSize = (height / 114).toFixed(2);
+					ctx.font = fontSize + "em sans-serif";
+					ctx.textBaseline = "middle";
+
+					var text = chart.config.data.datasets[0].data[1] + "%",
+						textX = Math.round((width - ctx.measureText(text).width) / 2),
+						textY = height / 2;
+
+					ctx.fillText(text, textX, textY);
+					ctx.save();
+				}
+			}
+			/**
+			 * To draw soil moisture chart
+			 * 
+			 **/
+			var v = new Chart(document.getElementById("soil-moisture-pie-chart"), {
+				type: "pie",
+				data: {
+					labels: ["-", "Moisture"],
+					datasets: [{
+						data: [(100 - 71), 71],
+						backgroundColor: [
+							"#e6eded",
+							"rgb(175, 240, 240)"
+						],
+						borderWidth: 0
+					}]
+				},
+				plugins: [plugin],
+				options: {
+					plugins: {
+						legend: {
+							display: false,
+						}
+					},
+					responsive: !window.MSInputMethodContext,
+					maintainAspectRatio: false,
+					cutout: 90
+				}
+			});
+			/**
+				 * To draw humidity chart
+				 * 
+				 **/
+			var s = new Chart(document.getElementById("humidity-pie-chart"), {
+				type: "doughnut",
+				data: {
+					labels: ["-", "Humidity"],
+					datasets: [{
+						data: [(100 - 58), 58],
+						backgroundColor: [
+							"#5e0585",
+							"#ede0dd"
+						],
+						borderWidth: 0
+					}]
+				},
+				plugins: [plugin],
+				options: {
+					responsive: !window.MSInputMethodContext,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							display: false,
+						}
+					},
+					cutout: 90
+				}
+			});
+
+			/**
+			 * To draw rainfall chart
+			 * 
+			 **/
+			var d = new Chart(document.getElementById("rainfall-pie-chart"), {
+				type: "doughnut",
+				data: {
+					labels: ["-", "Rainfall"],
+					datasets: [{
+						data: [(100 - 26), 26],
+						backgroundColor: [
+							"#9dfaab",
+							"#f0cb26"
+						],
+						borderWidth: 0
+					}]
+				},
+				plugins: [plugin],
+				options: {
+					responsive: !window.MSInputMethodContext,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							display: false,
+						}
+					},
+					cutout: 90
+				}
+			});
+
+		});
+	</script>
+
 
 			{%include "footer.html"%}
 		</div>
