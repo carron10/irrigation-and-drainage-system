@@ -6,3 +6,4 @@ Flask-Admin
 Flask-SQLAlchemy
 flask-security-too
 email_validator
+sqlalchemy_serializer

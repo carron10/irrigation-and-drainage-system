@@ -34,9 +34,26 @@ roles_users = db.Table(
     db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
 )
 
+
+#To store meta data for irrigation/drainage/rainfall/ and etc
+class Meta(db.Model, SerializerMixin):
+    __tablename__ = 'meta_data'
+    id = Column(Integer, primary_key=True)
+    for_ = Column(String(100), nullable=False)
+    meta_key=Column(String(100))
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    meta_value = Column(Text, nullable=False)
+
+#To store history for irrigation/drainage/rainfall/ and etc
+class History(db.Model, SerializerMixin):
+    __tablename__ = 'history'
+    id = Column(Integer, primary_key=True)
+    for_ = Column(String(100), nullable=False)
+    history_type=Column(String(100))
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    value = Column(Text, nullable=False)
+    
 # To store data of a certain region/field zone
-
-
 class FieldZone(db.Model, SerializerMixin):
     __tablename__ = 'field_zone'
     id = Column(Integer, primary_key=True)
