@@ -1,4 +1,8 @@
-flask
 uwsgi
 Gunicorn
 psycopg2
+Flask
+Flask-Admin
+Flask-SQLAlchemy
+flask-security-too
+email_validator
