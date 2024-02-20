@@ -1,5 +1,6 @@
 import os
 import json 
+import psycopg2
 from flask import Flask, url_for, redirect, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, \
