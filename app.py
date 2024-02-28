@@ -18,74 +18,31 @@ from dataclasses import dataclass
 from sqlalchemy_serializer import SerializerMixin
 
 # Create Flask application
+app = Flask(__name__,static_url_path='',static_folder='static',template_folder='templates')
 
-app = Flask(__name__,
-            static_url_path='',
-            static_folder='static',
 
-            template_folder='templates')
+#Configuration
 app.config.from_pyfile('config.py')
+
+#Create Database instance
 db = SQLAlchemy(app)
 
 
 # Define models
+
+#user roles table
 roles_users = db.Table(
     'roles_users',
     db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
     db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
 )
 
-
-#To store meta data for irrigation/drainage/rainfall/ and etc
-class Meta(db.Model, SerializerMixin):
-    __tablename__ = 'meta_data'
-    id = Column(Integer, primary_key=True)
-    for_ = Column(String(100), nullable=False)
-    meta_key=Column(String(100))
-    time_created = Column(DateTime(timezone=True), server_default=func.now())
-    meta_value = Column(Text, nullable=False)
-
-#To store history for irrigation/drainage/rainfall/ and etc
-class History(db.Model, SerializerMixin):
-    __tablename__ = 'history'
-    id = Column(Integer, primary_key=True)
-    for_ = Column(String(100), nullable=False)
-    history_type=Column(String(100))
-    time_created = Column(DateTime(timezone=True), server_default=func.now())
-    value = Column(Text, nullable=False)
-    
-# To store data of a certain region/field zone
-class FieldZone(db.Model, SerializerMixin):
-    __tablename__ = 'field_zone'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False,unique=True)
-    soil_type = Column(String(100))
-    soil_texture = Column(String(100))
-    gradient = Column(String(100))
-
-
-# For user role
+# Role Model
 class Role(db.Model, RoleMixin):
     __tablename__ = 'role'
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True)
     description = Column(String(255))
-
-# Model/Table for notifications
-
-
-class Notifications(db.Model, SerializerMixin):
-    __tablename__ = 'notifications'
-    id = Column(Integer, primary_key=True)
-    time_created = Column(DateTime(timezone=True), server_default=func.now())
-    status = Column(Boolean(), default=False)
-    message = Column(Text(), nullable=False)
-    notification_category = Column(String(100), default="Alert")
-    notification_icon = Column(String(30), default="bell")
-
-    def __init__(self, message) -> None:
-        self.message = message
-
 
 # User Model
 class User(db.Model, UserMixin,SerializerMixin):
@@ -109,25 +66,78 @@ class User(db.Model, UserMixin,SerializerMixin):
     roles = relationship('Role', secondary='roles_users',
                          backref=backref('users', lazy='dynamic'))
     fs_uniquifier = Column(String(64), unique=True, nullable=False)
-    def __repr__(self):
-        
-        del self.password
-        return self
+   
+
+#To store meta data for irrigation/drainage/rainfall/ and etc
+class Meta(db.Model, SerializerMixin):
+    __tablename__ = 'meta_data'
+    id = Column(Integer, primary_key=True)
+    for_ = Column(String(100), nullable=False)
+    meta_key=Column(String(100))
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    meta_value = Column(Text, nullable=False)
+
+##Options, to store settings
+class Options(db.Model, SerializerMixin):
+    __tablename__ = 'options'
+    id = Column(Integer, primary_key=True)
+    option_name= Column(String(100), nullable=False,unique=True)
+    option_value=Column(Text)
+
+#To store history for irrigation/drainage/rainfall/ and etc
+class Statistics(db.Model, SerializerMixin):
+    __tablename__ = 'stats'
+    id = Column(Integer, primary_key=True)
+    for_ = Column(String(100), nullable=False)
+    history_type=Column(String(100))
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    value = Column(Text, nullable=False)
+    
+# To store data of a certain region/field zone
+class FieldZone(db.Model, SerializerMixin):
+    __tablename__ = 'field_zone'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False,unique=True)
+    soil_type = Column(String(100))
+    soil_texture = Column(String(100))
+    gradient = Column(String(100))
+
+
+
+# Model/Table for notifications
+class Notifications(db.Model, SerializerMixin):
+    __tablename__ = 'notifications'
+    id = Column(Integer, primary_key=True)
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    status = Column(Boolean(), default=False)
+    message = Column(Text(), nullable=False)
+    notification_category = Column(String(100), default="Alert")
+    notification_icon = Column(String(30), default="bell")
+
+    def __init__(self, message) -> None:
+        self.message = message
+
+
+
 
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
 
+#extend fields for registration form
 class ExtendedRegisterForm(RegisterForm):
     first_name = StringField('First Name', [Required()])
     last_name = StringField('Last Name', [Required()])
 
-
+#security 
 security = Security(app, user_datastore,
                     register_form=ExtendedRegisterForm)
 
 
+#######Setup url route#####
+
+#Function to execute when one visit /api/notifications
 @app.route('/api/notifications', methods=['GET'])
 def get_notifications():
     limit = request.args.get('limit')
@@ -146,6 +156,7 @@ def get_users():
     results = User.query.limit(limit).all()
     return [r.to_dict(rules=['-password']) for r in results]
 
+#To update and also get fields Zones
 @app.route('/api/fields', methods=['GET',"POST"])
 def get_fields():
     if request.method=="GET":
@@ -161,6 +172,7 @@ def get_fields():
         return redirect('/settings')
 
 
+##Home page
 @app.route("/",methods=["GET"])
 @app.route("/index.html",methods=["GET"])
 @login_required
@@ -168,6 +180,7 @@ def hello():
     return pages('index')
 
 
+#Other pages
 @app.route("/<page>",methods=["GET"])
 @login_required
 def pages(page):
@@ -185,6 +198,8 @@ def pages(page):
                            page=page, notifications=notifications, total_notifications=r2,**data)
 
 
+
+#Build sample data into database
 def build_sample_db():
     """
     Populate a small db with some example entries.
@@ -203,18 +218,21 @@ def build_sample_db():
         db.session.add(super_user_role)
         db.session.commit()
 
-        test_user = user_datastore.create_user(
-            first_name='Admin',
-            email='admin@example.com',
-            password=hash_password('admin'),
-            roles=[user_role, super_user_role]
-        )
+       
         note = Notifications(
             "The next irrigation is scheduled for tommorrow at 13:00")
         db.session.add(note)
 
         fields= FieldZone(name="Entire Field",soil_type="Clay Soil",soil_texture="Clay",gradient="2M"),FieldZone(name="50CM Downhill from center",soil_type="Loam Soil",soil_texture="loamy",gradient="3M"),FieldZone(name="25cm Pivot",soil_type="Sand Soil",soil_texture="Sandy",gradient="4M"),FieldZone(name="50m Uphill From Center",soil_type="Clay Soil",soil_texture="Clay",gradient="2M"),
         db.session.add_all(fields)
+        db.session.add_all(fields)
+
+        test_user = user_datastore.create_user(
+            first_name='Admin',
+            email='admin@example.com',
+            password=hash_password('admin'),
+            roles=[user_role, super_user_role]
+        )
         admin_usr = user_datastore.create_user(
             first_name='Carron Muleya',
             email='carronmuleya10@gmail.com',
@@ -230,10 +248,9 @@ if __name__ == '__main__':
     # Build a sample db on the fly, if one does not exist yet.
     app_dir = os.path.realpath(os.path.dirname(__file__))
     dataBase_path = os.path.join(app_dir, app.config['DATABASE_FILE'])
-    # print(os.path.exists(dataBase_path), dataBase_path)
-    if not os.path.exists(dataBase_path):
-        with app.app_context():
-            build_sample_db()
+    # if not os.path.exists(dataBase_path):
+    #     with app.app_context():
+    #         build_sample_db()
 
     # Start app
     app.run(debug=True)
