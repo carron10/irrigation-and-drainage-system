@@ -5,9 +5,8 @@ Informatics student final year students 2024@NUST,Zimbabwe
 
 ### Backend
 
-1. cd into backend folder
-    ```cd backend```
-
+1. Go do the folder where you have saved this project
+  
 2. Create virtual environment
     ### Creating virtual environment
     ```python -m venv venv```
@@ -26,8 +25,8 @@ Informatics student final year students 2024@NUST,Zimbabwe
 ## Usage
 To run this project do the following:
 
-### Migrations
+### Run
 
-1. Make migrations:<br>
+1. Run The app:<br>
     ```python app.py```
 
