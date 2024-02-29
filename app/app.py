@@ -74,6 +74,17 @@ def get_fields():
 def hello():
     return pages('index')
 
+@app.route('/docs')
+@app.route('/docs/')
+def doc_root():
+    return redirect("/docs/index.html")
+@app.route('/docs/<path:filename>')
+def docs(filename):
+    """Serve static documentation files."""
+    return send_from_directory(
+        "../docs/_build/",
+        filename
+        )
 
 #Other pages
 @app.route("/<page>",methods=["GET"])
@@ -94,6 +105,8 @@ def pages(page):
         data['users']=users
     return render_template(page+'.html',
                            page=page, notifications=notifications, total_notifications=r2,**data)
+
+
 
 
 
