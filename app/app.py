@@ -12,11 +12,11 @@ from flask_security.forms import Required
 from app import create_app
 from app.models import db,User,Role,Notifications,Options,Statistics,Meta,FieldZone
 from app.micro_controllers_ws_server  import websocket
-
+from flask import Blueprint, request, Response, current_app
 
 app = create_app()
 db.init_app(app)
-websocket.init_app(app)
+
 
 #Security 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -101,6 +101,7 @@ def pages(page):
 
 
 with app.app_context():
+    websocket.init_app(app)
     db.create_all()
 
 

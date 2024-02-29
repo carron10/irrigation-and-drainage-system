@@ -1,4 +1,5 @@
 import os
+import selectors
 # Create dummy secrey key so we can use sessions
 SECRET_KEY = '123456790'
 # Create in-memory database
@@ -7,6 +8,8 @@ SQLALCHEMY_DATABASE_URI = os.environ.get("POSTGRES_URL")
 if SQLALCHEMY_DATABASE_URI==None:
     SQLALCHEMY_DATABASE_URI="sqlite:///sample_db.sqlite"
 SQLALCHEMY_ECHO = False
+
+        
 SOCK_SERVER_OPTIONS={'ping_interval': 25}
 # Flask-Security config
 SECURITY_URL_PREFIX = "/"

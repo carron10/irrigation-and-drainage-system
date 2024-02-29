@@ -8,19 +8,57 @@
 </head>
 
 <body>
+    <button id="connect" onclick="connect()">connect</button>
+    <button id="disconnect" disabled onclick="diconnect()">Disconnect</button>
+    <br>
+    <textarea name="" id="shshs" cols="30" rows="10"></textarea>
+    <br>
+    <button onclick="send()">send Data</button>
+    <div id="received"></div>
     <script>
-        const ws = new WebSocket('ws://localhost:5000')
-        ws.onopen = () => {
-            console.log('ws opened on browser')
-            data={
-                event:"data",
-                data:[1,2,3,4,5,6,7,7]
-            }
-            ws.send(JSON.stringify(data))
-        }
+        var ws = null;
+        function connect() {
+            if (ws == null) {
+                ws = new WebSocket('ws://localhost:5000')
+                ws.onopen = () => {
+                    console.log('ws opened on browser')
+                    data = {
+                        event: "data",
+                        data: [1, 2, 3, 4, 5, 6, 7, 7]
+                    }
+                    // setInterval(function () {
 
-        ws.onmessage = (message) => {
-            console.log(`message received ${message.data}`)
+                    //     ws.send(JSON.stringify(data))
+
+                    // }, 2000)
+
+                }
+                ws.onclose = function (e) {
+                    console.log('Disconnected!');
+                };
+
+                ws.onmessage = (message) => {
+                    console.log(`message received ${message.data}`)
+                    document.getElementById("received").innerHTML=document.getElementById("received").innerHTML+"<p>"+message.data+"</p>"
+                }
+            }
+            document.getElementById('connect').disabled = true;
+            document.getElementById('disconnect').disabled = false;
+        }
+        function diconnect() {
+            if (ws != null) {
+                ws.close()
+                ws = null;
+            }
+            document.getElementById('connect').disabled = false;
+            document.getElementById('disconnect').disabled = true;
+
+        }
+        function send() {
+            var d = document.getElementById("shshs").value
+            if (ws != null) {
+                ws.send(JSON.stringify({event:"data",data:d}))
+            }
         }
     </script>
 </body>
