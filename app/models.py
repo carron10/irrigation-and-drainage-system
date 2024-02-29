@@ -1,31 +1,15 @@
-import os
-import json 
-import psycopg2
-from flask import Flask, url_for, redirect, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_security import Security, SQLAlchemyUserDatastore, \
-    UserMixin, RoleMixin, current_user, login_required
-from flask_security.utils import hash_password
-from flask_security.forms import RegisterForm
-from flask_security.forms import StringField
-from flask_security.forms import Required
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
-    String, ForeignKey, Text, select,update
-
-from dataclasses import dataclass
+    String, ForeignKey, Text
+from flask_security import UserMixin, RoleMixin
 from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy.orm import relationship, backref
+from dataclasses import dataclass
+from sqlalchemy.sql import func
+from flask_security.utils import hash_password
 
-# Create Flask application
-app = Flask(__name__,static_url_path='',static_folder='static',template_folder='templates')
+db = SQLAlchemy()
 
-
-#Configuration
-app.config.from_pyfile('config.py')
-
-#Create Database instance
-db = SQLAlchemy(app)
 
 
 # Define models
@@ -119,88 +103,8 @@ class Notifications(db.Model, SerializerMixin):
 
 
 
-
-
-# Setup Flask-Security
-user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-
-
-#extend fields for registration form
-class ExtendedRegisterForm(RegisterForm):
-    first_name = StringField('First Name', [Required()])
-    last_name = StringField('Last Name', [Required()])
-
-#security 
-security = Security(app, user_datastore,
-                    register_form=ExtendedRegisterForm)
-
-
-#######Setup url route#####
-
-#Function to execute when one visit /api/notifications
-@app.route('/api/notifications', methods=['GET'])
-def get_notifications():
-    limit = request.args.get('limit')
-    if not limit:
-        limit = 20
-    results = db.session.execute(select(Notifications).limit(limit)).scalars()
-    return [r.to_dict() for r in results]
-
-# Returns users registered in this app
-# Accep limit as int, which specifies the limit of users to return
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    limit = request.args.get('limit')
-    if not limit:
-        limit = 20
-    results = User.query.limit(limit).all()
-    return [r.to_dict(rules=['-password']) for r in results]
-
-#To update and also get fields Zones
-@app.route('/api/fields', methods=['GET',"POST"])
-def get_fields():
-    if request.method=="GET":
-        results = FieldZone.query.all()
-        return [r.to_dict() for r in results]
-    else:
-        data=request.form.to_dict()
-        print(data)
-        field_query=update(FieldZone).where(FieldZone.id==data['id'])
-        field_query= field_query.values(**data)
-        db.session.execute(field_query)
-        db.session.commit()
-        return redirect('/settings')
-
-
-##Home page
-@app.route("/",methods=["GET"])
-@app.route("/index.html",methods=["GET"])
-@login_required
-def hello():
-    return pages('index')
-
-
-#Other pages
-@app.route("/<page>",methods=["GET"])
-@login_required
-def pages(page):
-    notifications= db.session.execute(select(Notifications).limit(4)).scalars()
-    # notifications = [r.to_dict() for r in results]
-    r2 = Notifications.query.filter_by(status=False).count()
-    data={}
-    if page=="settings":
-        users = User.query.all()
-        # users=[r.to_dict(rules=['-password']) for r in users]
-        fields = FieldZone.query.all()
-        data['fields']=str(json.dumps([r.to_dict() for r in fields]))
-        data['users']=users
-    return render_template(page+'.html',
-                           page=page, notifications=notifications, total_notifications=r2,**data)
-
-
-
 #Build sample data into database
-def build_sample_db():
+def build_sample_db(app, user_datastore):
     """
     Populate a small db with some example entries.
     """
@@ -243,14 +147,3 @@ def build_sample_db():
     return
 
 
-if __name__ == '__main__':
-
-    # Build a sample db on the fly, if one does not exist yet.
-    app_dir = os.path.realpath(os.path.dirname(__file__))
-    dataBase_path = os.path.join(app_dir, app.config['DATABASE_FILE'])
-    # if not os.path.exists(dataBase_path):
-    #     with app.app_context():
-    #         build_sample_db()
-
-    # Start app
-    app.run(debug=True)

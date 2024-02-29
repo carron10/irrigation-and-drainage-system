@@ -28,5 +28,5 @@ To run this project do the following:
 ### Run
 
 1. Run The app:<br>
-    ```python app.py```
+    ```python run.py```
 

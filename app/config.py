@@ -7,7 +7,7 @@ SQLALCHEMY_DATABASE_URI = os.environ.get("POSTGRES_URL")
 if SQLALCHEMY_DATABASE_URI==None:
     SQLALCHEMY_DATABASE_URI="sqlite:///sample_db.sqlite"
 SQLALCHEMY_ECHO = False
-
+SOCK_SERVER_OPTIONS={'ping_interval': 25}
 # Flask-Security config
 SECURITY_URL_PREFIX = "/"
 SECURITY_PASSWORD_HASH = "pbkdf2_sha512"
