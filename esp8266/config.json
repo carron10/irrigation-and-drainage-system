@@ -5,6 +5,9 @@
         "attempts": 3,
         "delay_in_msec": 200
     },
-    "server": "ws://192.168.1.105:3000/",
-    "socket_delay_ms": 5
+    "server": "ws://192.168.1.101:5000/controller/Esp8266",
+    "socket_delay_ms": 5,
+    "socket_send_data_seconds":3,
+    "socket_reconnect_seconds":40,
+    "send_sensor_status_seconds":30
 }

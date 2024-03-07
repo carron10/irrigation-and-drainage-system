@@ -23,22 +23,42 @@ class RainDropSensor:
         max_wet_value = 5000
         rainfall_percentage = max(0, min(100, (adc_value - dry_value) / (max_wet_value - dry_value) * 100))
         return rainfall_percentage
+    def isconnected(self):
+        #ToDo: Write code to detect if this sensor is connected oor not
+        return not self.read_rainfall_intensity()==0
 class HumidityTemperatureSensor:
     def __init__(self,pin=2) -> None:
         self.dht_sensor = DHT11(machine.Pin(pin))
-    
+    def isconnected(self):
+        try:
+            self.read()
+            return True
+        except Exception as ex:
+            return False
+        
     def read(self):
         # Get the temperature and humidity data
         self.dht_sensor.measure()
         temperature =self.dht_sensor.temperature()
         humidity =  self.dht_sensor.humidity()
         return temperature,humidity
+    def read_temperature(self):
+        temperature =self.dht_sensor.temperature()
+        return temperature
+    def read_humidity(self):
+        humidity =  self.dht_sensor.humidity()
+        return humidity
+    
+    
 class SoilMoistureSensor:
     def __init__(self) -> None:
         self.adc=machine.ADC(0)
     def read(self):
         soil_moisture=self.adc.read()
         return round(soil_moisture,1)
+    def isconnected(self):
+        #ToDo: Write code to detect if this sensor is connected oor not
+        return not self.read()==8 or self.read()==7
 
 
         

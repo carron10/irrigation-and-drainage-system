@@ -6,7 +6,7 @@ SECRET_KEY = '123456790'
 DATABASE_FILE = 'sample_db.sqlite'
 SQLALCHEMY_DATABASE_URI = os.environ.get("POSTGRES_URL")
 if SQLALCHEMY_DATABASE_URI==None:
-    SQLALCHEMY_DATABASE_URI="sqlite:///sample_db.sqlite"
+    SQLALCHEMY_DATABASE_URI="sqlite:///"+DATABASE_FILE
 SQLALCHEMY_ECHO = False
 
         

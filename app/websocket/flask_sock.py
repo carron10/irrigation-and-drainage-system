@@ -66,7 +66,7 @@ class Sock:
                     f(ws, *args, **kwargs)
                 except ConnectionClosed:
                     if on_disconnect!=None:
-                        on_disconnect(ws)
+                        on_disconnect(*args, **kwargs)
                     pass
                 try:
                     ws.close()

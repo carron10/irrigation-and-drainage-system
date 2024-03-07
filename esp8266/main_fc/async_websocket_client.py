@@ -87,6 +87,7 @@ class AsyncWebsocketClient:
                     return b''.join(chunks)
 
     async def handshake(self, uri, headers=[]):
+       
         if self.sock:
             self.close()
 
@@ -134,7 +135,6 @@ class AsyncWebsocketClient:
         while header:
             line = await self.a_readline()
             header = (line)[:-2]
-
         return await self.open(True)
 
     async def read_frame(self, max_size=None):

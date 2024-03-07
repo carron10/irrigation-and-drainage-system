@@ -26,10 +26,10 @@
 			</style>
 			<div class=" border-bottom border-top pt-2 d-flex justify-content-center">
 				<div class="nav nav-tabs me-3 setting-tabs" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-					<button class=" mx-1 bg-danger nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+					<button class=" mx-1 bg-danger nav-link active" id="user-accounts-tab" data-bs-toggle="pill"
 						data-bs-target="#user-accounts" type="button" role="tab" aria-controls="user-accounts"
 						aria-selected="false">User Accounts</button>
-					<button class="bg-danger nav-link  active border  mx-1" id="products-tab" data-bs-toggle="pill"
+					<button class="bg-danger nav-link border  mx-1" id="products-tab" data-bs-toggle="pill"
 						data-bs-target="#soil-type" type="button" role="tab" aria-controls="soil-type"
 						aria-selected="false">Set Soil Type</button>
 					<button class="bg-danger nav-link  border mx-1" id="tax-tab" data-bs-toggle="pill"
@@ -44,7 +44,7 @@
 
 				<div class="container-fluid p-0">
 					<div class="tab-content sub-form">
-						<div class="tab-pane fade  " style="background-color: rgba(255, 255, 255, 0.7);"
+						<div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.7);"
 							id="user-accounts" role="tabpanel" titleledby="general1-list">
 
 							<table class="table table-striped">
@@ -76,22 +76,22 @@
 							</table>
 
 						</div>
-						<div class="tab-pane fade show active " id="soil-type" role="tabpanel"
-							titleledby="general1-list">
+						<div class="tab-pane fade" id="soil-type" role="tabpanel" titleledby="general1-list">
 							<div class="container px-lg-6 mx-auto d-table h-100">
 								<div class="d-table-cell align-middle">
 									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
 										<form class="needs-validation" action="/api/fields" method="post" novalidate>
 											<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
 											<label for="id">Field Zone</label>
-											<select name="id" id="field_type"
-												class=" form-select form-select-sm" required>
+											<select name="id" id="field_type" class=" form-select form-select-sm"
+												required>
 
 											</select>
 											<label for="soil_type">Soil Type</label>
 											<input type="text" class=" form-control form-control-sm" name="soil_type">
 											<label for="soil_texture">Texture</label>
-											<input type="text" class=" form-control form-control-sm" name="soil_texture">
+											<input type="text" class=" form-control form-control-sm"
+												name="soil_texture">
 											<label for="gradient">Gradient</label>
 											<input type="text" class=" form-control form-control-sm" name="gradient">
 											<button class=" btn btn-success w-25 my-2">Set</button>
@@ -102,10 +102,69 @@
 
 						</div>
 						<div class="tab-pane fade " id="status" role="tabpanel" titleledby="general1-list">
-							--Status Here
+							<div class="container px-lg-6 mx-auto d-table h-100">
+								<div class="d-table-cell align-middle">
+									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
+										<form class="needs-validation" action="/api/crops" method="post" novalidate>
+											<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
+											<label for="id">Field Zone</label>
+											<select name="id" id="soil_field_type" class=" form-select form-select-sm"
+												required>
+
+											</select>
+											<label for="crop_name">Crop Name</label>
+											<input type="text" class=" form-control form-control-sm" name="soil_type">
+											<label for="crop_type">Crop Type</label>
+											<input type="text" class=" form-control form-control-sm" name="crop_type">
+											<label for="gradient">Crop Age(In Days)</label>
+											<input type="text" class=" form-control form-control-sm" name="crop_age">
+											<button class=" btn btn-success w-25 my-2">Set</button>
+										</form>
+									</div>
+								</div>
+							</div>
 						</div>
-						<div class="tab-pane fade " id="hardware" role="tabpanel" titleledby="general1-list">
-							--hardware comes here
+						<div class="tab-pane fade " id="hardware" role="tabpanel" titleledby="general1-list"
+							style="background-color: rgba(255, 255, 255, 0.9);">
+							<div class="d-flex justify-content-between p-2">
+								<div></div>
+								<div>
+									<button class="refresh btn btn-sm btn-success">Refresh</button>
+									<button id="golive" class="btn btn-danger btn-sm">Go Live</button>
+								</div>
+							</div>
+							<div id="no-device-msg" class="bg-white py-3 text-center text-danger fw-bolder">
+								<div class="py-5 my-5">
+									<h5>There are no devices connected......Please make sure the devices are connected
+										properly</h5>
+									<button class="refresh btn btn-sm btn-success py-2">Try Refresh</button>
+								</div>
+							</div>
+							
+							<div class="device-view visually-hidden">
+
+								<div class="device-infor alert border-bottom rounded-0 mb-1 ">
+									<h3>Device Name: <span class="device-name"></span></h3>
+									<div>
+										<h6>Status: <span class="text-success">Connected</span></h6>
+										<div class=" text-center w-100"><span>- - - - - - -</span></div>
+										<h5>Registered Sensors:</h5>
+									</div>
+								</div>
+								<table class="table table-striped registered-sensors">
+									<thead>
+										<tr>
+											<th scope="col">Sensor</th>
+											<th scope="col">Status</th>
+											<th scope="col">UpdateAt</th>
+
+										</tr>
+									</thead>
+									<tbody>
+
+									</tbody>
+								</table>
+							</div>
 						</div>
 					</div>
 
@@ -132,6 +191,24 @@
 						</div>
 					</div>
 				</div>
+				<div class="modal" id="alert" aria-hidden="true" style="z-index: 1500 !important;">
+					<div class=" modal-dialog modal-dialog-scrollable">
+						<div class="modal-content rounded-0">
+							<div
+								class="modal-header rounded-0 py-0 border-0 border-bottom d-flex justify-content-between">
+								<div class="title">
+								</div>
+								<a class="close small text-white" data-bs-dismiss="modal" aria-label="Close">
+									<span class=" h3 ">X</span>
+								</a>
+							</div>
+							<div class="modal-body py-1 m-0 text-center text-white">
+
+							</div>
+
+						</div>
+					</div>
+				</div>
 			</main>
 
 			{%include "footer.html"%}
@@ -142,8 +219,8 @@
 
 
 	<script>
-		var fields = {{ fields| safe }};
-		console.log(fields);
+		var fields = {{fields| safe }};
+		var connected_devices = {{connected_devices| safe}};
 		document.addEventListener("DOMContentLoaded", function () {
 			var j = 0, data = [];
 			fields.forEach(function (v, i, e) {
@@ -157,12 +234,114 @@
 				j++;
 			})
 			$("#field_type").change(function () {
-				var i=$(this).val();
+				var i = $(this).val();
 				$("[name='soil_type']").val(data[i].soil_type)
 				$("[name='gradient']").val(data[i].gradient)
 				$("[name='soil_texture']").val(data[i].soil_texture)
 			})
+			function error(str, title) {
+				$("#alert").modal("show").find('.modal-content').addClass(
+					"bg-danger").removeClass("bg-primary").find(
+						'.modal-body').html(
+							"<b>" + str + "</b>");
+				$('#alert').find('.title').html('<b>' + (title == undefined ? "Error" : title) + '</b>').addClass('text-white');
+			}
+
+			function send(url, data, method) {
+				return $.ajax({
+					url: url,
+					method: method,
+					data: data
+				});
+			}
+			function formatDate(date) {
+				var formattedDate = date.toLocaleDateString("en-GB", {
+					day: "numeric",
+					month: "numeric",
+					year: "numeric"
+				}).split("/").reverse().join("/");
+
+				var formattedTime = date.toLocaleTimeString().split(" ")[0];
+
+				return `${formattedDate} ${formattedTime}`;
+			}
+			function displayDevices(connected_devices) {
+				var devices = $(".device-view:not(.visually-hidden)")
+				devices.remove()
+				if (Object.keys(connected_devices).length === 0) {
+					$(".device-view").addClass("visually-hidden")
+					$("#no-device-msg").removeClass("visually-hidden")
+				} else {
+
+					for (const [device, device_infor] of Object.entries(connected_devices)) {
+						var device_infor_container = $(".device-view").clone()
+						device_infor_container.find(".device-name").text(device)
+						var registered_sensors = device_infor_container.find(".registered-sensors tbody").first()
+						for (const [sensor, sensor_infor] of Object.entries(device_infor['sensors'])) {
+							var status = sensor_infor['status'] == true ? "Connected" : "Not Connected",
+								last_update = formatDate(new Date())
+
+							var sensor_row = `<tr>
+								<td>${sensor}</td>
+								<td> <span class="${status == "Connected" ? "text-success" : "text-danger"} fw-bold">${status}</span></td>
+								<td>${last_update}</td>
+							</tr`
+							registered_sensors.append(sensor_row)
+						}
+						device_infor_container.removeClass("visually-hidden")
+						device_infor_container.insertAfter($(".device-view").last())
+					}
+					$("#no-device-msg").addClass("visually-hidden")
+				}
+			}
+			displayDevices(connected_devices)
+
+			$(".refresh").click(function () {
+				send("/api/refresh_hardware_infor").done(function (data) {
+					displayDevices(data)
+				}).fail(function (e) {
+					console.log(e)
+					error("Failed To Refresh")
+				})
+			})
+
+			var ws = null;
+			var disconnected = false
+			$("#golive").click(function () {
+				if ($("#golive").hasClass("live")) {
+					diconnected = true
+					if (ws != null) {
+						ws.close()
+						ws = null;
+					}
+					$("refresh").show()
+					$("#golive").text("Go Live")
+					$("#golive").removeClass("live")
+				} else {
+					if (ws == null) {
+						ws = new WebSocket('ws://localhost:5000/client/live_hardware_infor')
+						ws.onopen = () => {
+							$("#golive").text("Disconnect")
+							$("#golive").addClass("live")
+							$(".refresh").hide()
+						}
+						ws.onclose = function (e) {
+							if (!diconnected) {
+								$("#golive").text("Go Live")
+								$("#golive").removeClass("live")
+								error("Live Connection Failed")
+								ws = null
+							}
+						};
+						ws.onmessage = (message) => {
+							displayDevices(JSON.parse(message.data))
+						}
+					}
+				}
+
+			})
 		})
+
 	</script>
 
 </body>

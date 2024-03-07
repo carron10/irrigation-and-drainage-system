@@ -105,8 +105,10 @@ class Notifications(db.Model, SerializerMixin):
 
 #Build sample data into database
 def build_sample_db(app, user_datastore):
+    
+    
     """
-    Populate a small db with some example entries.
+    To generate sample data that can be used for testing and development
     """
 
     import string
