@@ -16,7 +16,7 @@
 # Objectives
 #---Communication to server--- 
 #1. Connect to server
-#2. Register sensor--this is registering all sensors that are available---[To: Find a way to remove this step and make sure the server already know the sensors]
+#2. Register sensors--this is registering all sensors that are available---[To: Find a way to remove this step and make sure the server already know the sensors]
 #3. fire sensor connected event / send information that a sensor is connected... [same as disconnection]
 #4.  to send sensor readings to server after X mins/second as defined on the config file [or from the server]
 #    --data to be sent in objective 4 above include the reading,time,and the sensor that initiated the record/

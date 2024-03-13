@@ -44,9 +44,11 @@
 
 				<div class="container-fluid p-0">
 					<div class="tab-content sub-form">
-						<div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.7);"
+						<div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.8);"
 							id="user-accounts" role="tabpanel" titleledby="general1-list">
-
+							<div class="d-flex justify-content-end p-2">
+									<button class="btn btn-sm btn-success add-new-user">Add New User</button>
+							</div>
 							<table class="table table-striped">
 								<thead>
 									<tr>
@@ -55,7 +57,7 @@
 										<th scope="col">Last Name</th>
 										<th scope="col">Email</th>
 										<th scope="col">Roles</th>
-
+										<th scope="col">Action</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -70,6 +72,7 @@
 											<span>{{role.name}} ,</span>
 											{%endfor%}
 										</td>
+										<td><i data-feather="trash-2"></i> <i data-feather="external-link"></i></td>
 									</tr>
 									{%endfor%}
 								</tbody>
@@ -130,7 +133,7 @@
 								<div></div>
 								<div>
 									<button class="refresh btn btn-sm btn-success">Refresh</button>
-									<button id="golive" class="btn btn-danger btn-sm">Go Live</button>
+									<button id="golive" class="btn btn-danger btn-sm">Auto Refresh</button>
 								</div>
 							</div>
 							<div id="no-device-msg" class="bg-white py-3 text-center text-danger fw-bolder">
@@ -140,7 +143,7 @@
 									<button class="refresh btn btn-sm btn-success py-2">Try Refresh</button>
 								</div>
 							</div>
-							
+
 							<div class="device-view visually-hidden">
 
 								<div class="device-infor alert border-bottom rounded-0 mb-1 ">
@@ -309,13 +312,13 @@
 			var disconnected = false
 			$("#golive").click(function () {
 				if ($("#golive").hasClass("live")) {
-					diconnected = true
+					disconnected = true
 					if (ws != null) {
 						ws.close()
 						ws = null;
 					}
-					$("refresh").show()
-					$("#golive").text("Go Live")
+					$(".refresh").removeClass("visually-hidden")
+					$("#golive").text("Auto Refresh")
 					$("#golive").removeClass("live")
 				} else {
 					if (ws == null) {
@@ -323,12 +326,13 @@
 						ws.onopen = () => {
 							$("#golive").text("Disconnect")
 							$("#golive").addClass("live")
-							$(".refresh").hide()
+							$(".refresh").addClass("visually-hidden")
 						}
 						ws.onclose = function (e) {
-							if (!diconnected) {
-								$("#golive").text("Go Live")
+							if (!disconnected) {
+								$("#golive").text("Auto Refresh")
 								$("#golive").removeClass("live")
+								$(".refresh").removeClass("visually-hidden")
 								error("Live Connection Failed")
 								ws = null
 							}

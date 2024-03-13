@@ -57,12 +57,13 @@ class CommandHandler:
                     return "Argument Parsing Error"
                 if len(args)==2:
                     if args[0].startswith("-"):
-                        options[args[0][1:]]=args[1]
+                        options[args[0][1:]]=int(args[1]) if args[1].isdigit() else args[1]
                     else:
                         return f"Argument Parsing Error {args[0]}"
                 else:
                     if args[0].startswith("-"):
                         options[args[0][1:]]=None if not len(command_args)>i+1 else command_args[i+1] if not command_args[i+1].startswith("-") else None
+                        options[args[0][1:]]=int(options[args[0][1:]]) if options[args[0][1:]].isdigit() else  options[args[0][1:]]
                     else:
                         if i!=0:
                             args=command_args[i-1].split("=")

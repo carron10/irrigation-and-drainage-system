@@ -34,7 +34,7 @@ from app.models import (
     FieldZone,
     build_sample_db,
 )
-from app.micro_controllers_ws_server import websocket, connected_devices
+from app.micro_controllers_ws_server import websocket, connected_devices,get_all_connected_sensors
 from flask import Blueprint, request, Response, current_app
 from app.websocket.flask_sock import Sock
 
@@ -146,6 +146,11 @@ def pages(page):
         **data
     )
 
+
+@app.route("/api/real_time_ecological_factors")
+def get_current_ecological_factors():
+    return get_all_connected_sensors()
+
 @app.route("/api/refresh_hardware_infor")
 def refresh_hardware_infor():
     connected_devices_copy = connected_devices.copy()
@@ -166,7 +171,7 @@ def refresh_hardware_infor_socket(ws):
                 del connected_devices_copy[k]["ws"]
     ws.send(json.dumps(connected_devices_copy))
     while True:
-        if end_time - start_time > 10:
+        if end_time - start_time > 2:
             connected_devices_copy = connected_devices.copy()
             if len(connected_devices_copy.keys()) > 0:
                 for k, v in connected_devices_copy.items():
@@ -193,4 +198,4 @@ with app.app_context():
     dataBase_path = os.path.join(app_dir, app.config["DATABASE_FILE"])
     if not os.path.exists(dataBase_path):
         pass
-        # build_sample_db(app=app,user_datastore=user_datastore)
+        build_sample_db(app=app,user_datastore=user_datastore)

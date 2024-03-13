@@ -15,12 +15,15 @@
 				<h1 class="h3 my-3">Ecological Conditions In Real Time</h1>
 			</div>
 			<main class="content" style="background-image: url('/img/sprinklerirrigation.jpg') !important;">
-
 				<div class="container-fluid p-0">
-
-					<div class="my-3 pb-3">
-						<div class="d-flex justify-content-end">
-							<div class="h3 fw-bold">25 Degrees Celcius</div>
+					<div class="d-flex justify-content-between">
+						<div>
+							<button id="refresh" class=" btn btn-success">Refresh</button>
+						</div>
+						<div class="my-3 pb-3">
+							<div class="d-flex justify-content-end">
+								<div class="h3 fw-bold">25 Degrees Celcius</div>
+							</div>
 						</div>
 					</div>
 					<div class="row">
@@ -80,8 +83,36 @@
 
 
 	<script>
-		document.addEventListener("DOMContentLoaded", function () {
 
+
+		document.addEventListener("DOMContentLoaded", function () {
+			function error(str, title) {
+				$("#alert").modal("show").find('.modal-content').addClass(
+					"bg-danger").removeClass("bg-primary").find(
+						'.modal-body').html(
+							"<b>" + str + "</b>");
+				$('#alert').find('.title').html('<b>' + (title == undefined ? "Error" : title) + '</b>').addClass('text-white');
+			}
+
+			function send(url, data, method) {
+				return $.ajax({
+					url: url,
+					method: method,
+					data: data
+				});
+			}
+
+			function refresh() {
+				send("/api/real_time_ecological_factors").done(function (data) {
+					console.log(data)
+				}).fail(function (e) {
+					console.log(e)
+					error("Failed To Refresh")
+				})
+			}
+
+			$("#refresh").click(refresh)
+			refresh()
 			var plugin = {
 				beforeDraw: function (chart) {
 					var width = chart.width,

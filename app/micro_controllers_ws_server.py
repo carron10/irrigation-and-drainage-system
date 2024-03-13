@@ -24,22 +24,31 @@ class InitSock(WebSocket):
 
 websocket = InitSock(route="/controller/<devicename>")
 connected_devices = {}
+last_sensors_updates={}
 
+def get_all_connected_sensors():
+    sensors={}
+    for k,v in connected_devices.items():
+        for sensor,v in v["sensors"].items():
+            sensors[sensor]=v
+    return sensors
+            
 
 @websocket.on("connect")
 def print_data(ws, *args, **kwargs):
     global websocket
-    device={"name":kwargs["devicename"],"ws":ws,"sensors":{}}
+    device = {"name": kwargs["devicename"], "ws": ws, "sensors": {}}
     connected_devices[kwargs["devicename"]] = device
     ws.send(
         json.dumps(
             {
-                "data":{'cmd':"config --socket_send_data_seconds 40 --socket_reconnect_seconds 20"},
+                "data": {
+                    "cmd": "config --socket_send_data_seconds 30 --send_sensor_status_seconds 5"
+                },
                 "event": "command",
             }
         )
     )
-
 
 
 @websocket.on("disconnect")
@@ -49,27 +58,31 @@ def handle_disconnect(*args, **kwargs):
 
 
 @websocket.on("register_sensors")
-def register_sensors(data, ws,devicename):
+def register_sensors(data, ws, devicename):
     global connected_devices
-    for sensor in data:
-        connected_devices[devicename]['sensors'][sensor]={}
-        connected_devices[devicename]['sensors'][sensor]['status']=False
+    for sensor,v in data.items():
+        connected_devices[devicename]["sensors"][sensor] = v
+        connected_devices[devicename]["sensors"][sensor]["status"] = False
+        connected_devices[devicename]["sensors"][sensor]['last_value']=None
 
 
 @websocket.on("sensor_update")
-def sensor_update(data, ws,devicename):
+def sensor_update(data, ws, devicename):
+    global connected_devices
     for k, v in data.items():
+        last_sensors_updates[k]=v
         stats = Statistics(for_=k, value=v, history_type="sensor_update")
         db.session.add(stats)
+        connected_devices[devicename]["sensors"][k]['last_value']=v
     # print(data)
 
 
 @websocket.on("sensor_status")
-def registor_sensors_status(data, ws,devicename):
+def registor_sensors_status(data, ws, devicename):
     global connected_devices
     for sensor in data:
-        if sensor not in connected_devices[devicename]['sensors'].keys():
+        if sensor not in connected_devices[devicename]["sensors"].keys():
             # Todo: Write the response , where unrestered sensor detected
             pass
         else:
-            connected_devices[devicename]['sensors'][sensor]["status"] = data[sensor]
+            connected_devices[devicename]["sensors"][sensor]["status"] = data[sensor]

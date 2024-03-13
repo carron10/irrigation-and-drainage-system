@@ -16,7 +16,7 @@ db = SQLAlchemy()
 
 #user roles table
 roles_users = db.Table(
-    'roles_users',
+    'irrigation_roles_users',
     db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
     db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
 )
@@ -24,6 +24,7 @@ roles_users = db.Table(
 # Role Model
 class Role(db.Model, RoleMixin):
     __tablename__ = 'role'
+    __table_prefix__ = 'irrigation_'
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True)
     description = Column(String(255))
@@ -31,6 +32,7 @@ class Role(db.Model, RoleMixin):
 # User Model
 class User(db.Model, UserMixin,SerializerMixin):
     __tablename__ = 'user'
+    __table_prefix__ = 'irrigation_'
     id = Column(Integer, primary_key=True)
     email = Column(String(255), unique=True)
     username = Column(String(255))
@@ -55,6 +57,7 @@ class User(db.Model, UserMixin,SerializerMixin):
 #To store meta data for irrigation/drainage/rainfall/ and etc
 class Meta(db.Model, SerializerMixin):
     __tablename__ = 'meta_data'
+    __table_prefix__ = 'irrigation_'
     id = Column(Integer, primary_key=True)
     for_ = Column(String(100), nullable=False)
     meta_key=Column(String(100))
@@ -64,6 +67,7 @@ class Meta(db.Model, SerializerMixin):
 ##Options, to store settings
 class Options(db.Model, SerializerMixin):
     __tablename__ = 'options'
+    __table_prefix__ = 'irrigation_'
     id = Column(Integer, primary_key=True)
     option_name= Column(String(100), nullable=False,unique=True)
     option_value=Column(Text)
@@ -71,6 +75,7 @@ class Options(db.Model, SerializerMixin):
 #To store history for irrigation/drainage/rainfall/ and etc
 class Statistics(db.Model, SerializerMixin):
     __tablename__ = 'stats'
+    __table_prefix__ = 'irrigation_'
     id = Column(Integer, primary_key=True)
     for_ = Column(String(100), nullable=False)
     history_type=Column(String(100))
@@ -80,17 +85,21 @@ class Statistics(db.Model, SerializerMixin):
 # To store data of a certain region/field zone
 class FieldZone(db.Model, SerializerMixin):
     __tablename__ = 'field_zone'
+    __table_prefix__ = 'irrigation_'
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False,unique=True)
     soil_type = Column(String(100))
     soil_texture = Column(String(100))
     gradient = Column(String(100))
 
+#Todo:  Add solit data and crop type tables
+
 
 
 # Model/Table for notifications
 class Notifications(db.Model, SerializerMixin):
     __tablename__ = 'notifications'
+    __table_prefix__ = 'irrigation_'
     id = Column(Integer, primary_key=True)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(Boolean(), default=False)

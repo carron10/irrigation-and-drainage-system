@@ -29,7 +29,7 @@ data = {}
 
 # Define sensors
 rain = RainDropSensor()
-humidity_and_tempeture = HumidityTemperatureSensor()
+humidity_and_tempeture = HumidityTemperatureSensor(16)
 moisture = SoilMoistureSensor()
 
 
@@ -37,8 +37,9 @@ moisture = SoilMoistureSensor()
 handler = CommandHandler()
 
 def config_service(options):
+    print(options)
     global config
-    for k, v in data.items():
+    for k, v in options.items():
         config[k] = v
     return "Config updated"
 
@@ -74,7 +75,8 @@ async def on_connect(websocket):
     global ws
     ws = websocket
     # register sensors here
-    sensors = ["Humidity","Temperature", "RainDrop", "SoilMoisture"]
+    sensors = {"Humidity": {}, "Temperature":{}, "RainDrop": {"name":"Rainfall"}, "SoilMoisture": {"name": "Soil Moisture"}}
+
     data = {"event": "register_sensors", "data": sensors}
     if await ws.open():
         await ws.send(json.dumps(data))
@@ -103,13 +105,15 @@ async def send_sensor_statuses_loop():
         if ws is not None:
             if await ws.open():
                 try:
+                    humidity_and_tempeture_on=humidity_and_tempeture.isconnected()
+                    print("Sent status-------")
                     await ws.send(
                         json.dumps(
                             {
                                 "event": "sensor_status",
                                 "data": {
-                                    "Temperature":humidity_and_tempeture.isconnected(),
-                                    "Humidity": humidity_and_tempeture.isconnected(),
+                                    "Temperature": humidity_and_tempeture_on,
+                                    "Humidity":  humidity_and_tempeture_on,
                                     "RainDrop": rain.isconnected(),
                                     "SoilMoisture": moisture.isconnected(),
                                 },
@@ -121,13 +125,15 @@ async def send_sensor_statuses_loop():
                     print("Error[Sending sensor_status]: {}".format(e))
                     break
 
-        if last_sent_time is not None:
-            end_time = time.time()
-            elapsed_time = end_time - last_sent_time
-            t_diff = config["send_sensor_status_seconds"] - elapsed_time
-            await a.sleep(1 if t_diff < 0 else t_diff)
-        else:
-            await a.sleep(1)
+            if last_sent_time is not None:
+                end_time = time.time()
+                elapsed_time = end_time - last_sent_time
+                t_diff = config["send_sensor_status_seconds"] - elapsed_time
+                print("Waiting----",t_diff,config["send_sensor_status_seconds"])
+                await a.sleep(1 if t_diff < 0 else t_diff)
+            else:
+                await a.sleep(1)
+        await a.sleep(1)
 
 async def send_moisture_loop():
     """To send moisture data to server in async manner"""
@@ -157,10 +163,10 @@ async def send_moisture_loop():
                 if last_sent_time is not None:
                     end_time = time.time()
                     elapsed_time = end_time - last_sent_time
-                    t_diff = config["send_sensor_status_seconds"] - elapsed_time
-                    await a.sleep(1 if t_diff < 0 else t_diff)
+                    t_diff = config["socket_send_data_seconds"] - elapsed_time
+                    await a.sleep(2 if t_diff < 0 else t_diff)
                 else:
-                    await a.sleep(1)
+                    await a.sleep(2)
         await a.sleep(1)
 
 
@@ -176,7 +182,7 @@ async def send_humidity_loop():
             if await ws.open():
                 try:
                     if humidity_and_tempeture.isconnected():
-                        await a.sleep(1)
+                        await a.sleep(2)
                         temp, humidity = humidity_and_tempeture.read()
                         await ws.send(
                             json.dumps(
@@ -196,11 +202,11 @@ async def send_humidity_loop():
                 if last_sent_time is not None:
                     end_time = time.time()
                     elapsed_time = end_time - last_sent_time
-                    t_diff = config["send_sensor_status_seconds"] - elapsed_time
-                    await a.sleep(1 if t_diff < 0 else t_diff)
+                    t_diff = config["socket_send_data_seconds"] - elapsed_time
+                    await a.sleep(3 if t_diff < 0 else t_diff)
                 else:
-                    await a.sleep(1)
-        await a.sleep(1)
+                    await a.sleep(3)
+        await a.sleep(3)
 
 
 async def send_rainfall_loop():
@@ -219,7 +225,7 @@ async def send_rainfall_loop():
                             json.dumps(
                                 {
                                     "data": {
-                                        "RainDrop": rain.read_rainfall_intensity()
+                                        "RainDrop": rain.read()
                                     },
                                     "event": "sensor_update",
                                 }
@@ -233,7 +239,7 @@ async def send_rainfall_loop():
                 if last_sent_time is not None:
                     end_time = time.time()
                     elapsed_time = end_time - last_sent_time
-                    t_diff = config["send_sensor_status_seconds"] - elapsed_time
+                    t_diff = config["socket_send_data_seconds"] - elapsed_time
                     await a.sleep(1 if t_diff < 0 else t_diff)
                 else:
                     await a.sleep(1)
