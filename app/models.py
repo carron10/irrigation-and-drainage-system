@@ -7,32 +7,32 @@ from sqlalchemy.orm import relationship, backref
 from dataclasses import dataclass
 from sqlalchemy.sql import func
 from flask_security.utils import hash_password
+from sqlalchemy.ext.declarative import declared_attr
 
 db = SQLAlchemy()
+TABLE_PREFIX="irrigation_"
+class MyModel(db.Model):
+  __abstract__ = True
+  # Use @declared_attr to dynamically set the table name with prefix
+  @declared_attr
+  def __tablename__(cls):
+    return f"{TABLE_PREFIX}{cls.__name__}".lower()
+
+
 
 
 
 # Define models
 
-#user roles table
-roles_users = db.Table(
-    'irrigation_roles_users',
-    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
-)
 
 # Role Model
-class Role(db.Model, RoleMixin):
-    __tablename__ = 'role'
-    __table_prefix__ = 'irrigation_'
+class Role(MyModel, RoleMixin):
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True)
     description = Column(String(255))
 
 # User Model
-class User(db.Model, UserMixin,SerializerMixin):
-    __tablename__ = 'user'
-    __table_prefix__ = 'irrigation_'
+class User(MyModel, UserMixin,SerializerMixin):
     id = Column(Integer, primary_key=True)
     email = Column(String(255), unique=True)
     username = Column(String(255))
@@ -49,15 +49,19 @@ class User(db.Model, UserMixin,SerializerMixin):
     active = Column(Boolean())
     confirmed_at = Column(DateTime())
     # serialize_only=('roles.id',)
-    roles = relationship('Role', secondary='roles_users',
+    roles = relationship('Role', secondary='irrigation_roles_users',
                          backref=backref('users', lazy='dynamic'))
     fs_uniquifier = Column(String(64), unique=True, nullable=False)
    
+#user roles table
+roles_users = db.Table(
+    'irrigation_roles_users',
+    db.Column('user_id', db.Integer(), db.ForeignKey('irrigation_user.id')),
+    db.Column('role_id', db.Integer(), db.ForeignKey('irrigation_role.id'))
+)
 
 #To store meta data for irrigation/drainage/rainfall/ and etc
-class Meta(db.Model, SerializerMixin):
-    __tablename__ = 'meta_data'
-    __table_prefix__ = 'irrigation_'
+class Meta(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
     for_ = Column(String(100), nullable=False)
     meta_key=Column(String(100))
@@ -65,17 +69,13 @@ class Meta(db.Model, SerializerMixin):
     meta_value = Column(Text, nullable=False)
 
 ##Options, to store settings
-class Options(db.Model, SerializerMixin):
-    __tablename__ = 'options'
-    __table_prefix__ = 'irrigation_'
+class Options(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
     option_name= Column(String(100), nullable=False,unique=True)
     option_value=Column(Text)
 
 #To store history for irrigation/drainage/rainfall/ and etc
-class Statistics(db.Model, SerializerMixin):
-    __tablename__ = 'stats'
-    __table_prefix__ = 'irrigation_'
+class Statistics(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
     for_ = Column(String(100), nullable=False)
     history_type=Column(String(100))
@@ -83,9 +83,7 @@ class Statistics(db.Model, SerializerMixin):
     value = Column(Text, nullable=False)
     
 # To store data of a certain region/field zone
-class FieldZone(db.Model, SerializerMixin):
-    __tablename__ = 'field_zone'
-    __table_prefix__ = 'irrigation_'
+class FieldZone(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False,unique=True)
     soil_type = Column(String(100))
@@ -97,9 +95,7 @@ class FieldZone(db.Model, SerializerMixin):
 
 
 # Model/Table for notifications
-class Notifications(db.Model, SerializerMixin):
-    __tablename__ = 'notifications'
-    __table_prefix__ = 'irrigation_'
+class Notifications(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(Boolean(), default=False)

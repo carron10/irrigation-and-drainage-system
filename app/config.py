@@ -4,7 +4,7 @@ import selectors
 SECRET_KEY = '123456790'
 # Create in-memory database
 DATABASE_FILE = 'sample_db.sqlite'
-SQLALCHEMY_DATABASE_URI = os.environ.get("POSTGRES_URL")
+SQLALCHEMY_DATABASE_URI = "postgresql://all_store_db_user:KslWulQK0u31qlWC34qLFb91OaGGOKLS@dpg-cnad71qcn0vc73901b10-a.oregon-postgres.render.com/all_store_db"
 if SQLALCHEMY_DATABASE_URI==None:
     SQLALCHEMY_DATABASE_URI="sqlite:///"+DATABASE_FILE
 SQLALCHEMY_ECHO = False

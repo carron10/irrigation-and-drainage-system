@@ -32,13 +32,19 @@ from app.models import (
     Statistics,
     Meta,
     FieldZone,
-    build_sample_db,
+    build_sample_db,MyModel
 )
 from app.micro_controllers_ws_server import websocket, connected_devices,get_all_connected_sensors
 from flask import Blueprint, request, Response, current_app
 from app.websocket.flask_sock import Sock
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Table, MetaData
+from sqlalchemy.ext.declarative import declared_attr
+
+
 
 app = create_app()
+app.config['SQLALCHEMY_MODEL_BASE_CLASS'] = MyModel
 db.init_app(app)
 
 # Security
