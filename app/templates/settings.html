@@ -83,10 +83,10 @@
 							<div class="container px-lg-6 mx-auto d-table h-100">
 								<div class="d-table-cell align-middle">
 									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
-										<form class="needs-validation" action="/api/fields" method="post" novalidate>
+										<form class="needs-validation" action="/api/soil_data" method="post" novalidate>
 											<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
 											<label for="id">Field Zone</label>
-											<select name="id" id="field_type" class=" form-select form-select-sm"
+											<select name="id" id="soil_field_type" class=" form-select form-select-sm"
 												required>
 
 											</select>
@@ -108,18 +108,18 @@
 							<div class="container px-lg-6 mx-auto d-table h-100">
 								<div class="d-table-cell align-middle">
 									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
-										<form class="needs-validation" action="/api/crops" method="post" novalidate>
+										<form class="needs-validation" action="/api/crops_data" method="post" novalidate>
 											<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
 											<label for="id">Field Zone</label>
-											<select name="id" id="soil_field_type" class=" form-select form-select-sm"
+											<select name="id" id="crop_field_type" class=" form-select form-select-sm"
 												required>
 
 											</select>
 											<label for="crop_name">Crop Name</label>
-											<input type="text" class=" form-control form-control-sm" name="soil_type">
+											<input type="text" class=" form-control form-control-sm" name="crop_name">
 											<label for="crop_type">Crop Type</label>
 											<input type="text" class=" form-control form-control-sm" name="crop_type">
-											<label for="gradient">Crop Age(In Days)</label>
+											<label for="crop_age">Crop Age(In Days)</label>
 											<input type="text" class=" form-control form-control-sm" name="crop_age">
 											<button class=" btn btn-success w-25 my-2">Set</button>
 										</form>
@@ -228,27 +228,47 @@
 			var j = 0, data = [];
 			fields.forEach(function (v, i, e) {
 				data[v.id] = v;
-				$("#field_type").append("<option value='" + v.id + "'>" + v.name + "</option>");
+				$("#soil_field_type").append("<option value='" + v.id + "'>" + v.name + "</option>");
+				$("#crop_field_type").append("<option value='" + v.id + "'>" + v.name + "</option>");
 				if (j == 0) {
-					$("[name='soil_type']").val(v.soil_type)
-					$("[name='gradient']").val(v.gradient)
-					$("[name='soil_texture']").val(v.soil_texture)
+					if(v.crop_status!=null){
+						$("[name='crop_type']").val(v.crop_status.crop_type)
+						$("[name='crop_name']").val(v.crop_status.crop_name)
+						$("[name='crop_age']").val(v.crop_status.crop_age)
+					}
+					if(v.soil_status!=null){
+					$("[name='soil_type']").val(v.soil_status.soil_type)
+					$("[name='gradient']").val(v.soil_status.gradient)
+					$("[name='soil_texture']").val(v.soil_status.soil_texture)
+					}
 				}
 				j++;
 			})
-			$("#field_type").change(function () {
+			$("#crop_field_type").change(function () {
 				var i = $(this).val();
-				$("[name='soil_type']").val(data[i].soil_type)
-				$("[name='gradient']").val(data[i].gradient)
-				$("[name='soil_texture']").val(data[i].soil_texture)
-			})
-			function error(str, title) {
-				$("#alert").modal("show").find('.modal-content').addClass(
-					"bg-danger").removeClass("bg-primary").find(
-						'.modal-body').html(
-							"<b>" + str + "</b>");
-				$('#alert').find('.title').html('<b>' + (title == undefined ? "Error" : title) + '</b>').addClass('text-white');
+				if(data[i].crop_status!=null){
+					$("[name='crop_type']").val(data[i].crop_status.crop_type)
+					$("[name='crop_name']").val(data[i].crop_status.crop_name)
+					$("[name='crop_age']").val(data[i].crop_status.crop_age)
+			   }else{
+				$("[name='crop_type']").val("")
+				$("[name='crop_name']").val("")
+				$("[name='crop_age']").val("")
 			}
+			})
+			$("#soil_field_type").change(function () {
+				var i = $(this).val();
+				if(data[i].soil_status!=null){
+				$("[name='soil_type']").val(data[i].soil_status.soil_type)
+				$("[name='gradient']").val(data[i].soil_status.gradient)
+				$("[name='soil_texture']").val(data[i].soil_status.soil_texture)
+			   }else{
+				$("[name='soil_type']").val("")
+				$("[name='gradient']").val("")
+				$("[name='soil_texture']").val("")
+			}
+			})
+			
 
 			function send(url, data, method) {
 				return $.ajax({
@@ -298,13 +318,14 @@
 				}
 			}
 			displayDevices(connected_devices)
-
+			
 			$(".refresh").click(function () {
 				send("/api/refresh_hardware_infor").done(function (data) {
 					displayDevices(data)
 				}).fail(function (e) {
 					console.log(e)
 					error("Failed To Refresh")
+					
 				})
 			})
 

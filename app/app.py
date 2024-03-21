@@ -1,50 +1,29 @@
-import os
 import json
+import os
 import time
+
 import psycopg2
-from flask import (
-    Flask,
-    url_for,
-    redirect,
-    render_template,
-    request,
-    jsonify,
-    send_from_directory,
-)
+from flask import (Blueprint, Flask, Response, current_app, jsonify, redirect,
+                   render_template, request, send_from_directory, url_for)
+from flask_security import (Security, SQLAlchemyUserDatastore, current_user,
+                            login_required)
+from flask_security.forms import RegisterForm, Required, StringField
 from flask_security.utils import hash_password
-from sqlalchemy import select, update
-from flask_security import (
-    Security,
-    SQLAlchemyUserDatastore,
-    current_user,
-    login_required,
-)
-from flask_security.forms import RegisterForm
-from flask_security.forms import StringField
-from flask_security.forms import Required
-from app import create_app
-from app.models import (
-    db,
-    User,
-    Role,
-    Notifications,
-    Options,
-    Statistics,
-    Meta,
-    FieldZone,
-    build_sample_db,MyModel
-)
-from app.micro_controllers_ws_server import websocket, connected_devices,get_all_connected_sensors
-from flask import Blueprint, request, Response, current_app
-from app.websocket.flask_sock import Sock
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Table, MetaData
+from sqlalchemy import MetaData, Table, select, update
 from sqlalchemy.ext.declarative import declared_attr
 
-
+from app import create_app
+from app.micro_controllers_ws_server import (connected_devices,
+                                             get_all_connected_sensors,
+                                             websocket)
+from app.models import (CropsStatus, FieldZone, Meta, MyModel, Notifications,
+                        Options, Role, SoilStatus, Statistics, User,
+                        build_sample_db, db)
+from app.websocket.flask_sock import Sock
 
 app = create_app()
-app.config['SQLALCHEMY_MODEL_BASE_CLASS'] = MyModel
+app.config["SQLALCHEMY_MODEL_BASE_CLASS"] = MyModel
 db.init_app(app)
 
 # Security
@@ -81,6 +60,57 @@ def get_users():
         limit = 20
     results = User.query.limit(limit).all()
     return [r.to_dict(rules=["-password"]) for r in results]
+
+@app.route("/api/history", methods=["GET"])
+def get_history():
+    results = Statistics.query.all()
+    return [r.to_dict() for r in results]
+
+@app.route("/api/soil_data", methods=["GET", "POST"])
+def get_soil_data():
+    if request.method == "GET":
+        results = SoilStatus.query.all()
+        return [
+            r.to_dict(rules=["-field.crop_status", "-field.soil_status"])
+            for r in results
+        ]
+    else:
+        data = request.form.to_dict()
+        field_query = FieldZone.query.where(FieldZone.id == data["id"]).first()
+        soil_status = field_query.soil_status
+        del data["id"]
+        if soil_status == None:
+            soil_status = SoilStatus(field=field_query, **data)
+            db.session.add(soil_status)
+        else:
+            soil_status = soil_status.values(**data)
+            db.session.execute(soil_status)
+        db.session.commit()
+        return redirect("/settings")
+
+
+@app.route("/api/crops_data", methods=["GET", "POST"])
+def get_crops_data():
+    if request.method == "GET":
+        results = CropsStatus.query.all()
+        return [
+            r.to_dict(rules=["-field.crop_status", "-field.soil_status"])
+            for r in results
+        ]
+    else:
+        data = request.form.to_dict()
+        field_query = FieldZone.query.where(FieldZone.id == data["id"]).first()
+
+        crop_status = field_query.crop_status
+        del data["id"]
+        if crop_status == None:
+            crop_status = CropsStatus(field=field_query, **data)
+            db.session.add(crop_status)
+        else:
+            crop_status = crop_status.values(**data)
+            db.session.execute(crop_status)
+        db.session.commit()
+        return redirect("/settings")
 
 
 # To update and also get fields Zones
@@ -134,7 +164,14 @@ def pages(page):
         users = User.query.all()
         # users=[r.to_dict(rules=['-password']) for r in users]
         fields = FieldZone.query.all()
-        data["fields"] = str(json.dumps([r.to_dict() for r in fields]))
+        data["fields"] = str(
+            json.dumps(
+                [
+                    r.to_dict(rules=["-crop_status.field", "-soil_status.field"])
+                    for r in fields
+                ]
+            )
+        )
         data["users"] = users
 
         ##Add current hardware status
@@ -143,7 +180,10 @@ def pages(page):
             for k, v in connected_devices_copy.items():
                 if "ws" in connected_devices_copy[k]:
                     del connected_devices_copy[k]["ws"]
-        data['connected_devices']=json.dumps(connected_devices_copy)
+        data["connected_devices"] = json.dumps(connected_devices_copy)
+    elif page == "drainage":
+        fields = FieldZone.query.all()
+        data["fields"] = [r.to_dict(rules=["-crop_status", "-soil_status"]) for r in fields]
     return render_template(
         page + ".html",
         page=page,
@@ -157,6 +197,7 @@ def pages(page):
 def get_current_ecological_factors():
     return get_all_connected_sensors()
 
+
 @app.route("/api/refresh_hardware_infor")
 def refresh_hardware_infor():
     connected_devices_copy = connected_devices.copy()
@@ -165,6 +206,7 @@ def refresh_hardware_infor():
             if "ws" in connected_devices_copy[k]:
                 del connected_devices_copy[k]["ws"]
     return connected_devices_copy
+
 
 @websocket.route("/client/live_hardware_infor")
 def refresh_hardware_infor_socket(ws):
@@ -203,5 +245,5 @@ with app.app_context():
     app_dir = os.path.realpath(os.path.dirname(__file__))
     dataBase_path = os.path.join(app_dir, app.config["DATABASE_FILE"])
     if not os.path.exists(dataBase_path):
-        pass
         build_sample_db(app=app,user_datastore=user_datastore)
+        pass

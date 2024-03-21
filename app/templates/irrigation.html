@@ -112,10 +112,29 @@
 						<div class="tab-pane fade" id="status" role="tabpanel"
 							titleledby="general1-list" >
 							<div class=" card card-body" style="background-color: rgba(255, 255, 255, 0.9);">
-								<div class="py-5 my-5 text-center">
-									<div class="fw-bold h5-m">Irrigation is <span class="text-danger">off</span></div>
-									<button class="start-irrigation btn btn-sm btn-success my-2">Start</button>
+								<div class="pt-1 text-center">
+									<!-- <div class="fw-bold h5-m">Irrigation is <span class="text-danger">off</span></div>
+									<button class="start-irrigation btn btn-sm btn-success my-2">Start</button> --->
+									<table class="table table-striped">
+										<thead>
+											<tr>
+												<th scope="col">Field</th>
+												<th scope="col">Satus</th>
+												<th scope="col">Ation</th>
+											</tr>
+										</thead>
+										<tbody>
+											{% for i in range(4) %}
+											<tr>
+												<td>Field {{i}}</td>
+												<td><span class="text-danger fw-bold">off</span></td>
+												<td><button class="start-irrigation btn btn-sm btn-success my-2">Start</button></td>
+											</tr>
+											{%endfor%}
+										</tbody>
+									</table>
 								</div>
+								
 							</div>
 						</div>
 						<div class="tab-pane fade hide_if_grouped" id="schedules" role="tabpanel"

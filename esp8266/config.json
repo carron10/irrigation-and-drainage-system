@@ -1,11 +1,11 @@
 {
     "wifi": {
-        "SSID": "HUAWEI3",
-        "password": "",
+        "SSID": "sticX",
+        "password": "lucky@5027",
         "attempts": 3,
         "delay_in_msec": 200
     },
-    "server": "ws://192.168.43.137:5000/controller/Esp8266",
+    "server": "ws://192.168.137.196:5000/controller/Esp8266",
     "socket_delay_ms": 5,
     "socket_send_data_seconds":30,
     "socket_reconnect_seconds":40,

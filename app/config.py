@@ -11,7 +11,7 @@ SQLALCHEMY_ECHO = False
 
         
 SOCK_SERVER_OPTIONS={'ping_interval': 25}
-# Flask-Security config
+# Flask-Securit y config
 SECURITY_URL_PREFIX = "/"
 SECURITY_PASSWORD_HASH = "pbkdf2_sha512"
 SECURITY_PASSWORD_SALT = "ATGUOHAELKiubahiughaerGOJAEGj"

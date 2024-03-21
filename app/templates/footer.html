@@ -1,4 +1,21 @@
 <footer class="footer">
+    <div class="modal" id="alert" aria-hidden="true" style="z-index: 1500 !important;">
+        <div class=" modal-dialog modal-dialog-scrollable">
+            <div class="modal-content rounded-0">
+                <div class="modal-header rounded-0 py-0 border-0 border-bottom d-flex justify-content-between">
+                    <div class="title">
+                    </div>
+                    <a class="close small text-white" data-bs-dismiss="modal" aria-label="Close">
+                        <span class=" h3 ">X</span>
+                    </a>
+                </div>
+                <div class="modal-body py-1 m-0 text-center text-white">
+
+                </div>
+
+            </div>
+        </div>
+    </div>
     <div class="container-fluid">
         <div class="row text-muted">
             <div class="col-6 text-start">
@@ -104,6 +121,22 @@
 
             // Wait until page is loaded
             document.addEventListener("DOMContentLoaded", () => initialize());
+
+            function error(str, title) {
+                $("#alert").modal("show").find('.modal-content').addClass(
+                    "bg-danger").removeClass("bg-primary").find(
+                        '.modal-body').html(
+                            "<b>" + str + "</b>");
+                $('#alert').find('.title').html('<b>' + (title == undefined ? "Error" : title) + '</b>').addClass('text-white');
+            }
+            function send(url, data, method) {
+                return $.ajax({
+                    url: url,
+                    method: method,
+                    data: data
+                });
+            }
+            
         </script>
     </div>
 </footer>

@@ -18,62 +18,46 @@
 				<div class="container-fluid p-0">
 					<div class="d-flex justify-content-between">
 						<div>
-							<button id="refresh" class=" btn btn-success">Refresh</button>
+							<button class="refresh btn btn-sm btn-success">Refresh</button>
+							<button id="golive" class="btn btn-danger btn-sm">Auto Refresh</button>
 						</div>
 						<div class="my-3 pb-3">
-							<div class="d-flex justify-content-end">
-								<div class="h3 fw-bold">25 Degrees Celcius</div>
+							<div class="d-flex justify-content-end temperature-record visually-hidden">
+								<div class="h3 fw-bold"> <span>__</span> Degrees Celcius</div>
 							</div>
+						</div>
+					</div>
+					<div id="no_sensors" class="bg-white py-3 text-center text-danger fw-bolder visually-hidden">
+						<div class="py-5 my-5">
+							<h5>There are no sensors......Please make sure the devices are connected
+								properly and sensors are connected</h5>
+							<button class="refresh btn btn-sm btn-success py-2">Try Refresh</button>
+						</div>
+					</div>
+					<div id="sensor-not-connected"
+						class="bg-white py-1 text-center alert alert-dismissable text-danger fw-bolder visually-hidden">
+						<div class="py-2 my-2">
+							<h5>Some sensors are not connected...Please check the sensors or refresh..</h5>
+							<h6 class="text-dark text-start ms-2">Check Sensors::</h6>
+							<ul class="flex-column text-dark text-start">
+							</ul>
 						</div>
 					</div>
 					<div class="row">
 
 						<!-- Draw pie chart for Soil moiture -->
-						<div class="col-xl-4 col-xxl-7">
+						<div class="col-xl-4 col-xxl-7 pie-chart visually-hidden">
 							<div class=" flex-fill w-100">
-
 								<div class="d-flex w-100 py-2">
 									<div class="align-self-center chart chart-sm">
-										<canvas id="soil-moisture-pie-chart"></canvas>
+										<canvas></canvas>
 									</div>
 								</div>
-								<div class="text-center h2 fw-bold" style=" color: rgb(175, 240, 240);">Soil Moisture
+								<div class="chart-label text-center h2 fw-bold" style=" color: rgb(175, 240, 240);">
 								</div>
 							</div>
-						</div>
-
-
-
-
-						<!-- Draw pie chart for Humidity -->
-
-						<div class="col-xl-4 col-xxl-7">
-							<div class="flex-fill w-100">
-								<div class="d-flex w-100 py-2">
-									<div class="chart chart-sm">
-										<canvas id="humidity-pie-chart"></canvas>
-									</div>
-								</div>
-							</div>
-							<div class="text-center h2 fw-bold" style=" color: #ede0dd;">Humidity</div>
-
-						</div>
-						<div class="col-xl-4 col-xxl-7">
-							<div class="flex-fill w-100">
-
-								<div class="d-flex w-100 py-2">
-									<div class="chart chart-sm">
-										<canvas id="rainfall-pie-chart"></canvas>
-									</div>
-								</div>
-							</div>
-							<div class="text-center h2 fw-bold" style=" color: #f0cb26;">Rainfall</div>
-
 						</div>
 					</div>
-
-
-
 				</div>
 			</main>
 
@@ -101,18 +85,6 @@
 					data: data
 				});
 			}
-
-			function refresh() {
-				send("/api/real_time_ecological_factors").done(function (data) {
-					console.log(data)
-				}).fail(function (e) {
-					console.log(e)
-					error("Failed To Refresh")
-				})
-			}
-
-			$("#refresh").click(refresh)
-			refresh()
 			var plugin = {
 				beforeDraw: function (chart) {
 					var width = chart.width,
@@ -132,95 +104,95 @@
 					ctx.save();
 				}
 			}
-			/**
-			 * To draw soil moisture chart
-			 * 
-			 **/
-			var v = new Chart(document.getElementById("soil-moisture-pie-chart"), {
-				type: "pie",
-				data: {
-					labels: ["-", "Moisture"],
-					datasets: [{
-						data: [(100 - 71), 71],
-						backgroundColor: [
-							"#e6eded",
-							"rgb(175, 240, 240)"
-						],
-						borderWidth: 0
-					}]
-				},
-				plugins: [plugin],
-				options: {
-					plugins: {
-						legend: {
-							display: false,
-						}
-					},
-					responsive: !window.MSInputMethodContext,
-					maintainAspectRatio: false,
-					cutout: 90
-				}
-			});
-			/**
-				 * To draw humidity chart
-				 * 
-				 **/
-			var s = new Chart(document.getElementById("humidity-pie-chart"), {
-				type: "doughnut",
-				data: {
-					labels: ["-", "Humidity"],
-					datasets: [{
-						data: [(100 - 58), 58],
-						backgroundColor: [
-							"#5e0585",
-							"#ede0dd"
-						],
-						borderWidth: 0
-					}]
-				},
-				plugins: [plugin],
-				options: {
-					responsive: !window.MSInputMethodContext,
-					maintainAspectRatio: false,
-					plugins: {
-						legend: {
-							display: false,
-						}
-					},
-					cutout: 90
-				}
-			});
+			function drawChart(label, data) {
+				var chart_container = $(".pie-chart.visually-hidden").clone();
+				chart_container.find("canvas").first().attr("id", 'pie-' + label)
 
-			/**
-			 * To draw rainfall chart
-			 * 
-			 **/
-			var d = new Chart(document.getElementById("rainfall-pie-chart"), {
-				type: "doughnut",
-				data: {
-					labels: ["-", "Rainfall"],
-					datasets: [{
-						data: [(100 - 26), 26],
-						backgroundColor: [
-							"#9dfaab",
-							"#f0cb26"
-						],
-						borderWidth: 0
-					}]
-				},
-				plugins: [plugin],
-				options: {
-					responsive: !window.MSInputMethodContext,
-					maintainAspectRatio: false,
-					plugins: {
-						legend: {
-							display: false,
-						}
+				var chart = new Chart(chart_container.find("canvas")[0], {
+					type: "pie",
+					data: {
+						labels: ["-", label],
+						datasets: [{
+							data: [(100 - data.last_value), data.last_value],
+							backgroundColor: [
+								"#e6eded",
+								"rgb(175, 240, 240)"
+							],
+							borderWidth: 0
+						}]
 					},
-					cutout: 90
-				}
-			});
+					plugins: [plugin],
+					options: {
+						plugins: {
+							legend: {
+								display: false,
+							}
+						},
+						responsive: !window.MSInputMethodContext,
+						maintainAspectRatio: false,
+						cutout: 90
+					}
+				});
+				chart_container.removeClass("visually-hidden")
+				chart_container.find(".chart-label").first().text(label)
+				chart_container.insertAfter($(".pie-chart.visually-hidden"))
+			}
+			var failed = false;
+			function refresh() {
+				var charts = $(".pie-chart:not(.visually-hidden)");
+				var sensor_error_alert = $("#sensor-not-connected");
+				$("#sensor-not-connected").find("ul").html("")
+				sensor_error_alert.addClass("visually-hidden")
+				charts.remove()
+				send("/api/real_time_ecological_factors").done(function (data) {
+					if (Object.keys(data).length === 0) {
+						$("#no_sensors").removeClass("visually-hidden")
+						$(".temperature-record").addClass("visually-hidden")
+					} else {
+						$("#no_sensors").addClass("visually-hidden")
+						$(".temperature-record").addClass("visually-hidden")
+						for (const [sensor, sensorData] of Object.entries(data)) {
+							if (sensorData.status === false) {
+								sensor_error_alert.find("ul").first().append(`<li class='nav-item'>${sensor}</li>`)
+								sensor_error_alert.removeClass("visually-hidden")
+							} else {
+								if (sensor !== "Temperature") {
+									drawChart(sensor, sensorData)
+								} else {
+									$(".temperature-record").removeClass("visually-hidden").find("span").text(sensorData.last_value)
+								}
+							}
 
+						}
+					}
+				}).fail(function (e) {
+					console.log(e)
+					failed = true;
+					error("Failed To Refresh")
+				})
+			}
+
+			$(".refresh").click(refresh)
+			refresh()
+			var connected = false
+			$("#golive").click(function () {
+				if ($("#golive").hasClass("live")) {
+					connected = false
+					$("#golive").text("Auto Refresh")
+					$("#golive").removeClass("live")
+					$(".refresh").removeClass("visually-hidden")
+				} else {
+					connected = true
+					$("#golive").text("Disconnect")
+					$("#golive").addClass("live")
+					$(".refresh").addClass("visually-hidden")
+				}
+			})
+			setInterval(function () {
+				if (connected && !failed) {
+					refresh()
+				}
+			}, 4 * 1000)
 		});
 	</script>
 
