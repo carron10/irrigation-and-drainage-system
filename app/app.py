@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import time
@@ -18,11 +19,13 @@ from app.micro_controllers_ws_server import (connected_devices,
                                              get_all_connected_sensors,
                                              websocket)
 from app.models import (CropsStatus, FieldZone, Meta, MyModel, Notifications,
-                        Options, Role, SoilStatus, Statistics, User,
+                        Options, Role, Schedules, SoilStatus, Statistics, User,
                         build_sample_db, db)
 from app.websocket.flask_sock import Sock
 
 app = create_app()
+
+
 app.config["SQLALCHEMY_MODEL_BASE_CLASS"] = MyModel
 db.init_app(app)
 
@@ -61,10 +64,12 @@ def get_users():
     results = User.query.limit(limit).all()
     return [r.to_dict(rules=["-password"]) for r in results]
 
+
 @app.route("/api/history", methods=["GET"])
 def get_history():
     results = Statistics.query.all()
     return [r.to_dict() for r in results]
+
 
 @app.route("/api/soil_data", methods=["GET", "POST"])
 def get_soil_data():
@@ -167,7 +172,7 @@ def pages(page):
         data["fields"] = str(
             json.dumps(
                 [
-                    r.to_dict(rules=["-crop_status.field", "-soil_status.field"])
+                    r.to_dict(rules=["-crop_status.field","-schedules", "-soil_status.field"])
                     for r in fields
                 ]
             )
@@ -183,14 +188,96 @@ def pages(page):
         data["connected_devices"] = json.dumps(connected_devices_copy)
     elif page == "drainage":
         fields = FieldZone.query.all()
-        data["fields"] = [r.to_dict(rules=["-crop_status", "-soil_status"]) for r in fields]
+        data["fields"] = [
+            r.to_dict(rules=["-crop_status", "-soil_status","-schedules"]) for r in fields
+        ]
+    elif page == "irrigation":
+        scheduled_fields = Schedules.query.filter_by(status=False).all()
+        data["scheduled_fields"] = [
+            r.to_dict(rules=["-field.crop_status","-field.schedules", "-field.soil_status"]) for r in scheduled_fields
+        ]
+        
+        data['auto_schedule']=Options.query.get({'option_name':"irrigation_auto_schedule"}).option_value
+        
+        print(data['auto_schedule'])
+        fields= FieldZone.query.all()
+        data["fields"] = [
+            r.to_dict(rules=["-crop_status", "-soil_status","-schedules"]) for r in fields
+        ]
     return render_template(
         page + ".html",
         page=page,
         notifications=notifications,
         total_notifications=r2,
-        **data
+        **data,
     )
+
+
+
+
+@app.route("/api/add_irrigation_schedule",methods=['POST'])
+def add_irrigation_schedule():
+    data=request.form.to_dict()
+    schedule_date=datetime.datetime.strptime(data['schedule_date'],"%Y-%m-%dT%H:%M")
+    schedule=Schedules(duration=data['duration'],field_id=data['field_id'],schedule_date=schedule_date,for_="irrigation")
+    db.session.add(schedule)
+    db.session.commit()
+    # r=Schedules.query.filter_by(id=schedule.id).first()
+    results= schedule.to_dict(rules=["-field.crop_status","-field.schedules", "-field.soil_status"])
+    return results
+
+
+@app.route("/api/options",methods=['POST',"GET"])
+def add_get_update_option():
+    """To add/update options
+
+    Returns:
+        dict: Option
+    """
+    
+    if request.method == "GET":
+        data = request.args
+        return Options.query.get(data["name"]).to_dict()
+    
+    data = request.form.to_dict()
+    option = Options.query.get(data["name"])
+    if not option:
+            option = Options(option_name=data['name'],option_value=data['value'])
+            db.session.add(option)
+    else:
+            option.option_value=data['value']
+            db.session.add(option)
+    db.session.commit()
+    return option.to_dict()
+
+@app.route("/api/start_irrigation/<action>",methods=['POST'])
+def stop_or_start_irrigation(action):
+    if action != "start" and action != "stop":
+        return "Error, Action should be start or stop", 404
+    data = request.form.to_dict()
+    try:
+        connected_devices_copy = connected_devices.copy()
+        if len(connected_devices_copy.keys()) > 0:
+            for k, v in connected_devices_copy.items():
+                connected_devices_copy[k]["ws"].send(
+                    json.dumps(
+                        {
+                            "data": {"cmd": f"irrigation {action}"},
+                            "event": "command",
+                        }
+                    )
+                )
+            field_query = update(FieldZone).where(FieldZone.id == data["id"])
+            field_query = field_query.values(irrigation_status=action=="start")
+            db.session.execute(field_query)
+            db.session.commit()
+        else:
+            return "No Controlller is connected, check your components!!", 500
+
+    except Exception as ex:
+        return ex, 5000
+
+    return "Done"
 
 
 @app.route("/api/real_time_ecological_factors")
@@ -245,5 +332,5 @@ with app.app_context():
     app_dir = os.path.realpath(os.path.dirname(__file__))
     dataBase_path = os.path.join(app_dir, app.config["DATABASE_FILE"])
     if not os.path.exists(dataBase_path):
-        build_sample_db(app=app,user_datastore=user_datastore)
+        # build_sample_db(app=app, user_datastore=user_datastore)
         pass

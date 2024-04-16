@@ -26,7 +26,25 @@ class MyModel(db.Model):
         return f"{TABLE_PREFIX}{cls.__name__}".lower()
 
 
-# Define models
+#Schedule table
+class Schedules(MyModel,SerializerMixin):
+    """To store irrigation and drainage Schedules
+
+    Args:
+        MyModel (_type_): _description_
+        SerializerMixin (_type_): _description_
+    """
+    id = Column(Integer(), primary_key=True)
+    duration=Column(Integer,nullable=False)
+    time_created=Column(DateTime(timezone=True), server_default=func.now())
+    schedule_date=Column(DateTime(timezone=True))
+    field_id=Column(Integer, db.ForeignKey(f"{TABLE_PREFIX}fieldzone.id"),nullable=False)
+    status=Column(Boolean,default=False)
+    for_=Column(String,nullable=False)
+    type=Column(String,default="Manual")
+
+    # for
+    
 
 
 # Role Model
@@ -82,12 +100,11 @@ class Meta(MyModel, SerializerMixin):
 
 ##Options, to store settings
 class Options(MyModel, SerializerMixin):
-    id = Column(Integer, primary_key=True)
-    option_name = Column(String(100), nullable=False, unique=True)
+    option_name = Column(String(100), nullable=False, unique=True,primary_key=True)
     option_value = Column(Text)
 
 
-# To store history for irrigation/drainage/rainfall/ and etc
+##From sensors
 class Statistics(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
     for_ = Column(String(100), nullable=False)
@@ -103,6 +120,7 @@ class FieldZone(MyModel, SerializerMixin):
     irrigation_status = Column(Boolean, default=False)
     drainage_status = Column(Boolean, default=False)
     crop_status = relationship("CropsStatus", backref="field", uselist=False)
+    schedules = relationship("Schedules", backref="field")
     soil_status = relationship("SoilStatus", backref="field", uselist=False)
 
 
@@ -124,6 +142,18 @@ class CropsStatus(MyModel, SerializerMixin):
     field_id = Column(
         Integer, db.ForeignKey(f"{TABLE_PREFIX}fieldzone.id"), unique=True
     )
+
+
+# To store history for irrigation/drainage/rainfall/ and etc
+class History(MyModel, SerializerMixin):
+    id = Column(Integer, primary_key=True)
+    for_ = Column(String(100), nullable=False)  ##Irrigation or drainage
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    value = Column(Integer)
+    start_time = Column(DateTime(timezone=True), server_default=func.now())
+    end_time = Column(DateTime(timezone=True), server_default=func.now())
+    time_spent = Column(DateTime(timezone=True), server_default=func.now())
+    field_id = Column(Integer, db.ForeignKey(f"{TABLE_PREFIX}fieldzone.id"))
 
 
 # Model/Table for notifications
@@ -153,15 +183,14 @@ def build_sample_db(app, user_datastore):
 
     with app.app_context():
         user_role = Role(name="user")
-        super_user_role = Role(name="superuser")
+        super_user_role = Role(name="Admin")
         db.session.add(user_role)
         db.session.add(super_user_role)
         db.session.commit()
-
         # Generate history data
         for i in range(7):
             for j in range(24 * 2):
-                date_=datetime(2024, 3, 21, math.floor(j/2), (j%2)*30)
+                date_ = datetime(2024, 3, 21, math.floor(j / 2), (j % 2) * 30)
                 hist_ = (
                     Statistics(
                         for_="RainDrop",
@@ -227,6 +256,27 @@ def build_sample_db(app, user_datastore):
                 gradient="2M",
             ),
         )
+
+        # for i in range(20):
+        #     irr_hist = History(
+        #         for_="irrigation",
+        #         value=randint(100,300),
+        #         start_time=1,
+        #         end_time=1,
+        #         time_spent=1,
+        #         # field_id=1,
+        #     )
+        #     drainage_hist = History(
+        #         for_="irrigation",
+        #         value=randint(100,300),
+        #         start_time=1,
+        #         end_time=1,
+        #         time_spent=1,
+        #         # field_id=1,
+        #     )
+        #     db.session.add(drainage_hist)
+        #     db.session.add(irr_hist)
+            
         db.session.add_all(soil_statuses)
         crop_statuses = CropsStatus(
             field=fields[0], crop_type="Just", crop_name="Maize", crop_age=20
