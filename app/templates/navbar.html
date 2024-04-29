@@ -31,49 +31,15 @@
                             </div>
                         </a>
                         {%endfor%}
-                        <!-- <a href="#" class="list-group-item">
-                            <div class="row g-0 align-items-center">
-                                <div class="col-2">
-                                    <i class="text-danger" data-feather="alert-circle"></i>
-                                </div>
-                                <div class="col-10">
-                                    <div class="text-dark">Irrigation Alert</div>
-                                    <div class="text-muted small mt-1">
-                                        Soil moisture and rain detection sensors offline,attention required.
-                                    </div>
-                                    <div class="text-muted small mt-1">30m ago</div>
-                                </div>
-                            </div>
-                        </a>
-
-                        <a href="#" class="list-group-item">
-                            <div class="row g-0 align-items-center">
-                                <div class="col-2">
-                                    <i class="text-primary" data-feather="activity"></i>
-                                </div>
-                                <div class="col-10">
-                                    <div class="text-dark">System mainteinance</div>
-                                    <div class="text-muted small mt-1">Don't forget to clean the filter and to inspect
-                                        equipment</div>
-                                    <div class="text-muted small mt-1">5h ago</div>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="#" class="list-group-item">
-                            <div class="row g-0 align-items-center">
-                                <div class="col-2">
-                                    <i class="text-success" data-feather="cloud-snow"></i>
-                                </div>
-                                <div class="col-10">
-                                    <div class="text-dark">Excess Soil Moisture</div>
-                                    <div class="text-muted small mt-1">Christina accepted your request.
-                                    </div>
-                                    <div class="text-muted small mt-1">14h ago</div>
-                                </div>
-                            </div>
-                        </a> -->
-                    </div>
+                  </div>
                     <div class="dropdown-menu-footer">
+
+
+
+
+
+
+                        
                         <a href="#" class="text-muted">Show all notifications</a>
                     </div>
                 </div>
@@ -85,8 +51,7 @@
                 </a>
 
                 <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
-                    <img src="{{current_user.avatar}}" class="avatar img-fluid rounded me-1" alt="Cynthia" /> <span
-                        class="text-dark">
+                    <img src="{{current_user.avatar}}" class="avatar img-fluid rounded me-1" /> <span class="text-dark">
                         {% if current_user.first_name -%}
                         {{ current_user.first_name }}
                         {% else -%}
@@ -95,13 +60,15 @@
                     </span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end">
-                    <a class="dropdown-item" href="/profile"><i class="align-middle me-1"
-                            data-feather="user"></i> Profile</a>
+                    <a class="dropdown-item" href="/profile"><i class="align-middle me-1" data-feather="user"></i>
+                        Profile</a>
 
                     <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="/account-settings"><i class="align-middle me-1" data-feather="settings"></i>
+                    <a class="dropdown-item" href="/account-settings"><i class="align-middle me-1"
+                            data-feather="settings"></i>
                         Settings & Privacy</a>
-                    <a class="dropdown-item" href="/help"><i class="align-middle me-1" data-feather="help-circle"></i> Help
+                    <a class="dropdown-item" href="/help"><i class="align-middle me-1" data-feather="help-circle"></i>
+                        Help
                         Center</a>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="/logout">Log out</a>
@@ -110,3 +77,11 @@
         </ul>
     </div>
 </nav>
+
+{%for msg in msgs%}
+<div class=" alert alert-{{msg.type}} m-2 text-center fw-bold">
+    <div>
+        {{msg.msg}}
+    </div>
+</div>
+{%endfor%}

@@ -11,9 +11,11 @@
 
 		<div class="main">
 			{%include 'navbar.html'%}
+
 			<div class=" text-center rounded-0">
 				<h1 class="h3 my-3">Irrigation</h1>
 			</div>
+
 			<div class=" border-top d-flex justify-content-center">
 				<div class="nav nav-tabs me-3 pt-2" id="list-tab" role="tablist">
 					<button class="bg-danger mx-1 nav-link active " id="user-accounts-tab" data-bs-toggle="pill"
@@ -52,37 +54,40 @@
 						<div class="tab-pane fade hide_if_grouped show active " id="manual" role="tabpanel"
 							titleledby="general1-list">
 
-							<div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.5);" id="manual"
-							role="tabpanel" titleledby="general1-list">
-							<div class="pt-1">
-							  <!-- <div class="fw-bold h5-m">Irrigation is <span class="text-danger">off</span></div>
+							<div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.5);"
+								id="manual" role="tabpanel" titleledby="general1-list">
+								<div class="pt-1">
+									<!-- <div class="fw-bold h5-m">Irrigation is <span class="text-danger">off</span></div>
 								<button class="start-irrigation btn btn-sm btn-success my-2">Start</button> --->
-							  <table class="table table-striped">
-								<thead>
-								  <tr>
-									<th scope="col">Field</th>
-									<th scope="col">Start/Stop</th>
-								  </tr>
-								</thead>
-								<tbody>
-								  {% for field in fields %}
-								  <tr id="{{field['name']}}">
-									<td>{{field['name']}}</td>
-									<td>
-									  <div class="py-4">
-										<div class="button r" id="button-1">
-										  <input type="checkbox" data_field_name="{{field.name}}" data_field_id="{{field.id}}" class="toggle_irrigation_checkbox checkbox" {%if field['irrigation_status']%}checked{%endif%} />
-										  <div class="knobs"></div>
-										  <div class="layer"></div>
-										</div>
-									  </div>
-									</td>
-								  </tr>
-								  {%endfor%}
-								</tbody>
-							  </table>
+									<table class="table table-striped">
+										<thead>
+											<tr>
+												<th scope="col">Field</th>
+												<th scope="col">Start/Stop</th>
+											</tr>
+										</thead>
+										<tbody>
+											{% for field in fields %}
+											<tr id="{{field['name']}}">
+												<td>{{field['name']}}</td>
+												<td>
+													<div class="py-4">
+														<div class="button r" id="button-1">
+															<input type="checkbox" data_field_name="{{field.name}}"
+																data_field_id="{{field.id}}"
+																class="toggle_irrigation_checkbox checkbox" {%if
+																field['irrigation_status']%}checked{%endif%} />
+															<div class="knobs"></div>
+															<div class="layer"></div>
+														</div>
+													</div>
+												</td>
+											</tr>
+											{%endfor%}
+										</tbody>
+									</table>
+								</div>
 							</div>
-						  </div>
 
 
 						</div>
@@ -91,7 +96,7 @@
 							<table class="table table-striped">
 								<thead>
 									<tr>
-										<th scope="col">Date</th>
+										<th scope="col">Field</th>
 										<th scope="col">Time Start</th>
 										<th scope="col">Time End</th>
 										<th scope="col">Time Spent</th>
@@ -99,13 +104,13 @@
 									</tr>
 								</thead>
 								<tbody>
-									{% for i in range(-7, 20) %}
+									{% for history in scheduled_history %}
 									<tr>
-										<td>{{i+7}}/03/2024</td>
-										<td>12:00</td>
-										<td>13:00</td>
-										<td>1hr</td>
-										<td>233</td>
+										<td>{{history.field.name}}</td>
+										<td>{{history.start_time}}</td>
+										<td>{{history.end_time}}</td>
+										<td>{{history.time_spent}}</td>
+										<td>{{history.value}}</td>
 									</tr>
 									{%endfor%}
 								</tbody>
@@ -216,7 +221,7 @@
 										<div class="form-group p_star">
 											<label for="duration" class="col-form-label">Duration(in
 												Minutes):</label>
-											<input type="number" required class="form-control" name="duration">
+											<input type="number" min="1" required class="form-control" name="duration">
 											<i class="small invalid-feedback">Add duration!</i>
 										</div>
 										<div class="form-group p_star">
@@ -282,11 +287,11 @@
 					if (is_on) {
 						$(".set-auto-schedule").removeClass("on_").addClass("off_")
 						$(".set-auto-schedule").text("Enable Auto Shedule")
-						$(".auto_schedule_status").text("Off").addClass("bg-danger").removeClass("bg-succcess")
+						$(".auto_schedule_status").text("Off").addClass("bg-danger").removeClass("bg-success")
 					} else {
 						$(".set-auto-schedule").removeClass("off_").addClass("on_")
 						$(".set-auto-schedule").text("Disable Auto Shedule")
-						$(".auto_schedule_status").text("On").removeClass("bg-danger").addClass("bg-succcess")
+						$(".auto_schedule_status").text("On").removeClass("bg-danger").addClass("bg-success")
 
 					}
 				}).fail(function (err) {
@@ -296,13 +301,15 @@
 
 
 			$(".set-schedule").click(function () {
+				$("#schedule-irrigation-modal").find("input[name='schedule_date']").prop('min', new Date().toISOString().substring(0, 16));
 				$("#schedule-irrigation-modal").modal("show")
 			})
 			$("#add-irrigation-schedule-btn").click(function () {
 				var form = document.querySelector("#add-irrigation-schedule-form");
 				if (form.checkValidity() === true) {
 					var data = getFormData("schedule-irrigation-modal")
-					send('/api/add_irrigation_schedule', data, "POST").done(function (data) {
+					data['for_'] = "drainage"
+					send('/api/add_schedule', data, "POST").done(function (data) {
 						$("#scheduled_fields_table").find("tbody").append(`<tr id="${data.id}"><td class="scheduled_field">${data.field.name}</td><td>${data.schedule_date}</td><td>${data.duration}</td><td class='text-success'>${data.type}</td></tr>`)
 						$("#schedule-irrigation-modal").modal("hide")
 						$("#scheduled_fields_table").removeClass("visually-hidden")
@@ -314,10 +321,9 @@
 				$(form).addClass("was-validated");
 			})
 		})
-		document.querySelector('.toggle_irrigation_checkbox').addEventListener("change", function (e) {
-			var on = e.target.checked, action = on ? "start" : "stop",target=$(e.target);
-			send(`/api/start_irrigation/${action}`,{'field_id':target.attr("data_field_id")},"POST").done(function (data) {
-				
+		$('.toggle_irrigation_checkbox').on("change", function (e) {
+			var on = e.target.checked, action = on ? "start" : "stop", target = $(e.target);
+			send(`/api/${action}_irrigation`, { 'field_id': target.attr("data_field_id") }, "POST").done(function (data) {
 			}).fail(function (err) {
 				console.log(err)
 				error(`${err.responseText}`, err.statusText)

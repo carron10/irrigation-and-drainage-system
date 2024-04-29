@@ -1,13 +1,29 @@
 import datetime
+from datetime import timedelta
 import json
 import os
 import time
 
+# from schedule import Scheduler
 import psycopg2
-from flask import (Blueprint, Flask, Response, current_app, jsonify, redirect,
-                   render_template, request, send_from_directory, url_for)
-from flask_security import (Security, SQLAlchemyUserDatastore, current_user,
-                            login_required)
+from flask import (
+    Blueprint,
+    Flask,
+    Response,
+    current_app,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
+from flask_security import (
+    Security,
+    SQLAlchemyUserDatastore,
+    current_user,
+    login_required,
+)
 from flask_security.forms import RegisterForm, Required, StringField
 from flask_security.utils import hash_password
 from flask_sqlalchemy import SQLAlchemy
@@ -15,18 +31,38 @@ from sqlalchemy import MetaData, Table, select, update
 from sqlalchemy.ext.declarative import declared_attr
 
 from app import create_app
-from app.micro_controllers_ws_server import (connected_devices,
-                                             get_all_connected_sensors,
-                                             websocket)
-from app.models import (CropsStatus, FieldZone, Meta, MyModel, Notifications,
-                        Options, Role, Schedules, SoilStatus, Statistics, User,
-                        build_sample_db, db)
+from app.micro_controllers_ws_server import (
+    connected_devices,
+    get_all_connected_sensors,
+    websocket,
+    start_stop_irrigation_and_drainage,
+)
+from app.models import (
+    CropsStatus,
+    FieldZone,
+    Meta,
+    MyModel,
+    Notifications,
+    Options,
+    Role,
+    Schedules,
+    SoilStatus,
+    Statistics,
+    History,
+    User,
+    build_sample_db,
+    db,
+)
 from app.websocket.flask_sock import Sock
+from threading import Thread
+import schedule
 
 app = create_app()
 
 
 app.config["SQLALCHEMY_MODEL_BASE_CLASS"] = MyModel
+# scheduler = Scheduler()
+# app.config["SCHEDULER"] = scheduler
 db.init_app(app)
 
 # Security
@@ -47,6 +83,11 @@ security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
 # Function to execute when one visit /api/notifications
 @app.route("/api/notifications", methods=["GET"])
 def get_notifications():
+    """To get notifications
+    
+    Returns:
+        list: list of notifications with given limit,
+    """
     limit = request.args.get("limit")
     if not limit:
         limit = 20
@@ -58,6 +99,11 @@ def get_notifications():
 # Accep limit as int, which specifies the limit of users to return
 @app.route("/api/users", methods=["GET"])
 def get_users():
+    """get users . 
+    --Make an http get request with limit:int param
+    Returns:
+        list: List of users with given limit
+    """
     limit = request.args.get("limit")
     if not limit:
         limit = 20
@@ -65,14 +111,25 @@ def get_users():
     return [r.to_dict(rules=["-password"]) for r in results]
 
 
+
 @app.route("/api/history", methods=["GET"])
 def get_history():
+    """Return sensoers reading history
+
+    Returns:
+        _type_: _description_
+    """
     results = Statistics.query.all()
     return [r.to_dict() for r in results]
 
 
 @app.route("/api/soil_data", methods=["GET", "POST"])
 def get_soil_data():
+    """Get or Update/Create soil data for specific fields
+
+    Returns:
+        list:return list or soil data with their assot fields or redirect to settings page
+    """
     if request.method == "GET":
         results = SoilStatus.query.all()
         return [
@@ -96,6 +153,11 @@ def get_soil_data():
 
 @app.route("/api/crops_data", methods=["GET", "POST"])
 def get_crops_data():
+    """Get or Update/Create crop infor for specific fields
+
+    Returns:
+        list:return list or crop infor with their assot fields or redirect to settings page
+    """
     if request.method == "GET":
         results = CropsStatus.query.all()
         return [
@@ -137,7 +199,7 @@ def get_fields():
 ##Home page
 @app.route("/", methods=["GET"])
 @app.route("/index.html", methods=["GET"])
-@login_required
+# @login_required
 def hello():
     return pages("index")
 
@@ -156,15 +218,31 @@ def docs(filename):
 
 # Other pages
 @app.route("/<page>", methods=["GET"])
-@login_required
-def pages(page):
+# @login_required
+def pages(page: str):
+    """To get a page... any page which maches <page>.html
+   ===ToDo: Separate thes pages to have each with its own route..
+    Args:
+        page (str): Page to get
+
+    Returns:
+        _type_: _description_
+    """
     if page == "favicon.ico":
         return send_from_directory(app.static_folder, page), 200
 
     notifications = db.session.execute(select(Notifications).limit(4)).scalars()
-    # notifications = [r.to_dict() for r in results]
+    notifications = [r.to_dict() for r in notifications]
     r2 = Notifications.query.filter_by(status=False).count()
     data = {}
+    data["msgs"] = []
+    if len(connected_devices.keys()) < 1:
+        data["msgs"].append(
+            {
+                "msg": "No Component Is connected, Please Check You Components",
+                "type": "danger",
+            }
+        )
     if page == "settings":
         users = User.query.all()
         # users=[r.to_dict(rules=['-password']) for r in users]
@@ -172,7 +250,9 @@ def pages(page):
         data["fields"] = str(
             json.dumps(
                 [
-                    r.to_dict(rules=["-crop_status.field","-schedules", "-soil_status.field"])
+                    r.to_dict(
+                        rules=["-crop_status.field", "-schedules", "-soil_status.field"]
+                    )
                     for r in fields
                 ]
             )
@@ -187,23 +267,55 @@ def pages(page):
                     del connected_devices_copy[k]["ws"]
         data["connected_devices"] = json.dumps(connected_devices_copy)
     elif page == "drainage":
+        scheduled_fields = Schedules.query.filter_by(status=False,for_="drainage").all()
+        data["scheduled_fields"] = [
+            r.to_dict(
+                rules=["-field.crop_status", "-field.schedules", "-field.soil_status"]
+            )
+            for r in scheduled_fields
+        ]
+        data["scheduled_history"] = [
+            r.to_dict() for r in History.query.filter_by(for_="drainage").all()
+        ]
+        for hist_ in data["scheduled_history"]:
+            hist_["field"] = FieldZone.query.filter_by(id=hist_["field_id"]).first()
+
+        data["auto_schedule"] = False
+        auto = Options.query.get({"option_name": "drainage_auto_schedule"})
+        if auto:
+            data["auto_schedule"] = auto.option_value
+
         fields = FieldZone.query.all()
         data["fields"] = [
-            r.to_dict(rules=["-crop_status", "-soil_status","-schedules"]) for r in fields
+            r.to_dict(rules=["-crop_status", "-soil_status", "-schedules"])
+            for r in fields
         ]
     elif page == "irrigation":
-        scheduled_fields = Schedules.query.filter_by(status=False).all()
+
+        scheduled_fields = Schedules.query.filter_by(status=False,for_="irrigation").all()
         data["scheduled_fields"] = [
-            r.to_dict(rules=["-field.crop_status","-field.schedules", "-field.soil_status"]) for r in scheduled_fields
+            r.to_dict(
+                rules=["-field.crop_status", "-field.schedules", "-field.soil_status"]
+            )
+            for r in scheduled_fields
         ]
-        
-        data['auto_schedule']=Options.query.get({'option_name':"irrigation_auto_schedule"}).option_value
-        
-        print(data['auto_schedule'])
-        fields= FieldZone.query.all()
+        data["scheduled_history"] = [
+            r.to_dict() for r in History.query.filter_by(for_="irrigation").all()
+        ]
+        for hist_ in data["scheduled_history"]:
+            hist_["field"] = FieldZone.query.filter_by(id=hist_["field_id"]).first()
+
+        data["auto_schedule"] = False
+        auto = Options.query.get({"option_name": "irrigation_auto_schedule"})
+        if auto:
+            data["auto_schedule"] = auto.option_value
+
+        fields = FieldZone.query.all()
         data["fields"] = [
-            r.to_dict(rules=["-crop_status", "-soil_status","-schedules"]) for r in fields
+            r.to_dict(rules=["-crop_status", "-soil_status", "-schedules"])
+            for r in fields
         ]
+    
     return render_template(
         page + ".html",
         page=page,
@@ -214,47 +326,71 @@ def pages(page):
 
 
 
-
-@app.route("/api/add_irrigation_schedule",methods=['POST'])
-def add_irrigation_schedule():
-    data=request.form.to_dict()
-    schedule_date=datetime.datetime.strptime(data['schedule_date'],"%Y-%m-%dT%H:%M")
-    schedule=Schedules(duration=data['duration'],field_id=data['field_id'],schedule_date=schedule_date,for_="irrigation")
+@app.route("/api/add_schedule", methods=["POST"])
+def add_irrigation_or_drainage_schedule():
+    data = request.form.to_dict()
+    schedule_date = datetime.datetime.strptime(data["schedule_date"], "%Y-%m-%dT%H:%M")
+    schedule = Schedules(
+        duration=data["duration"],
+        field_id=data["field_id"],
+        schedule_date=schedule_date,
+        for_=data['for_'],
+    )
     db.session.add(schedule)
     db.session.commit()
+    add_schedule(schedule)
     # r=Schedules.query.filter_by(id=schedule.id).first()
-    results= schedule.to_dict(rules=["-field.crop_status","-field.schedules", "-field.soil_status"])
+    results = schedule.to_dict(
+        rules=["-field.crop_status", "-field.schedules", "-field.soil_status"]
+    )
     return results
 
 
-@app.route("/api/options",methods=['POST',"GET"])
+@app.route("/api/options", methods=["POST", "GET"])
 def add_get_update_option():
     """To add/update options
 
     Returns:
         dict: Option
     """
-    
+
     if request.method == "GET":
         data = request.args
         return Options.query.get(data["name"]).to_dict()
-    
+
     data = request.form.to_dict()
     option = Options.query.get(data["name"])
     if not option:
-            option = Options(option_name=data['name'],option_value=data['value'])
-            db.session.add(option)
+        option = Options(option_name=data["name"], option_value=data["value"])
+        db.session.add(option)
     else:
-            option.option_value=data['value']
-            db.session.add(option)
+        option.option_value = data["value"]
+        db.session.add(option)
     db.session.commit()
     return option.to_dict()
 
-@app.route("/api/start_irrigation/<action>",methods=['POST'])
-def stop_or_start_irrigation(action):
+
+@app.route("/api/<action>_<what>", methods=["POST"])
+def stop_start_irrigation_or_drainage(action,what):
+    """To start or stop irrigation and drainage. e.g If one wants to start irrigation should make a POST request to 
+    /api/start_irrigation, sending data with field_id as id
+
+    Args:
+        action (str): start or stop
+        what (str): irrigation or drainage
+
+    Returns:
+        any: "Done" or "Error",status_code
+    """
     if action != "start" and action != "stop":
         return "Error, Action should be start or stop", 404
+    if what != "irrigation" and what != "drainage":
+        return f"Error! Url should be either /api/{action}_irrigation or /api/{action}_drainage  ", 404
+    
+    
     data = request.form.to_dict()
+    
+    #Try to send the command to the connected components
     try:
         connected_devices_copy = connected_devices.copy()
         if len(connected_devices_copy.keys()) > 0:
@@ -262,20 +398,21 @@ def stop_or_start_irrigation(action):
                 connected_devices_copy[k]["ws"].send(
                     json.dumps(
                         {
-                            "data": {"cmd": f"irrigation {action}"},
+                            "data": {"cmd": f"{what} {action}"},
                             "event": "command",
                         }
                     )
                 )
-            field_query = update(FieldZone).where(FieldZone.id == data["id"])
-            field_query = field_query.values(irrigation_status=action=="start")
+            field_query = update(FieldZone).where(FieldZone.id == data["field_id"])
+            field_query = field_query.values(irrigation_status=action == "start")
             db.session.execute(field_query)
             db.session.commit()
         else:
             return "No Controlller is connected, check your components!!", 500
 
     except Exception as ex:
-        return ex, 5000
+        print(ex)
+        return f"{ex}", 5000
 
     return "Done"
 
@@ -287,6 +424,11 @@ def get_current_ecological_factors():
 
 @app.route("/api/refresh_hardware_infor")
 def refresh_hardware_infor():
+    """To retrieve connected modules infor, including sensors
+
+    Returns:
+        _type_: List of components and connected sensors
+    """
     connected_devices_copy = connected_devices.copy()
     if len(connected_devices_copy.keys()) > 0:
         for k, v in connected_devices_copy.items():
@@ -325,6 +467,95 @@ def refresh_hardware_infor_socket(ws):
     #             func(data['data'],ws)
 
 
+def add_schedule(task: Schedules):
+    print("Add schedule called")
+    duration = task.duration
+    what = task.for_
+    schedule_date = task.schedule_date
+    stop_date = schedule_date + timedelta(minutes=duration)
+    ##Add the start schedule in scheduler
+    current_date = datetime.datetime.now()
+    time_format = "%H:%M"
+    # date_format = "%d-%m-%Y %H:%M:%S"
+    start_in_days = (schedule_date - current_date).days
+    stop_in_days = (stop_date - current_date).days
+    
+    print(f"New Job Days {stop_in_days}  {start_in_days} start=={schedule_date.strftime(time_format)} stop=={stop_date.strftime(time_format)}")
+    
+    start_in_days=1 if start_in_days==0 else start_in_days
+    stop_in_days=1 if stop_in_days==0 else stop_in_days
+    
+    if start_in_days < 0:
+        ##Notify the users about missed schedule
+        note = Notifications(
+            f"A schedule  was missed at {schedule_date} , maybe the {what} started but the System was offline"
+        )
+        db.session.add(note)
+        db.session.commit()
+    else:
+        schedule.every(start_in_days).days.at(schedule_date.strftime(time_format)).do(
+            start_stop_irrigation_and_drainage,
+            what=what,
+            start=True,
+            call_back_fun=start_call_back,
+            call_back_args=task,
+        )
+        ##Add stop schedule..... the irrigation should stop at schedule_data+duration(mins)
+        schedule.every(stop_in_days).days.at(stop_date.strftime(time_format)).do(
+            start_stop_irrigation_and_drainage,
+            what=what,
+            start=False,
+            call_back_fun=stop_call_back,
+            call_back_args=task,
+        )
+        note = Notifications(f"{what} was successfully scheduuled at {schedule_date}")
+        db.session.add(note)
+    db.session.commit()
+
+
+def start_call_back(scheduled_task: Schedules):
+    """Function to be called after irrigation or drainage is started through an auto schedule,
+    this function will updated the database on the status of an irrigation
+
+    Args:
+        scheduled_task (Schedules): Schedules instance from DB_
+
+    Returns:
+        CancelJob: Cancel job, not to continue running
+    """
+    scheduled_task.status = True
+    db.session.commit()
+    print(f"{scheduled_task.for_}  Started")
+    return schedule.CancelJob
+
+
+def stop_call_back(scheduled_task: Schedules):
+    """Function to be called after irrigation or drainage is started through an auto schedule,
+    it will then updted the status of the schedule in the DB
+    Args:
+        scheduled_task (Schedules): Schedules instance from DB_
+
+    Returns:
+        CancelJob: Cancel job, not to continue running
+    """
+    scheduled_task.status = False
+    db.session.commit()
+    print(f"{scheduled_task.for_}  Stopped")
+    return schedule.CancelJob
+
+
+def run_pending_schedules():
+    """To run Irrigation, Drainage many more schedules"""
+    ##Get schedules that are in database a run add them on
+    with app.app_context():
+        schedules = Schedules.query.filter_by(status=False).all()
+        for schedul in schedules:
+            add_schedule(schedul)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+
+
 with app.app_context():
     db.create_all()
     websocket.init_app(application=app, data_base=db)
@@ -332,5 +563,10 @@ with app.app_context():
     app_dir = os.path.realpath(os.path.dirname(__file__))
     dataBase_path = os.path.join(app_dir, app.config["DATABASE_FILE"])
     if not os.path.exists(dataBase_path):
-        # build_sample_db(app=app, user_datastore=user_datastore)
+        build_sample_db(app=app, user_datastore=user_datastore)
         pass
+    
+
+#Start schedule on new Thread
+mythread = Thread(target=run_pending_schedules)
+mythread.start()

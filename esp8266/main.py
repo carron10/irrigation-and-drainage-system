@@ -1,35 +1,37 @@
-from main_fc.App import MainApp  # Import main app...
 import json
 import time
-from main_fc.commandlinehandler import CommandHandler
-from main_fc.service_handlers import IrrigationService
-from main_fc.util import (
-    HumidityTemperatureSensor,
-    RainDropSensor,
-    SoilMoistureSensor,
-)  ##Import sensor
+
 import uasyncio as a
 
-
+from config_manager import ConfigManager
+from main_fc.App import MainApp  # Import main app...
+from main_fc.commandlinehandler import CommandHandler
+from main_fc.service_handlers import IrrigationService,DrainageService
+from main_fc.util import HumidityTemperatureSensor  # #Import sensor
+from main_fc.util import RainDropSensor, SoilMoistureSensor
 # Open config file and read data from it
-f = open("../config.json")
-text = f.read()
-f.close()
-config = json.loads(text)
-del text
+# f = open("../config.json")
+# text = f.read()
+# f.close()
+# config = json.loads(text)
+# del text
 # --------------------------------
 
-# Creat app instance
+config=ConfigManager()
+
+
+
+# # Creat app instance
 data_from_ws = ws = None
-lock = a.Lock()
-app = MainApp(config=config, lock=lock, start_time=None)
+# lock = a.Lock()
+app = MainApp(config=config, start_time=None)
 
 data = {}
 
 
-# Define sensors
+# # Define sensors
 rain = RainDropSensor()
-humidity_and_tempeture = HumidityTemperatureSensor(16)
+humidity_and_tempeture = HumidityTemperatureSensor(config.get("humidity_and_temperature_pin"))
 moisture = SoilMoistureSensor()
 
 
@@ -40,13 +42,14 @@ def config_service(options):
     print(options)
     global config
     for k, v in options.items():
-        config[k] = v
+        config.set(k, v)
     return "Config updated"
 
 
 
 @app.on("command")
 async def commandsController(data, ws):
+    print(data)
     """This function will be used to execute commands from the server and send back the results to the event specified by the server"""
     cmd=data['cmd']
     return_to=data['return'] if "return" in data else None
@@ -56,19 +59,18 @@ async def commandsController(data, ws):
     
 
 
-@app.on("*")
-async def debug_data(data, ws):
-    "This function is used to receive any data that is sent from the server"
-    global lock
-    global data_from_ws
-    await lock.acquire()
-    data_from_ws = data
-    lock.release()
+# @app.on("*")
+# async def debug_data(data, ws):
+#     "This function is used to receive any data that is sent from the server"
+    
+#     global data_from_ws
+#     await a.lock().acquire()
+#     data_from_ws = data
+#     a.lock().release()
 
 
 @app.on("connected")
 async def on_connect(websocket):
-    '''After the websocket is connected to the server, this function will be executed....any data or configurations that needs to take place after execution will take place here'''
     global config
     global data
     data["connected"] = True
@@ -82,16 +84,16 @@ async def on_connect(websocket):
         await ws.send(json.dumps(data))
 
 
-@app.on("config")
-async def on_config(data, ws):
-    config_service(data)
+# @app.on("config")
+# async def on_config(data, ws):
+#     config_service(data)
 
 
-@app.on("disconnect")
-async def on_disconnect():
-    global data
-    print("Disconnected")
-    data["connected"] = False
+# @app.on("disconnect")
+# async def on_disconnect():
+#     global data
+#     print("Disconnected")
+#     data["connected"] = False
 
 
 async def send_sensor_statuses_loop():
@@ -128,8 +130,8 @@ async def send_sensor_statuses_loop():
             if last_sent_time is not None:
                 end_time = time.time()
                 elapsed_time = end_time - last_sent_time
-                t_diff = config["send_sensor_status_seconds"] - elapsed_time
-                print("Waiting----",t_diff,config["send_sensor_status_seconds"])
+                t_diff = config.get("send_sensor_status_seconds") - elapsed_time
+                print("Waiting----",t_diff,config.get("send_sensor_status_seconds"))
                 await a.sleep(1 if t_diff < 0 else t_diff)
             else:
                 await a.sleep(1)
@@ -163,7 +165,7 @@ async def send_moisture_loop():
                 if last_sent_time is not None:
                     end_time = time.time()
                     elapsed_time = end_time - last_sent_time
-                    t_diff = config["socket_send_data_seconds"] - elapsed_time
+                    t_diff = config.get("socket_send_data_seconds") - elapsed_time
                     await a.sleep(2 if t_diff < 0 else t_diff)
                 else:
                     await a.sleep(2)
@@ -202,7 +204,7 @@ async def send_humidity_loop():
                 if last_sent_time is not None:
                     end_time = time.time()
                     elapsed_time = end_time - last_sent_time
-                    t_diff = config["socket_send_data_seconds"] - elapsed_time
+                    t_diff = config.get("socket_send_data_seconds") - elapsed_time
                     await a.sleep(3 if t_diff < 0 else t_diff)
                 else:
                     await a.sleep(3)
@@ -239,7 +241,7 @@ async def send_rainfall_loop():
                 if last_sent_time is not None:
                     end_time = time.time()
                     elapsed_time = end_time - last_sent_time
-                    t_diff = config["socket_send_data_seconds"] - elapsed_time
+                    t_diff = config.get("socket_send_data_seconds") - elapsed_time
                     await a.sleep(1 if t_diff < 0 else t_diff)
                 else:
                     await a.sleep(1)
@@ -256,7 +258,7 @@ async def connect_and_reconnect():
                 end_time = time.time()
                 elapsed_time = end_time - app.start_time
                 print("Time elapsed", elapsed_time)
-                if elapsed_time > config["socket_reconnect_seconds"]:
+                if elapsed_time > config.get("socket_reconnect_seconds"):
                     if await ws.open():
                         await ws.close()
                         print("ws is open: " + str(await ws.open()))
@@ -264,6 +266,10 @@ async def connect_and_reconnect():
                         print("closed")
             await a.sleep(5)
         await a.sleep(2)
+
+
+
+
 
 
 async def main():
@@ -277,9 +283,12 @@ async def main():
     ]
     await a.gather(*tasks)
 
-##Add services on command handler such that the service can send commands to execute these services
-handler.add_service("irrigation", IrrigationService())
+#Add services on command handler such that the service can send commands to execute these services
+handler.add_service("irrigation", IrrigationService(config.get("irrigation_relay_pin")))
 handler.add_service("config", config_service)
-
+handler.add_service("drainage",DrainageService())
 ##Run the app
 a.run(main())
+
+
+

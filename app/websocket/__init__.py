@@ -28,7 +28,7 @@ class WebSocket(Sock):
             while True:
                     data=ws.receive()
                     data = json.loads(data)
-                    print("recevied",data)
+                    # print("recevied",data)
                     event=data['event']
                     if event in self.events:
                         for func in self.events[event]:
