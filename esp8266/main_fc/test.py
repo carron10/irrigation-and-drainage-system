@@ -61,18 +61,7 @@ class HumidityTemperatureSensor:
         humidity =  self.dht_sensor.humidity()
         return humidity
     
-class SoilMoistureSensor:
-    def __init__(self):
-        self.adc = machine.ADC(0)
-        self.conversion_factor = 100 / (1024)
-    def read(self):
-        rain_coverage = 100 - (self.adc.read_u16() * self.conversion_factor)
-        return round(rain_coverage, 1)
-    def isconnected(self):
-        #ToDo: Write code to detect if this sensor is connected oor not
-        return not self.read()==8 or self.read()==7
-        
-        
 
-
-    
+sensor=HumidityTemperatureSensor()
+connected=sensor.isconnected()
+print(f"Connected {connected}")

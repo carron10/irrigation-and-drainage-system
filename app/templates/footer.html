@@ -121,7 +121,87 @@
 
             // Wait until page is loaded
             document.addEventListener("DOMContentLoaded", () => initialize());
+            var addFormData = (v, d) => {
+                if (v[d.name] != undefined) {
+                    if (typeof v[d.name] == 'string' || typeof v[d.name] == 'number') {
+                        v[d.name] = [v[d.name], d.type == 'checkbox' ? ($(d).is(":checked") ? 1 : 0) : $(d).val()];
 
+                    } else {
+                        v[d.name].push(d.type == 'checkbox' ? ($(d).is(":checked") ? 1 : 0) : $(d).val());
+
+                    }
+                } else {
+                    // console.log(d.name,$(d).val(), $(d).is(":checked"),$(d).val())
+                    v[d.name] = d.type == 'checkbox' ? ($(d).is(":checked") ? 1 : 0) : $(d).val();
+                };
+            };
+
+            function getFormData(id) {
+
+                var inputs = $('#' + id + ' :input');
+
+                var values = {},
+                    key = $('#' + id).attr('data-cf-formkey');
+                inputs.each(function () {
+                    var skip = $(this).parents('.skip-form').first();
+                    var sub = $(this).parents('.sub-form').first();
+                    if (skip.length != 0) {
+                        if (skip.attr('id') != id && skip.find('#' + id).length == 0) { //chcks if the skipform is not a parent of current form
+                            return;
+                        }
+                    }
+                    if (sub.length != 0) {
+                        if (sub.attr('id') != id && sub.find('#' + id).length == 0) {
+                            values[sub.attr('id')] = getFormData(sub.attr('id'));
+                            return;
+                        }
+                    }
+                    if ($(this).hasClass('key')) {
+                        return
+                    }
+                    if ($(this).attr('data-cf-setunder') != null) {
+                        if ($(this).val() != '') {
+                            if (values[$(this).attr('data-cf-setunder')] == undefined) {
+                                values[$(this).attr('data-cf-setunder')] = {};
+                            }
+                            if (this.type == 'checkbox') {
+                                addFormData(values[$(this).attr('data-cf-setunder')], this);
+                            } else if ($(this).tagName() == 'SELECT') {
+                                if ($(this).val() != -1) {
+                                    addFormData(values[$(this).attr('data-cf-setunder')], this);
+                                }
+                            } else {
+                                addFormData(values[$(this).attr('data-cf-setunder')], this);
+                            }
+                        }
+                    } else if ($(this).val() != '') {
+                        if ($(this).hasClass('value')) {
+                            var key = $(this).parents('.key_value').first().find('.key').first().val();
+                            values[key] = $(this).val();
+                            return;
+                        }
+
+                        if (this.type == 'checkbox') {
+                            addFormData(values, this);
+                        } else if ($(this).tagName() == 'SELECT') {
+                            if ($(this).val() != -1) {
+                                addFormData(values, this);
+                            }
+                        } else {
+                            addFormData(values, this);
+                        }
+                    }
+                });
+                if (key != undefined) {
+                    var v = {};
+                    v[key] = values;
+                    return v;
+                }
+                return values;
+            }
+            jQuery.fn.tagName = function () {
+                return this.prop("tagName");
+            };
             function error(str, title) {
                 $("#alert").modal("show").find('.modal-content').addClass(
                     "bg-danger").removeClass("bg-primary").find(

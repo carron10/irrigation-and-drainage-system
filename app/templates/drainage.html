@@ -2,162 +2,335 @@
 <html lang="en">
 
 <head>
-  {% include 'head.html' %}
+	{%include 'head.html' %}
 </head>
 
 <body>
-  <div class="wrapper">
-    {% include 'sidebar.html' %}
+	<div class="wrapper">
+		{%include 'sidebar.html'%}
 
-    <div class="main">
-      {% include 'navbar.html' %}
-      <div class="text-center rounded-0">
-        <h1 class="h3 my-3 fw-bold">Drainage</h1>
-      </div>
-      <style>
-        .nav-link {
-          color: white;
-        }
+		<div class="main">
+			{%include 'navbar.html'%}
+			
+			<div class=" text-center rounded-0">
+				<h1 class="h3 my-3">Drainage</h1>
+			</div>
 
-        .nav-link.active {
-          background-color: white !important;
-          color: dark !important;
-        }
-      </style>
-      <div class="border-top d-flex justify-content-center">
-        <div class="nav nav-tabs me-3 pt-2" id="list-tab" role="tablist">
-          <button class="bg-danger mx-1 nav-link active" id="user-accounts-tab" data-bs-toggle="pill"
-            data-bs-target="#manual" type="button" role="tab" aria-selected="false">Manual Controls</button>
-          <button class="bg-danger mx-1 nav-link" id="user-accounts-tab" data-bs-toggle="pill" data-bs-target="#history"
-            type="button">History</button>
-          <button class="bg-danger mx-1 nav-link" id="user-accounts-tab" data-bs-toggle="pill" data-bs-target="#status"
-            type="button">Status</button><button class="bg-danger mx-1 nav-link" id="user-accounts-tab"
-            data-bs-toggle="pill" data-bs-target="#schedules" type="button">Schedules</button>
-        </div>
-      </div>
-      <main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
-        <div class="container-fluid p-0">
-          <div class="tab-content sub-form">
-            <div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.5);" id="manual"
-              role="tabpanel" titleledby="general1-list">
-              <div class="pt-1">
-                <!-- <div class="fw-bold h5-m">Irrigation is <span class="text-danger">off</span></div>
-                  <button class="start-irrigation btn btn-sm btn-success my-2">Start</button> --->
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th scope="col">Field</th>
-                      <th scope="col">Auto Schedule</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for field in fields %}
-                    <tr>
-                      <td>{{field['name']}}</td>
-                      <td>
-                        <div class="py-4">
-                          <div class="button r" id="button-1">
-                            <input type="checkbox" class="checkbox" {%if field['drainage_status']%}checked{%endif%} />
-                            <div class="knobs"></div>
-                            <div class="layer"></div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                    {%endfor%}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div class="tab-pane fade hide_if_grouped" id="history" role="tabpanel" titleledby="general1-list"
-              style="background-color: rgba(255, 255, 255, 0.8);">
-              <table class="table table-striped">
-                <thead>
-                  <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Time Start</th>
-                    <th scope="col">Time End</th>
-                    <th scope="col">Time Spent</th>
-                    <th scope="col">Estimated Litres (Litres)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for i in range(- 7, 20) %}
-                  <tr>
-                    <td>{{ i + 7 }}/03/2024</td>
-                    <td>12:00</td>
-                    <td>13:00</td>
-                    <td>1hr</td>
-                    <td>233</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            <div class="tab-pane fade hide_if_grouped" id="status" role="tabpanel" titleledby="general1-list">
-              <div class="card card-body" style="background-color: rgba(255, 255, 255, 0.9);">
-                <div class="pt-1 text-start">
-                  <!--  <div class="fw-bold h5-m">Irrigation is <span class="text-danger">off</span></div>
-                    <button class="start-irrigation btn btn-sm btn-success my-2">Start</button> --- --><table
-                    class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th scope="col">Field</th>
-                        <th scope="col">Satus</th>
-                        <th scope="col">Ation(start/stop)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for field in fields %}
-                      <tr>
-                        <td>{{field['name']}}</td>
-                        <td>
-                          <span class="text-danger fw-bold">off</span>
-                        </td>
-                        <td>
-                          <button class="start-irrigation btn btn-sm btn-success my-2">Start</button>
-                        </td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-            <div class="tab-pane fade hide_if_grouped" id="schedules" role="tabpanel" titleledby="general1-list">
-              <div class=" card card-body" style="background-color: rgba(255, 255, 255, 0.9);">
-                <div class="pt-1 text-start">
-                  <!-- <div class="fw-bold h5-m">Irrigation is <span class="text-danger">off</span></div>
-                    <button class="start-irrigation btn btn-sm btn-success my-2">Start</button> --->
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th scope="col">Field</th>
-                        <th scope="col">Schedule</th>
-                        <th scope="col">Ation(Schedule Manual)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for field in fields %}
-                      <tr>
-                        <td>{{field['name']}}</td>
-                        <td><span class="text-danger fw-bold">No Schedule</span></td>
-                        <td><button class="start-irrigation btn btn-sm btn-success my-2">Schedule</button></td>
-                      </tr>
-                      {%endfor%}
-                    </tbody>
-                  </table>
-                </div>
+			<div class=" border-top d-flex justify-content-center">
+				<div class="nav nav-tabs me-3 pt-2" id="list-tab" role="tablist">
+					<button class="bg-danger mx-1 nav-link active " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#manual" type="button" role="tab" aria-selected="false">
+						Manual Controls
+					</button>
+					<button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#history" type="button">
+						History
+					</button>
+					<button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#status" type="button">
+						Status
+					</button><button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
+						data-bs-target="#schedules" type="button">
+						Schedules
+					</button>
 
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
 
-      {% include 'footer.html' %}
-    </div>
-  </div>
+				</div>
+			</div>
+
+			<main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
+				<style>
+					.nav-link {
+						color: white;
+					}
+
+					.nav-link.active {
+						background-color: white !important;
+						color: dark !important;
+					}
+				</style>
+				<div class="container-fluid p-0">
+					<div class="tab-content sub-form">
+						<div class="tab-pane fade hide_if_grouped show active " id="manual" role="tabpanel"
+							titleledby="general1-list">
+
+							<div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.5);" id="manual"
+							role="tabpanel" titleledby="general1-list">
+							<div class="pt-1">
+							  <!-- <div class="fw-bold h5-m">drainage is <span class="text-danger">off</span></div>
+								<button class="start-drainage btn btn-sm btn-success my-2">Start</button> --->
+							  <table class="table table-striped">
+								<thead>
+								  <tr>
+									<th scope="col">Field</th>
+									<th scope="col">Start/Stop</th>
+								  </tr>
+								</thead>
+								<tbody>
+								  {% for field in fields %}
+								  <tr id="{{field['name']}}">
+									<td>{{field['name']}}</td>
+									<td>
+									  <div class="py-4">
+										<div class="button r" id="button-1">
+										  <input type="checkbox" data_field_name="{{field.name}}" data_field_id="{{field.id}}" class="toggle_drainage_checkbox checkbox" {%if field['drainage_status']%}checked{%endif%} />
+										  <div class="knobs"></div>
+										  <div class="layer"></div>
+										</div>
+									  </div>
+									</td>
+								  </tr>
+								  {%endfor%}
+								</tbody>
+							  </table>
+							</div>
+						  </div>
+
+
+						</div>
+						<div class="tab-pane fade" id="history" role="tabpanel" titleledby="general1-list"
+							style="background-color: rgba(255, 255, 255, 0.8);">
+							<table class="table table-striped">
+								<thead>
+									<tr>
+										<th scope="col">Field</th>
+										<th scope="col">Time Start</th>
+										<th scope="col">Time End</th>
+										<th scope="col">Time Spent</th>
+										<th scope="col">Estimated Litres (Litres)</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for history in scheduled_history %}
+									<tr>
+										<td>{{history.field.name}}</td>
+										<td>{{history.start_time}}</td>
+										<td>{{history.end_time}}</td>
+										<td>{{history.time_spent}}</td>
+										<td>{{history.value}}</td>
+									</tr>
+									{%endfor%}
+								</tbody>
+							</table>
+						</div>
+						<div class="tab-pane fade" id="status" role="tabpanel" titleledby="general1-list">
+							<div class=" card card-body" style="background-color: rgba(255, 255, 255, 0.9);">
+								<div class="pt-1">
+									<!-- <div class="fw-bold h5-m">drainage is <span class="text-danger">off</span></div>
+									<button class="start-drainage btn btn-sm btn-success my-2">Start</button> --->
+									<table class="table table-striped">
+										<thead>
+											<tr>
+												<th scope="col">Field</th>
+												<th scope="col">Satus</th>
+												<!-- <th scope="col">Ation</th> -->
+											</tr>
+										</thead>
+										<tbody>
+											{% for field in fields %}
+											<tr>
+												<td>{{field.name}}</td>
+												<td><span class="text-danger fw-bold">
+														{% if field.drainage_status %}On{% else %}Off{% endif %}
+													</span></td>
+
+											</tr>
+											{%endfor%}
+										</tbody>
+									</table>
+								</div>
+
+							</div>
+						</div>
+						<div class="tab-pane fade hide_if_grouped" id="schedules" role="tabpanel"
+							titleledby="general1-list" style="background-color: rgba(255, 255, 255, 0.9);">
+							<div class="d-flex justify-content-between border-bottom p-2">
+								<!-- <div><i class="text-success" data-feather="calendar"></i> To Schedule drainage
+									automatically, click <strong>Auto Schedule</strong> </div>-->
+								<div>
+									<button class="set-schedule btn btn-sm btn-success">Schedule drainage</button>
+									{%if auto_schedule=='ON'%}
+									<button class="set-auto-schedule btn btn-sm btn-danger on_">Disable Auto
+										Schedule</button>
+									{%else%}
+									<button class="set-auto-schedule btn btn-sm btn-danger off_">Enable Auto
+										Schedule</button>
+									{%endif%}
+								</div>
+								<div><i class="text-success" data-feather="calendar"></i>Auto:
+									{%if auto_schedule=='ON'%}
+									<span class="bg-success auto_schedule_status badge">On</span>
+									{%else%}
+									<span class="bg-danger badge auto_schedule_status">Off</span>
+									{%endif%}
+								</div>
+							</div>
+							<div
+								class="py-5 mb-5 text-center schedule-msg {%if scheduled_fields%}visually-hidden{%endif%}">
+								<div class="fw-bold h5-m">No drainage Schedules</div>
+							</div>
+							<table class="table table-striped {%if not scheduled_fields%}visually-hidden{%endif%}"
+								id="scheduled_fields_table">
+								<thead>
+									<tr>
+										<th scope="col">Field</th>
+										<th scope="col">Dated</th>
+										<th scope="col">Duration</th>
+										<th scope="col">Type</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for field_schedule in scheduled_fields %}
+									<tr id="{{field_schedule.id}}">
+										<td class="scheduled_field">{{field_schedule.field.name}}</td>
+										<td class="scheedule_date">
+											{{field_schedule.schedule_date}}
+										</td>
+										<td class="scheduled_duration">
+											{{field_schedule.duration}}
+										</td>
+										<td class="{%if field_schedule.type=='Manual'%}text-success{%endif%}">
+											{{field_schedule.type}}</td>
+									</tr>
+									{%endfor%}
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+				</div>
+				<div class="modal fade" data-bs-backdrop="false" id="schedule-drainage-modal" tabindex="-1"
+					role="dialog">
+					<div class="modal-dialog rounded-0 ">
+						<div class="modal-content rounded-0">
+							<div class="modal-header py-2">
+								<h5 class="modal-title">Add schedule</h5>
+							</div>
+							<div class="modal-body">
+								<form id="add-drainage-schedule-form" class="needs-validation">
+									<div class="row mt-4 ">
+										<div class="form-group ">
+											<label for="id" class="col-form-label">Date:</label>
+											<input type="datetime-local" required name="schedule_date"
+												class="form-control">
+											<i class="small invalid-feedback">Please fill the above!</i>
+										</div>
+										<div class="form-group p_star">
+											<label for="duration" class="col-form-label" >Duration(in
+												Minutes):</label>
+											<input type="number" min="1" required class="form-control" name="duration">
+											<i class="small invalid-feedback">Add duration!</i>
+										</div>
+										<div class="form-group p_star">
+											<label for="field_id" class="col-form-label">Zone:</label>
+											<select required name="field_id"
+												class="form-control form-control-sm field-zone">
+												{% for field in fields%}
+												<option value="{{field.id}}">{{field.name}}</option>
+												{%endfor%}
+											</select>
+
+										</div>
+									</div>
+								</form>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+								<button type="button" id="add-drainage-schedule-btn"
+									class="btn btn-primary">Add</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal" id="drainageStatusModal" tabindex="-1">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">drainage Turned On</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal"
+									aria-label="Close"></button>
+							</div>
+							<div class="modal-body">
+								<p>
+									You have successfully turned on drainage!
+
+								</p>
+								<p class="text-danger">You will receive a reminder to turn it off after 30mins</p>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+								<!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+
+			{%include "footer.html"%}
+		</div>
+	</div>
+
+
+
+
+	<script>
+		$(function () {
+
+			//Set Auto Schedule On/Off
+			$(".set-auto-schedule").click(function () {
+				is_on = $(".set-auto-schedule").hasClass("on_")
+				data = { name: "drainage_auto_schedule", value: is_on ? "OFF" : "ON" }
+				send('/api/options', data, "POST").done(function (data) {
+					if (is_on) {
+						$(".set-auto-schedule").removeClass("on_").addClass("off_")
+						$(".set-auto-schedule").text("Enable Auto Shedule")
+						$(".auto_schedule_status").text("Off").addClass("bg-danger").removeClass("bg-success")
+					} else {
+						$(".set-auto-schedule").removeClass("off_").addClass("on_")
+						$(".set-auto-schedule").text("Disable Auto Shedule")
+						$(".auto_schedule_status").text("On").removeClass("bg-danger").addClass("bg-success")
+
+					}
+				}).fail(function (err) {
+					error(`${err.responseText}`, err.statusText)
+				})
+			})
+
+
+			$(".set-schedule").click(function () {
+				$("#schedule-drainage-modal").find("input[name='schedule_date']").prop('min', new Date().toISOString().substring(0, 16));
+				$("#schedule-drainage-modal").modal("show")
+			})
+			$("#add-drainage-schedule-btn").click(function () {
+				var form = document.querySelector("#add-drainage-schedule-form");
+				if (form.checkValidity() === true) {
+					var data = getFormData("schedule-drainage-modal")
+					data['for_']="drainage"
+					send('/api/add_schedule', data, "POST").done(function (data) {
+						$("#scheduled_fields_table").find("tbody").append(`<tr id="${data.id}"><td class="scheduled_field">${data.field.name}</td><td>${data.schedule_date}</td><td>${data.duration}</td><td class='text-success'>${data.type}</td></tr>`)
+						$("#schedule-drainage-modal").modal("hide")
+						$("#scheduled_fields_table").removeClass("visually-hidden")
+						$(".schedule-msg").addClass("visually-hidden")
+					}).fail(function (err) {
+						error(`${err.responseText}`, err.statusText)
+					})
+				}
+				$(form).addClass("was-validated");
+			})
+		})
+		$('.toggle_drainage_checkbox').on("change", function (e) {
+			var on = e.target.checked, action = on ? "start" : "stop",target=$(e.target);
+			send(`/api/${action}_drainage`,{'field_id':target.attr("data_field_id")},"POST").done(function (data) {
+			}).fail(function (err) {
+				console.log(err)
+				error(`${err.responseText}`, err.statusText)
+				$(e.target).prop('checked', on ? false : true)
+			})
+
+		})
+
+	</script>
+
 </body>
 
 </html>

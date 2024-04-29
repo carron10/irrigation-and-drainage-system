@@ -8,3 +8,4 @@ flask-security-too
 email_validator
 sqlalchemy_serializer
 simple_websocket
+schedule

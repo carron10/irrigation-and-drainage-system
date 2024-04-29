@@ -1,11 +1,12 @@
-import usocket as socket
 import uasyncio as a
 import ubinascii as binascii
 import urandom as random
-from ucollections import namedtuple
 import ure as re
-import ustruct as struct
+import usocket as socket
 import ussl
+import ustruct as struct
+from ucollections import namedtuple
+
 # Opcodes
 OP_CONT = const(0x0)
 OP_TEXT = const(0x1)
