@@ -123,5 +123,5 @@ def start_stop_irrigation_and_drainage(
                         }
                     )
                 )
-                if not call_back_fun:
+                if call_back_fun:
                     call_back_fun(call_back_args)
