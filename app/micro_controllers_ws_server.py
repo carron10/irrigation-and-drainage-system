@@ -135,6 +135,6 @@ def start_stop_irrigation_and_drainage(
         time.sleep(1)
 
     if call_back_fun:
-        return call_back_fun(call_back_args)
-    else:
-        return schedule.CancelJob
+        call_back_fun(call_back_args)
+        
+    return schedule.CancelJob

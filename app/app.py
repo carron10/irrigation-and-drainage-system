@@ -393,6 +393,8 @@ def stop_start_irrigation_or_drainage(action,what):
     #Try to send the command to the connected components
     try:
         connected_devices_copy = connected_devices.copy()
+        
+        #ToDo: To make sure the message is delivered and there is a callback specified
         if len(connected_devices_copy.keys()) > 0:
             for k, v in connected_devices_copy.items():
                 connected_devices_copy[k]["ws"].send(
@@ -403,6 +405,7 @@ def stop_start_irrigation_or_drainage(action,what):
                         }
                     )
                 )
+        
         
             field_query = update(FieldZone).where(FieldZone.id == data["field_id"])
             if what=="irrigation":
