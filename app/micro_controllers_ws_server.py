@@ -5,6 +5,7 @@ import time
 import json
 from app.models import User, Role, Notifications, Options, Statistics, Meta, FieldZone
 from flask import Flask
+import schedule
 
 db = None
 app: Flask = None
@@ -111,17 +112,29 @@ def start_stop_irrigation_and_drainage(
         call_back_fun (_type_, optional): A function to call back after sending the command. Defaults to None.
     """
     action = "start" if start else "stop"
-    if len(connected_devices.keys()) > 0:
-        for k, v in connected_devices.items():
-            ws = connected_devices[k]["ws"]
-            if ws.connected:
-                ws.send(
-                    json.dumps(
-                        {
-                            "event": "command",
-                            "data": {"cmd": f"{what} {action}"},
-                        }
-                    )
-                )
-                if call_back_fun:
-                    call_back_fun(call_back_args)
+    
+    stop = False
+    ##Ensure the  command is sent
+    while not stop:
+        try:
+            if len(connected_devices.keys()) > 0:
+                for k, v in connected_devices.items():
+                    ws = connected_devices[k]["ws"]
+                    if ws.connected:
+                        ws.send(
+                            json.dumps(
+                                {
+                                    "event": "command",
+                                    "data": {"cmd": f"{what} {action}"},
+                                }
+                            )
+                        )
+                    stop=True
+        except:
+            print("Waiting for components to connect")
+        time.sleep(1)
+
+    if call_back_fun:
+        return call_back_fun(call_back_args)
+    else:
+        return schedule.CancelJob

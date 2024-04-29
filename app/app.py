@@ -403,8 +403,12 @@ def stop_start_irrigation_or_drainage(action,what):
                         }
                     )
                 )
+        
             field_query = update(FieldZone).where(FieldZone.id == data["field_id"])
-            field_query = field_query.values(irrigation_status=action == "start")
+            if what=="irrigation":
+                 field_query = field_query.values(irrigation_status=(action == "start"))
+            else:
+                 field_query = field_query.values(drainage_status=(action == "start"))
             db.session.execute(field_query)
             db.session.commit()
         else:
