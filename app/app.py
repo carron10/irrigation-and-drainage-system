@@ -4,7 +4,7 @@ import json
 import os
 import time
 
-# from schedule import Scheduler
+from schedule import Scheduler
 import psycopg2
 from flask import (
     Blueprint,
@@ -609,21 +609,22 @@ def update_field_status(data):
     else:
         field_query = field_query.values(drainage_status=status)
     
-    print(f"{what} was Updated {start_auto_scheduler_checker}")
+    print(f"{what} was Updated {status}")
+    db.session.execute(field_query)
     db.session.commit()
 
 
 
 def start_auto_scheduler_checker(what):
-    print(f"Auto scheduler was called {what}")
     soil_value = None
-
     if len(connected_devices.keys()) > 0:
         for k, v in connected_devices.items():
             if "SoilMoisture" in connected_devices[k]["sensors"]:
                 soil_value = connected_devices[k]["sensors"]["SoilMoisture"]["last_value"]
     else:
         print("No Device Connected")
+
+        
     if soil_value != None:
         print(f"Value {soil_value}")
         if soil_value < 60:
@@ -635,11 +636,12 @@ def start_auto_scheduler_checker(what):
                     "status":True
                 })
         elif soil_value > 80:
+            #Stop irrigation or drainage if already started
             if is_on(what):
                 print(f"is not on Stoped {what}")
-                start_stop_irrigation_and_drainage(what=what, start=True,call_back_fun=update_field_status,call_back_args={
+                start_stop_irrigation_and_drainage(what=what, start=False,call_back_fun=update_field_status,call_back_args={
                     "what":what,
-                    "status":True
+                    "status":False
                 })
 
 

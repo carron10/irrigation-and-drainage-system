@@ -20,7 +20,8 @@ class MainApp:
     async def run(self):
         # Try to connect to wifi
         wifi=None
-        if self.config.get("auto_connect"):
+        
+        if self.config.get("wifi")["auto_connect"]:
             print("connect to configured wifi")
             wifi = await wifi_connect(
                 self.config.get("wifi")["SSID"], self.config.get("wifi")["password"]

@@ -64,13 +64,15 @@ class HumidityTemperatureSensor:
 class SoilMoistureSensor:
     def __init__(self):
         self.adc = machine.ADC(0)
-        self.conversion_factor = 100 / (1024)
     def read(self):
-        rain_coverage = 100 - (self.adc.read_u16() * self.conversion_factor)
+        min_value=29000
+        max_value=65535
+        rain_coverage=((max_value-self.adc.read_u16())/(max_value-min_value))*100
         return round(rain_coverage, 1)
     def isconnected(self):
         #ToDo: Write code to detect if this sensor is connected oor not
-        return not self.read()==8 or self.read()==7
+        value= self.adc.read()
+        return not value==8 or value==9 or value==7
         
         
 
