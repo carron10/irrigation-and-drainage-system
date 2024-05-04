@@ -308,7 +308,7 @@
 				var form = document.querySelector("#add-irrigation-schedule-form");
 				if (form.checkValidity() === true) {
 					var data = getFormData("schedule-irrigation-modal")
-					data['for_'] = "drainage"
+					data['for_'] = "irrigation"
 					send('/api/add_schedule', data, "POST").done(function (data) {
 						$("#scheduled_fields_table").find("tbody").append(`<tr id="${data.id}"><td class="scheduled_field">${data.field.name}</td><td>${data.schedule_date}</td><td>${data.duration}</td><td class='text-success'>${data.type}</td></tr>`)
 						$("#schedule-irrigation-modal").modal("hide")
