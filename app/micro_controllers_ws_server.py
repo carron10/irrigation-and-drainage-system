@@ -37,25 +37,35 @@ connected_devices = {}
 last_sensors_updates = {}
 
 
-def send_command(command, require_return=False, time_out=7)->bool:
+def send_command(command, require_return=False, time_out=7) -> bool:
     return send_data(
-        {"data":{"cmd": command}, "event": "command"},
+        {"data": {"cmd": command}, "event": "command"},
         require_return=require_return,
         time_out=time_out,
     )
 
+def get_sensor_value(sensor_name):
+    if len(connected_devices.keys()) > 0:
+        for k, v in connected_devices.items():
+            if sensor_name in connected_devices[k]["sensors"]:
+                return connected_devices[k]["sensors"][sensor_name][
+                    "last_value"
+                ]
+    return None
 
-def send_data(data, time_out=7, require_return=False)->bool:
+def send_data(data, time_out=7, require_return=False) -> bool:
     done = False
     last_trial = None
     if require_return:
         uniq_strin = generate_unique_string()
         data["return"] = uniq_strin
+
         @websocket.on_temp_event(uniq_strin)
         def return_fun(*args, **kwargs):
             nonlocal done
             done = True
             websocket.remove_event(uniq_strin)
+
     def try_send():
         nonlocal last_trial
         current_time = time.time()
@@ -68,9 +78,10 @@ def send_data(data, time_out=7, require_return=False)->bool:
         for k, v in connected_devices.items():
             if connected_devices[k]["ws"].connected:
                 connected_devices[k]["ws"].send(json.dumps(data))
+
     if require_return:
         i = 0
-        while i<=time_out:
+        while i <= time_out:
             if done:
                 return True
             try_send()
@@ -94,15 +105,12 @@ def get_all_connected_sensors():
 @websocket.on("reconnect")
 def on_reconnect(ws, *args, **kwargs):
     global connected_devices
-    print("ReConnected")
     connected_devices[kwargs["devicename"]]["ws"] = ws
 
 
 @websocket.on("connect")
-def print_data(ws, *args, **kwargs):
+def on_connect(ws, *args, **kwargs):
     global websocket, connected_devices
-
-    print("Connected")
     device = {"name": kwargs["devicename"], "ws": ws, "sensors": {}}
     connected_devices[kwargs["devicename"]] = device
     ws.send(
@@ -175,30 +183,10 @@ def start_stop_irrigation_and_drainage(
     """
     global scheduler
     action = "start" if start else "stop"
-
-    stop = False
-    ##Ensure the  command is sent
-    while not stop:
-        try:
-            if len(connected_devices.keys()) > 0:
-                for k, v in connected_devices.items():
-                    ws = connected_devices[k]["ws"]
-                    if ws.connected:
-                        ws.send(
-                            json.dumps(
-                                {
-                                    "event": "command",
-                                    "data": {"cmd": f"{what} {action}"},
-                                }
-                            )
-                        )
-                        stop = True
-
-        except:
-            print("Waiting for components to connect")
-        time.sleep(1)
-
-    if call_back_fun:
-        call_back_fun(call_back_args)
-
-    return schedule.CancelJob
+    print("===Start/Stop irrigation called==")
+    sent = send_command(f"{what} {action}",require_return=True,time_out=40)
+    if sent:
+        if call_back_fun:
+            call_back_fun(call_back_args)
+        return schedule.CancelJob
+    

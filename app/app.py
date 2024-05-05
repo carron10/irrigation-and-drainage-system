@@ -38,6 +38,7 @@ from app.micro_controllers_ws_server import (
     start_stop_irrigation_and_drainage,
     send_command,
     send_data,
+    get_sensor_value,
 )
 from app.models import (
     CropsStatus,
@@ -190,7 +191,6 @@ def get_fields():
         return [r.to_dict() for r in results]
     else:
         data = request.form.to_dict()
-        print(data)
         field_query = update(FieldZone).where(FieldZone.id == data["id"])
         field_query = field_query.values(**data)
         db.session.execute(field_query)
@@ -382,6 +382,12 @@ def add_get_update_option():
                 ).tag("auto_drainage_job")
         else:
             scheduler.clear("auto_drainage_job")
+            start_stop_irrigation_and_drainage(
+                what="drainage",
+                start=False,
+                call_back_fun=update_field_status,
+                call_back_args={"what": "drainage", "status": False},
+            )
 
     elif data["name"] == "irrigation_auto_schedule":
         job = scheduler.get_jobs("auto_irrigation_job")
@@ -392,6 +398,12 @@ def add_get_update_option():
                 ).tag("auto_irrigation_job")
         else:
             scheduler.clear("auto_irrigation_job")
+            start_stop_irrigation_and_drainage(
+                what="irrigation",
+                start=False,
+                call_back_fun=update_field_status,
+                call_back_args={"what": "irrigation", "status": False},
+            )
     db.session.commit()
     return option.to_dict()
 
@@ -422,7 +434,7 @@ def stop_start_irrigation_or_drainage(action, what):
     connected_devices_copy = connected_devices.copy()
     # ToDo: To make sure the message is delivered and there is a callback specified
     if len(connected_devices_copy.keys()) > 0:
-        if send_command(f"{what} {action}",require_return=True,time_out=20):
+        if send_command(f"{what} {action}", require_return=True, time_out=20):
             field_query = update(FieldZone).where(FieldZone.id == data["field_id"])
             if what == "irrigation":
                 field_query = field_query.values(irrigation_status=(action == "start"))
@@ -490,7 +502,6 @@ def refresh_hardware_infor_socket(ws):
 
 
 def add_schedule(task: Schedules):
-    print("Add scheduler called")
     duration = task.duration
     what = task.for_
     schedule_date = task.schedule_date
@@ -502,9 +513,9 @@ def add_schedule(task: Schedules):
     start_in_days = (schedule_date - current_date).days
     stop_in_days = (stop_date - current_date).days
 
-    print(
-        f"New Job Days {stop_in_days}  {start_in_days} start=={schedule_date.strftime(time_format)} stop=={stop_date.strftime(time_format)}"
-    )
+    # print(
+    #     f"New Job Days {stop_in_days}  {start_in_days} start=={schedule_date.strftime(time_format)} stop=={stop_date.strftime(time_format)}"
+    # )
 
     start_in_days = 1 if start_in_days == 0 else start_in_days
     stop_in_days = 1 if stop_in_days == 0 else stop_in_days
@@ -552,7 +563,6 @@ def start_call_back(scheduled_task: Schedules):
         f"{scheduled_task.for_} has started at {scheduled_task.schedule_date} succesfully"
     )
     db.session.add(note)
-    print(f"{scheduled_task.for_}  Started")
     field_query = update(FieldZone).where(FieldZone.id == scheduled_task.field_id)
     if scheduled_task.for_ == "irrigation":
         field_query = field_query.values(irrigation_status=True)
@@ -570,12 +580,10 @@ def is_on(what):
     if what == "irrigation":
         for field in fields:
             if field.irrigation_status:
-                print("Irrigation is On")
                 return True
     else:
         for field in fields:
             if field.drainage_status:
-                print("Drainage is On")
                 return True
     return False
 
@@ -588,38 +596,25 @@ def update_field_status(data):
     else:
         field_query = field_query.values(drainage_status=status)
 
-    print(f"{what} was Updated {status}")
     db.session.execute(field_query)
     db.session.commit()
 
 
 def start_auto_scheduler_checker(what):
-    soil_value = None
-    if len(connected_devices.keys()) > 0:
-        for k, v in connected_devices.items():
-            if "SoilMoisture" in connected_devices[k]["sensors"]:
-                soil_value = connected_devices[k]["sensors"]["SoilMoisture"][
-                    "last_value"
-                ]
-    else:
-        print("No Device Connected")
-
+    soil_value = get_sensor_value("SoilMoisture")
     if soil_value != None:
-        print(f"Value {soil_value}")
         if soil_value < 48:
             # Start irrigation
             if not is_on(what):
-                print(f"is on started {what}")
                 start_stop_irrigation_and_drainage(
                     what=what,
                     start=True,
                     call_back_fun=update_field_status,
                     call_back_args={"what": what, "status": True},
                 )
-        elif soil_value > 80:
+        elif soil_value > 52:
             # Stop irrigation or drainage if already started
             if is_on(what):
-                print(f"is not on Stoped {what}")
                 start_stop_irrigation_and_drainage(
                     what=what,
                     start=False,
@@ -643,7 +638,6 @@ def stop_call_back(scheduled_task: Schedules):
     )
     note = Notifications(f"{scheduled_task.for_} has ended  at {stop_date}")
     db.session.add(note)
-    print(f"{scheduled_task.for_}  Stopped")
     field_query = update(FieldZone).where(FieldZone.id == scheduled_task.field_id)
     if scheduled_task.for_ == "irrigation":
         field_query = field_query.values(irrigation_status=False)
@@ -689,7 +683,7 @@ with app.app_context():
     app_dir = os.path.realpath(os.path.dirname(__file__))
     dataBase_path = os.path.join(app_dir, app.config["DATABASE_FILE"])
     if not os.path.exists(dataBase_path):
-        build_sample_db(app=app, user_datastore=user_datastore)
+        # build_sample_db(app=app, user_datastore=user_datastore)
         pass
 
 

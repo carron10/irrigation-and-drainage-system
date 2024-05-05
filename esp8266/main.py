@@ -39,7 +39,6 @@ moisture = SoilMoistureSensor()
 handler = CommandHandler()
 
 def config_service(options):
-    print(options)
     global config
     for k, v in options.items():
         config.set(k, v)
@@ -49,12 +48,10 @@ def config_service(options):
 
 @app.on("command")
 async def commandsController(data, ws,return_to):
-    print(data)
     """This function will be used to execute commands from the server and send back the results to the event specified by the server"""
     cmd=data['cmd']
     cmd_result=handler.process_command(cmd)
     if return_to!=None:
-        print("Returned to",return_to)
         await ws.send(json.dumps({"event":return_to,"data":cmd_result}))
     
 
@@ -90,7 +87,6 @@ async def on_connect(websocket):
 @app.on("disconnect")
 async def on_disconnect():
     global app
-
     print("Disconnected",app.reconnect)
 
 
@@ -106,7 +102,6 @@ async def send_sensor_statuses_loop():
             if await ws.open():
                 try:
                     humidity_and_tempeture_on=humidity_and_tempeture.isconnected()
-                    print("Sent status-------")
                     await ws.send(
                         json.dumps(
                             {
@@ -122,14 +117,14 @@ async def send_sensor_statuses_loop():
                     )
                     last_sent_time = time.time()
                 except Exception as e:
-                    print("Error[Sending sensor_status]: {}".format(e))
+                    # print("Error[Sending sensor_status]: {}".format(e))
                     break
 
             if last_sent_time is not None:
                 end_time = time.time()
                 elapsed_time = end_time - last_sent_time
                 t_diff = config.get("send_sensor_status_seconds") - elapsed_time
-                print("Waiting----",t_diff,config.get("send_sensor_status_seconds"))
+                # print("Waiting----",t_diff,config.get("send_sensor_status_seconds"))
                 await a.sleep(1 if t_diff < 0 else t_diff)
             else:
                 await a.sleep(1)
@@ -156,7 +151,7 @@ async def send_moisture_loop():
                         )
                         last_sent_time = time.time()
                     except Exception as e:
-                        print("Error[Soil_moisture]: {}".format(e))
+                        # print("Error[Soil_moisture]: {}".format(e))
                         break
                     # end try
 
@@ -197,7 +192,7 @@ async def send_humidity_loop():
                         )
                         last_sent_time = time.time()
                 except Exception as e:
-                    print("Error[Humidity]: {}".format(e))
+                    # print("Error[Humidity]: {}".format(e))
                     break
                 if last_sent_time is not None:
                     end_time = time.time()
@@ -233,7 +228,7 @@ async def send_rainfall_loop():
                         )
                         last_sent_time = time.time()
                     except Exception as e:
-                        print("Error[Sending Rainfall data]: {}".format(e))
+                        # print("Error[Sending Rainfall data]: {}".format(e))
                         break
 
                 if last_sent_time is not None:
@@ -255,7 +250,7 @@ async def connect_and_reconnect():
             if await ws.open() and app.start_time is not None:
                 end_time = time.time()
                 elapsed_time = end_time - app.start_time
-                print("Time elapsed", elapsed_time)
+                # print("Time elapsed", elapsed_time)
                 if elapsed_time > config.get("socket_reconnect_seconds"):
                     await app.disconnect_and_reconnect()
             await a.sleep(5)

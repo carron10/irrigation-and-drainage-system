@@ -1,4 +1,20 @@
 <footer class="footer">
+    <div class="modal fade" id="loaderModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="loaderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0" style="background-color: rgba(255, 255, 255, 0);">
+                <!-- <div class="modal-header">
+                    <h5 class="modal-title" id="loaderModalLabel">Loading...</h5>
+                </div> -->
+                <div class="modal-body text-center">
+                    <button class="btn btn-primary" type="button" disabled>
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span class="sr-only">Waiting...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal" id="alert" aria-hidden="true" style="z-index: 1500 !important;">
         <div class=" modal-dialog modal-dialog-scrollable">
             <div class="modal-content rounded-0">
@@ -216,7 +232,7 @@
                     data: data
                 });
             }
-            
+
         </script>
     </div>
 </footer>

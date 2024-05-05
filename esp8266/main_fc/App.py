@@ -110,7 +110,6 @@ class MainApp:
 
     def on(self, event: str):
         def inner(func):
-            print("Event Added", event)
             if event in self.events:
                 self.events[event].append(func)
             else:
@@ -119,7 +118,6 @@ class MainApp:
         return inner
 
     async def fire(self, event: str, *args, **kwargs):
-        print("Fired ",event)
         if event in self.events:
             for func in self.events[event]:
                 await func(*args, **kwargs)

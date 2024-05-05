@@ -320,11 +320,14 @@
 		})
 		$('.toggle_drainage_checkbox').on("change", function (e) {
 			var on = e.target.checked, action = on ? "start" : "stop",target=$(e.target);
+			$('#loaderModal').modal('show');
 			send(`/api/${action}_drainage`,{'field_id':target.attr("data_field_id")},"POST").done(function (data) {
+				$('#loaderModal').modal('hide');
 			}).fail(function (err) {
 				console.log(err)
 				error(`${err.responseText}`, err.statusText)
 				$(e.target).prop('checked', on ? false : true)
+				$('#loaderModal').modal('hide');
 			})
 
 		})

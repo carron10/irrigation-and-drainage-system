@@ -15,7 +15,6 @@ class WebSocket(Sock):
     def set_disconnected(self, *args, **kwargs):
         connection_time = self.devices[kwargs["devicename"]]
         current_time = time.time()
-        print("Disconnect handle called", (current_time - connection_time))
         if (current_time - connection_time) > 5:
             for func in self.events["disconnect"]:
                 func(*args, **kwargs)
@@ -34,7 +33,6 @@ class WebSocket(Sock):
         self.events = {"connect": [], "disconnect": [], "reconnect": []}
 
         def on_disconnect(*args, **kwargs):
-            print("Disconnect Called")
             self.devices[kwargs["devicename"]] = time.time()
             self.schedule.every().seconds.do(
                 self.set_disconnected, *args, **kwargs
@@ -53,9 +51,8 @@ class WebSocket(Sock):
             while True:
                 data = ws.receive()
                 data = json.loads(data)
-                # print("recevied",data)
                 event = data["event"]
-                print("event.", event)
+                # print("event.", event)
                 if event in self.events:
                     for func in self.events[event]:
                         func(data["data"], ws, *args, **kwargs)
