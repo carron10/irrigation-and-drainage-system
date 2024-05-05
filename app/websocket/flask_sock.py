@@ -62,12 +62,12 @@ class Sock:
             def websocket_route(*args, **kwargs):  # pragma: no cover
                 ws = Server(request.environ, **current_app.config.get(
                     'SOCK_SERVER_OPTIONS', {}))
+                
                 try:
                     f(ws, *args, **kwargs)
                 except ConnectionClosed:
                     if on_disconnect!=None:
                         on_disconnect(*args, **kwargs)
-                    pass
                 try:
                     ws.close()
                 except:  # noqa: E722

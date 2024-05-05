@@ -36,6 +36,8 @@ from app.micro_controllers_ws_server import (
     get_all_connected_sensors,
     websocket,
     start_stop_irrigation_and_drainage,
+    send_command,
+    send_data,
 )
 from app.models import (
     CropsStatus,
@@ -56,12 +58,13 @@ from app.models import (
 from app.websocket.flask_sock import Sock
 from threading import Thread
 import schedule
+from app.utils import generate_unique_string
 
 app = create_app()
 
 
 app.config["SQLALCHEMY_MODEL_BASE_CLASS"] = MyModel
-# scheduler = Scheduler()
+scheduler = Scheduler()
 # app.config["SCHEDULER"] = scheduler
 db.init_app(app)
 
@@ -281,11 +284,11 @@ def pages(page: str):
         for hist_ in data["scheduled_history"]:
             hist_["field"] = FieldZone.query.filter_by(id=hist_["field_id"]).first()
 
-        data["auto_schedule"] ="OFF"
+        data["auto_schedule"] = "OFF"
         auto = Options.query.get({"option_name": "drainage_auto_schedule"})
         if auto:
             data["auto_schedule"] = auto.option_value
-        
+
         fields = FieldZone.query.all()
         data["fields"] = [
             r.to_dict(rules=["-crop_status", "-soil_status", "-schedules"])
@@ -332,17 +335,17 @@ def pages(page: str):
 def add_irrigation_or_drainage_schedule():
     data = request.form.to_dict()
     schedule_date = datetime.datetime.strptime(data["schedule_date"], "%Y-%m-%dT%H:%M")
-    schedule = Schedules(
+    scheduler = Schedules(
         duration=data["duration"],
         field_id=data["field_id"],
         schedule_date=schedule_date,
         for_=data["for_"],
     )
-    db.session.add(schedule)
+    db.session.add(scheduler)
     db.session.commit()
-    add_schedule(schedule)
-    # r=Schedules.query.filter_by(id=schedule.id).first()
-    results = schedule.to_dict(
+    add_schedule(scheduler)
+    # r=Schedules.query.filter_by(id=scheduler.id).first()
+    results = scheduler.to_dict(
         rules=["-field.crop_status", "-field.schedules", "-field.soil_status"]
     )
     return results
@@ -355,7 +358,7 @@ def add_get_update_option():
     Returns:
         dict: Option
     """
-    
+
     if request.method == "GET":
         data = request.args
         return Options.query.get(data["name"]).to_dict()
@@ -368,23 +371,27 @@ def add_get_update_option():
     else:
         option.option_value = data["value"]
         db.session.add(option)
-    
-    is_on=data["value"]=="ON"
-    if data["name"]=="drainage_auto_schedule":
-        job=schedule.get_jobs("auto_drainage_job")
+
+    is_on = data["value"] == "ON"
+    if data["name"] == "drainage_auto_schedule":
+        job = scheduler.get_jobs("auto_drainage_job")
         if is_on:
-            if len(job)<1:
-                schedule.every().seconds.do(start_auto_scheduler_checker,what="drainage").tag("auto_drainage_job")
+            if len(job) < 1:
+                scheduler.every().seconds.do(
+                    start_auto_scheduler_checker, what="drainage"
+                ).tag("auto_drainage_job")
         else:
-            schedule.clear("auto_drainage_job")
-                
-    elif data["name"]=="irrigation_auto_schedule":
-        job=schedule.get_jobs("auto_irrigation_job")
+            scheduler.clear("auto_drainage_job")
+
+    elif data["name"] == "irrigation_auto_schedule":
+        job = scheduler.get_jobs("auto_irrigation_job")
         if is_on:
-            if len(job)<1:
-                schedule.every().seconds.do(start_auto_scheduler_checker,what="irrigation").tag("auto_irrigation_job")
+            if len(job) < 1:
+                scheduler.every().seconds.do(
+                    start_auto_scheduler_checker, what="irrigation"
+                ).tag("auto_irrigation_job")
         else:
-            schedule.clear("auto_irrigation_job")
+            scheduler.clear("auto_irrigation_job")
     db.session.commit()
     return option.to_dict()
 
@@ -412,53 +419,24 @@ def stop_start_irrigation_or_drainage(action, what):
     data = request.form.to_dict()
 
     # Try to send the command to the connected components
-    try:
-        connected_devices_copy = connected_devices.copy()
-        # ToDo: To make sure the message is delivered and there is a callback specified
-        if len(connected_devices_copy.keys()) > 0:
-
-            def start_or_stop():
-                print("=============Start Stop called===========")
-                done = False
-                for k, v in connected_devices_copy.items():
-                    if connected_devices_copy[k]["ws"].connected:
-                        connected_devices_copy[k]["ws"].send(
-                            json.dumps(
-                                {
-                                    "data": {"cmd": f"{what} {action}"},
-                                    "event": "command",
-                                }
-                            )
-                        )
-                        done = True
-                if done:
-                    field_query = update(FieldZone).where(
-                        FieldZone.id == data["field_id"]
-                    )
-                    if what == "irrigation":
-                        field_query = field_query.values(
-                            irrigation_status=(action == "start")
-                        )
-                    else:
-                        field_query = field_query.values(
-                            drainage_status=(action == "start")
-                        )
-                    db.session.execute(field_query)
-                    db.session.commit()
-                    print("Done---")
-                    return schedule.CancelJob
-                else:
-                    print("Not Done---")
-
-            schedule.every(0).seconds.do(start_or_stop)
+    connected_devices_copy = connected_devices.copy()
+    # ToDo: To make sure the message is delivered and there is a callback specified
+    if len(connected_devices_copy.keys()) > 0:
+        if send_command(f"{what} {action}",require_return=True,time_out=20):
+            field_query = update(FieldZone).where(FieldZone.id == data["field_id"])
+            if what == "irrigation":
+                field_query = field_query.values(irrigation_status=(action == "start"))
+            else:
+                field_query = field_query.values(drainage_status=(action == "start"))
+            db.session.execute(field_query)
+            db.session.commit()
+            return "Done"
         else:
-            return "No Controlller is connected, check your components!!", 500
+            return "Failed", 5000
+    else:
+        return "No Controlller is connected, check your components!!", 500
 
-    except Exception as ex:
-        print(ex)
-        return f"{ex}", 5000
-
-    return "Done"
+    # return "Done"
 
 
 @app.route("/api/real_time_ecological_factors")
@@ -512,12 +490,12 @@ def refresh_hardware_infor_socket(ws):
 
 
 def add_schedule(task: Schedules):
-    print("Add schedule called")
+    print("Add scheduler called")
     duration = task.duration
     what = task.for_
     schedule_date = task.schedule_date
     stop_date = schedule_date + timedelta(minutes=duration)
-    ##Add the start schedule in scheduler
+    ##Add the start scheduler in scheduler
     current_date = datetime.datetime.now()
     time_format = "%H:%M"
     # date_format = "%d-%m-%Y %H:%M:%S"
@@ -532,22 +510,22 @@ def add_schedule(task: Schedules):
     stop_in_days = 1 if stop_in_days == 0 else stop_in_days
 
     if start_in_days < 0:
-        ##Notify the users about missed schedule
+        ##Notify the users about missed scheduler
         note = Notifications(
-            f"A schedule  was missed at {schedule_date} , maybe the {what} started but the System was offline"
+            f"A scheduler  was missed at {schedule_date} , maybe the {what} started but the System was offline"
         )
         db.session.add(note)
         db.session.commit()
     else:
-        schedule.every(start_in_days).days.at(schedule_date.strftime(time_format)).do(
+        scheduler.every(start_in_days).days.at(schedule_date.strftime(time_format)).do(
             start_stop_irrigation_and_drainage,
             what=what,
             start=True,
             call_back_fun=start_call_back,
             call_back_args=task,
         )
-        ##Add stop schedule..... the irrigation should stop at schedule_data+duration(mins)
-        schedule.every(stop_in_days).days.at(stop_date.strftime(time_format)).do(
+        ##Add stop scheduler..... the irrigation should stop at schedule_data+duration(mins)
+        scheduler.every(stop_in_days).days.at(stop_date.strftime(time_format)).do(
             start_stop_irrigation_and_drainage,
             what=what,
             start=False,
@@ -560,7 +538,7 @@ def add_schedule(task: Schedules):
 
 
 def start_call_back(scheduled_task: Schedules):
-    """Function to be called after irrigation or drainage is started through an auto schedule,
+    """Function to be called after irrigation or drainage is started through an auto scheduler,
     this function will updated the database on the status of an irrigation
 
     Args:
@@ -588,7 +566,7 @@ def start_call_back(scheduled_task: Schedules):
 # check if irr or drainage is on
 def is_on(what):
     fields = FieldZone.query.all()
-    
+
     if what == "irrigation":
         for field in fields:
             if field.irrigation_status:
@@ -601,18 +579,18 @@ def is_on(what):
                 return True
     return False
 
+
 def update_field_status(data):
-    what,status=data['what'],data['status']
+    what, status = data["what"], data["status"]
     field_query = update(FieldZone).where(FieldZone.name == "Entire Field")
     if what == "irrigation":
         field_query = field_query.values(irrigation_status=status)
     else:
         field_query = field_query.values(drainage_status=status)
-    
+
     print(f"{what} was Updated {status}")
     db.session.execute(field_query)
     db.session.commit()
-
 
 
 def start_auto_scheduler_checker(what):
@@ -620,34 +598,39 @@ def start_auto_scheduler_checker(what):
     if len(connected_devices.keys()) > 0:
         for k, v in connected_devices.items():
             if "SoilMoisture" in connected_devices[k]["sensors"]:
-                soil_value = connected_devices[k]["sensors"]["SoilMoisture"]["last_value"]
+                soil_value = connected_devices[k]["sensors"]["SoilMoisture"][
+                    "last_value"
+                ]
     else:
         print("No Device Connected")
 
-        
     if soil_value != None:
         print(f"Value {soil_value}")
-        if soil_value < 60:
+        if soil_value < 48:
             # Start irrigation
             if not is_on(what):
                 print(f"is on started {what}")
-                start_stop_irrigation_and_drainage(what=what, start=True,call_back_fun=update_field_status,call_back_args={
-                    "what":what,
-                    "status":True
-                })
+                start_stop_irrigation_and_drainage(
+                    what=what,
+                    start=True,
+                    call_back_fun=update_field_status,
+                    call_back_args={"what": what, "status": True},
+                )
         elif soil_value > 80:
-            #Stop irrigation or drainage if already started
+            # Stop irrigation or drainage if already started
             if is_on(what):
                 print(f"is not on Stoped {what}")
-                start_stop_irrigation_and_drainage(what=what, start=False,call_back_fun=update_field_status,call_back_args={
-                    "what":what,
-                    "status":False
-                })
+                start_stop_irrigation_and_drainage(
+                    what=what,
+                    start=False,
+                    call_back_fun=update_field_status,
+                    call_back_args={"what": what, "status": False},
+                )
 
 
 def stop_call_back(scheduled_task: Schedules):
-    """Function to be called after irrigation or drainage is started through an auto schedule,
-    it will then updted the status of the schedule in the DB
+    """Function to be called after irrigation or drainage is started through an auto scheduler,
+    it will then updted the status of the scheduler in the DB
     Args:
         scheduled_task (Schedules): Schedules instance from DB_
 
@@ -679,24 +662,29 @@ def run_pending_schedules():
         for schedul in schedules:
             add_schedule(schedul)
 
-       
         irr_auto = Options.query.get({"option_name": "irrigation_auto_schedule"})
-        irrigation_auto_schedule = irr_auto.option_value=="ON" if irr_auto else False
+        irrigation_auto_schedule = irr_auto.option_value == "ON" if irr_auto else False
         if irrigation_auto_schedule:
-            schedule.every().seconds.do(start_auto_scheduler_checker,what="irrigation").tag("auto_irrigation_job")
+            scheduler.every().seconds.do(
+                start_auto_scheduler_checker, what="irrigation"
+            ).tag("auto_irrigation_job")
         drainage_auto = Options.query.get({"option_name": "drainage_auto_schedule"})
-        drainage_auto_schedule= drainage_auto.option_value=="ON" if drainage_auto else False
+        drainage_auto_schedule = (
+            drainage_auto.option_value == "ON" if drainage_auto else False
+        )
         if drainage_auto_schedule:
-            schedule.every().seconds.do(start_auto_scheduler_checker,what="drainage").tag("auto_drainage_job")
+            scheduler.every().seconds.do(
+                start_auto_scheduler_checker, what="drainage"
+            ).tag("auto_drainage_job")
 
         while True:
-            schedule.run_pending()
+            scheduler.run_pending()
             time.sleep(1)
 
 
 with app.app_context():
     db.create_all()
-    websocket.init_app(application=app, data_base=db)
+    websocket.init_app(application=app, data_base=db, schedule=scheduler)
     ##Remove this to avoid generating sample data
     app_dir = os.path.realpath(os.path.dirname(__file__))
     dataBase_path = os.path.join(app_dir, app.config["DATABASE_FILE"])
@@ -705,6 +693,6 @@ with app.app_context():
         pass
 
 
-# Start schedule on new Thread
+# Start scheduler on new Thread
 mythread = Thread(target=run_pending_schedules)
 mythread.start()

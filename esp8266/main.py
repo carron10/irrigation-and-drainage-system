@@ -48,19 +48,19 @@ def config_service(options):
 
 
 @app.on("command")
-async def commandsController(data, ws):
+async def commandsController(data, ws,return_to):
     print(data)
     """This function will be used to execute commands from the server and send back the results to the event specified by the server"""
     cmd=data['cmd']
-    return_to=data['return'] if "return" in data else None
     cmd_result=handler.process_command(cmd)
-    if return_to is not None:
+    if return_to!=None:
+        print("Returned to",return_to)
         await ws.send(json.dumps({"event":return_to,"data":cmd_result}))
     
 
 
 # @app.on("*")
-# async def debug_data(data, ws):
+# async def debug_data(data, ws,return_to):
 #     "This function is used to receive any data that is sent from the server"
     
 #     global data_from_ws
@@ -76,24 +76,22 @@ async def on_connect(websocket):
     data["connected"] = True
     global ws
     ws = websocket
-    # register sensors here
     sensors = {"Humidity": {}, "Temperature":{}, "RainDrop": {"name":"Rainfall"}, "SoilMoisture": {"name": "Soil Moisture"}}
-
     data = {"event": "register_sensors", "data": sensors}
     if await ws.open():
         await ws.send(json.dumps(data))
 
 
 # @app.on("config")
-# async def on_config(data, ws):
+# async def on_config(data, ws,return_to):
 #     config_service(data)
 
 
-# @app.on("disconnect")
-# async def on_disconnect():
-#     global data
-#     print("Disconnected")
-#     data["connected"] = False
+@app.on("disconnect")
+async def on_disconnect():
+    global app
+
+    print("Disconnected",app.reconnect)
 
 
 async def send_sensor_statuses_loop():
@@ -259,11 +257,7 @@ async def connect_and_reconnect():
                 elapsed_time = end_time - app.start_time
                 print("Time elapsed", elapsed_time)
                 if elapsed_time > config.get("socket_reconnect_seconds"):
-                    if await ws.open():
-                        await ws.close()
-                        print("ws is open: " + str(await ws.open()))
-                    else:
-                        print("closed")
+                    await app.disconnect_and_reconnect()
             await a.sleep(5)
         await a.sleep(2)
 

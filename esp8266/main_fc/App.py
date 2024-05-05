@@ -16,6 +16,8 @@ class MainApp:
         self.events = {"connected": [], "disconnect": [],"*":[]}
         self.config = config
         self.start_time = start_time
+        self.reconnect=False
+        self.connection_trials=0
 
     async def run(self):
         # Try to connect to wifi
@@ -65,8 +67,14 @@ class MainApp:
                 self.start_time = time.time()
                 # Websocket Connected
 
-                if "connected" in self.events:
-                    for func in self.events["connected"]:
+                if self.reconnect:
+                    if "reconnected" in self.events:
+                       for func in self.events["reconnected"]:
+                         await func(self.ws)
+                    self.reconnect=False
+                else:
+                    if "connected" in self.events:
+                       for func in self.events["connected"]:
                         await func(self.ws)
 
                 # Open websocket and wait for data
@@ -86,11 +94,12 @@ class MainApp:
                         await func(data, self.ws)
                     # end try
 
+                    return_to=data['return'] if "return" in data else None
                     # Execute functions registered on this event
                     if event in self.events:
                         for func in self.events[event]:
                             await func(
-                                data["data"] if "data" in data else None, self.ws
+                                data["data"] if "data" in data else None, self.ws,return_to
                             )
 
                     # Wait a moment
@@ -114,3 +123,8 @@ class MainApp:
         if event in self.events:
             for func in self.events[event]:
                 await func(*args, **kwargs)
+    async def disconnect_and_reconnect(self):
+        if await self.ws.open():
+            await self.ws.close()
+            self.reconnect=True
+                    

@@ -67,14 +67,23 @@ class SoilMoistureSensor:
     def read(self):
         min_value=40000
         max_value=65535
-        rain_coverage=((max_value-self.adc.read_u16())/(max_value-min_value))*100
-        return round(rain_coverage, 1)
+        true_value=self.adc.read_u16()
+        rain_coverage=((max_value-true_value)/(max_value-min_value))*100
+        return round(rain_coverage, 1),true_value
     def isconnected(self):
         #ToDo: Write code to detect if this sensor is connected oor not
         value= self.adc.read()
         return not (value==8 or value==9 or value==7)
-        
+    def test(self):
+        return self.adc.read_u16()
         
 
+sensor=SoilMoistureSensor()
+import time
+while True:
+    time.sleep(1)
+    print("Connected",sensor.isconnected())
+    time.sleep(1)
+    print("Perce:",sensor.read())
 
     

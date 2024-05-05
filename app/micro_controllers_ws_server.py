@@ -5,25 +5,31 @@ import time
 import json
 from app.models import User, Role, Notifications, Options, Statistics, Meta, FieldZone
 from flask import Flask
+from schedule import Scheduler
 import schedule
+from app.utils import generate_unique_string
 
 db = None
 app: Flask = None
 
+scheduler: Scheduler = None
+
 
 class InitSock(WebSocket):
-    def __init__(self, application: Flask = None, route="/"):
-        global app
+    def __init__(self, application: Flask = None, route="/", schedule=None):
+        global app, scheduler
+        scheduler = scheduler
         app = application
         self.app = app
         super().__init__(application, route)
 
-    def init_app(self, data_base, application):
+    def init_app(self, data_base, application, schedule=None):
         global db
-        global app
+        global app, scheduler
+        scheduler = schedule
         db = data_base
         app = application
-        return super().init_app(app)
+        return super().init_app(app, scheduler)
 
 
 websocket = InitSock(route="/controller/<devicename>")
@@ -31,7 +37,53 @@ connected_devices = {}
 last_sensors_updates = {}
 
 
+def send_command(command, require_return=False, time_out=7)->bool:
+    return send_data(
+        {"data":{"cmd": command}, "event": "command"},
+        require_return=require_return,
+        time_out=time_out,
+    )
+
+
+def send_data(data, time_out=7, require_return=False)->bool:
+    done = False
+    last_trial = None
+    if require_return:
+        uniq_strin = generate_unique_string()
+        data["return"] = uniq_strin
+        @websocket.on_temp_event(uniq_strin)
+        def return_fun(*args, **kwargs):
+            nonlocal done
+            done = True
+            websocket.remove_event(uniq_strin)
+    def try_send():
+        nonlocal last_trial
+        current_time = time.time()
+        if done:
+            return
+        if last_trial != None:
+            if (current_time - last_trial) > 1:
+                return
+        last_trial = time.time()
+        for k, v in connected_devices.items():
+            if connected_devices[k]["ws"].connected:
+                connected_devices[k]["ws"].send(json.dumps(data))
+    if require_return:
+        i = 0
+        while i<=time_out:
+            if done:
+                return True
+            try_send()
+            time.sleep(0.5)
+            i += 1
+        return False
+    else:
+        try_send()
+    return True
+
+
 def get_all_connected_sensors():
+    global connected_devices
     sensors = {}
     for k, v in connected_devices.items():
         for sensor, v in v["sensors"].items():
@@ -39,16 +91,25 @@ def get_all_connected_sensors():
     return sensors
 
 
+@websocket.on("reconnect")
+def on_reconnect(ws, *args, **kwargs):
+    global connected_devices
+    print("ReConnected")
+    connected_devices[kwargs["devicename"]]["ws"] = ws
+
+
 @websocket.on("connect")
 def print_data(ws, *args, **kwargs):
-    global websocket
+    global websocket, connected_devices
+
+    print("Connected")
     device = {"name": kwargs["devicename"], "ws": ws, "sensors": {}}
     connected_devices[kwargs["devicename"]] = device
     ws.send(
         json.dumps(
             {
                 "data": {
-                    "cmd": "config --socket_send_data_seconds 30 --send_sensor_status_seconds 5"
+                    "cmd": "config --socket_send_data_seconds 10 --send_sensor_status_seconds 5"
                 },
                 "event": "command",
             }
@@ -58,6 +119,7 @@ def print_data(ws, *args, **kwargs):
 
 @websocket.on("disconnect")
 def handle_disconnect(*args, **kwargs):
+    global connected_devices
     if kwargs["devicename"] in connected_devices:
         del connected_devices[kwargs["devicename"]]
 
@@ -111,8 +173,9 @@ def start_stop_irrigation_and_drainage(
         start (bool, optional): start or stop . Defaults to False.
         call_back_fun (_type_, optional): A function to call back after sending the command. Defaults to None.
     """
+    global scheduler
     action = "start" if start else "stop"
-    
+
     stop = False
     ##Ensure the  command is sent
     while not stop:
@@ -129,14 +192,13 @@ def start_stop_irrigation_and_drainage(
                                 }
                             )
                         )
-                    stop=True
+                        stop = True
+
         except:
             print("Waiting for components to connect")
         time.sleep(1)
 
     if call_back_fun:
         call_back_fun(call_back_args)
-        
+
     return schedule.CancelJob
-
-
