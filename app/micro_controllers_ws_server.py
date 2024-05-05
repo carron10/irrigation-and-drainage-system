@@ -44,6 +44,20 @@ def send_command(command, require_return=False, time_out=7) -> bool:
         time_out=time_out,
     )
 
+def get_drainage_status(time_out=7):
+    """To get drainage status from the micro controller
+
+    Args:
+        time_out (int, optional): time to wait for results. Defaults to 7.
+
+    Returns:
+        int: 1 or 0
+    """
+    return send_command("drainage status",require_return=True,time_out=time_out)
+
+def get_irrigation_status( time_out=7):
+    return send_command("irrigation status",require_return=True,time_out=time_out)
+
 def get_sensor_value(sensor_name):
     if len(connected_devices.keys()) > 0:
         for k, v in connected_devices.items():
@@ -105,7 +119,10 @@ def get_all_connected_sensors():
 @websocket.on("reconnect")
 def on_reconnect(ws, *args, **kwargs):
     global connected_devices
-    connected_devices[kwargs["devicename"]]["ws"] = ws
+    try:
+        connected_devices[kwargs["devicename"]]["ws"] = ws
+    except:
+        on_connect(ws,*args, **kwargs)
 
 
 @websocket.on("connect")

@@ -19,6 +19,15 @@ class IrrigationService:
         print("Irrigation Start")
         self.relay_pin.value(1)
         return True
+    def status(self, options=None):
+        """Check if irrigation is on or off
+
+        Args:
+            options (dict):Should be None
+        """
+        return self.relay_pin.value()
+      
+
 
     def stop(self, options=None):
         """To stop the irrigation
@@ -43,6 +52,13 @@ class DrainageService:
         print("Drainage Started")
         self.relay_pin.value(1)
         return True
+    def status(self, options=None):
+        """Check if drainage is on or off
+
+        Args:
+            options (dict):Should be None
+        """
+        return self.relay_pin.value()
     def stop(self,options=None):
         #Todo: Add code to stop drainage--- this is will be switch a pin Off
         print("Drainage Stopped")
