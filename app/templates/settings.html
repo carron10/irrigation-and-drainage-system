@@ -47,7 +47,9 @@
 						<div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.8);"
 							id="user-accounts" role="tabpanel" titleledby="general1-list">
 							<div class="d-flex justify-content-end p-2">
-									<button class="btn btn-sm btn-success add-new-user">Add New User</button>
+
+								<button type="button" class="btn btn-sm btn-success " data-bs-toggle="modal"
+									data-bs-target="#addUserModal">Add New User</button>
 							</div>
 							<table class="table table-striped">
 								<thead>
@@ -62,7 +64,7 @@
 								</thead>
 								<tbody>
 									{%for user in users%}
-									<tr>
+									<tr id="{{user.id}}">
 										<td scope="row">{{user.id}}</td>
 										<td>{{user.first_name}}</td>
 										<td>{{user.last_name}}</td>
@@ -72,7 +74,12 @@
 											<span>{{role.name}} ,</span>
 											{%endfor%}
 										</td>
-										<td><i data-feather="trash-2"></i> <i data-feather="external-link"></i></td>
+										<td>
+											<a role="button" id="delete-user" data-cf-user-id="{{user.id}}" data-cf-user-email="{{user.email}}"><i
+													data-feather="trash-2"></i></a>
+											<a href="/user/{{user.email}}/{{user.id}}"><i
+													data-feather="external-link"></i></a>
+										</td>
 									</tr>
 									{%endfor%}
 								</tbody>
@@ -108,7 +115,8 @@
 							<div class="container px-lg-6 mx-auto d-table h-100">
 								<div class="d-table-cell align-middle">
 									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
-										<form class="needs-validation" action="/api/crops_data" method="post" novalidate>
+										<form class="needs-validation" action="/api/crops_data" method="post"
+											novalidate>
 											<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
 											<label for="id">Field Zone</label>
 											<select name="id" id="crop_field_type" class=" form-select form-select-sm"
@@ -212,6 +220,50 @@
 						</div>
 					</div>
 				</div>
+				<div class="modal" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel"
+					aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+					<div class="modal-dialog modal-lg modal-dialog-centered">
+						<div class="modal-content rounded-0">
+							<div class="modal-header">
+								<h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal"
+									aria-label="Close"></button>
+							</div>
+							<div class="modal-body ">
+								<!-- User registration form -->
+								<form id="addUserForm" class="needs-validation">
+									<div class="mb-3">
+										<label for="first_name" class="form-label">First Name</label>
+										<input type="text" class="form-control" id="first_name" name="firstName"
+											required>
+									</div>
+									<div class="mb-3">
+										<label for="lastName" class="form-label">Last Name</label>
+										<input type="text" class="form-control" id="last_name" name="last_name"
+											required>
+									</div>
+
+									<div class="mb-3">
+										<label for="email" class="form-label">email</label>
+										<input type="email" class="form-control" id="email" name="email" required>
+									</div>
+									<div class="mb-3">
+										<label for="userRole" class="form-label">User Role</label>
+										<select class="form-select" id="userRole" name="userRole" required>
+											<option value="admin">Admin</option>
+											<option value="user">User</option>
+										</select>
+									</div>
+									<!-- Add more fields as needed -->
+								</form>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+								<button type="button" class="btn btn-primary" onclick="addUser()">Add User</button>
+							</div>
+						</div>
+					</div>
+				</div>
 			</main>
 
 			{%include "footer.html"%}
@@ -222,8 +274,8 @@
 
 
 	<script>
-		var fields = {{fields| safe }};
-		var connected_devices = {{connected_devices| safe}};
+		var fields = {{ fields| safe }};
+		var connected_devices = {{ connected_devices| safe}};
 		document.addEventListener("DOMContentLoaded", function () {
 			var j = 0, data = [];
 			fields.forEach(function (v, i, e) {
@@ -231,52 +283,44 @@
 				$("#soil_field_type").append("<option value='" + v.id + "'>" + v.name + "</option>");
 				$("#crop_field_type").append("<option value='" + v.id + "'>" + v.name + "</option>");
 				if (j == 0) {
-					if(v.crop_status!=null){
+					if (v.crop_status != null) {
 						$("[name='crop_type']").val(v.crop_status.crop_type)
 						$("[name='crop_name']").val(v.crop_status.crop_name)
 						$("[name='crop_age']").val(v.crop_status.crop_age)
 					}
-					if(v.soil_status!=null){
-					$("[name='soil_type']").val(v.soil_status.soil_type)
-					$("[name='gradient']").val(v.soil_status.gradient)
-					$("[name='soil_texture']").val(v.soil_status.soil_texture)
+					if (v.soil_status != null) {
+						$("[name='soil_type']").val(v.soil_status.soil_type)
+						$("[name='gradient']").val(v.soil_status.gradient)
+						$("[name='soil_texture']").val(v.soil_status.soil_texture)
 					}
 				}
 				j++;
 			})
 			$("#crop_field_type").change(function () {
 				var i = $(this).val();
-				if(data[i].crop_status!=null){
+				if (data[i].crop_status != null) {
 					$("[name='crop_type']").val(data[i].crop_status.crop_type)
 					$("[name='crop_name']").val(data[i].crop_status.crop_name)
 					$("[name='crop_age']").val(data[i].crop_status.crop_age)
-			   }else{
-				$("[name='crop_type']").val("")
-				$("[name='crop_name']").val("")
-				$("[name='crop_age']").val("")
-			}
+				} else {
+					$("[name='crop_type']").val("")
+					$("[name='crop_name']").val("")
+					$("[name='crop_age']").val("")
+				}
 			})
 			$("#soil_field_type").change(function () {
 				var i = $(this).val();
-				if(data[i].soil_status!=null){
-				$("[name='soil_type']").val(data[i].soil_status.soil_type)
-				$("[name='gradient']").val(data[i].soil_status.gradient)
-				$("[name='soil_texture']").val(data[i].soil_status.soil_texture)
-			   }else{
-				$("[name='soil_type']").val("")
-				$("[name='gradient']").val("")
-				$("[name='soil_texture']").val("")
-			}
+				if (data[i].soil_status != null) {
+					$("[name='soil_type']").val(data[i].soil_status.soil_type)
+					$("[name='gradient']").val(data[i].soil_status.gradient)
+					$("[name='soil_texture']").val(data[i].soil_status.soil_texture)
+				} else {
+					$("[name='soil_type']").val("")
+					$("[name='gradient']").val("")
+					$("[name='soil_texture']").val("")
+				}
 			})
-			
 
-			function send(url, data, method) {
-				return $.ajax({
-					url: url,
-					method: method,
-					data: data
-				});
-			}
 			function formatDate(date) {
 				var formattedDate = date.toLocaleDateString("en-GB", {
 					day: "numeric",
@@ -318,14 +362,14 @@
 				}
 			}
 			displayDevices(connected_devices)
-			
+
 			$(".refresh").click(function () {
 				send("/api/refresh_hardware_infor").done(function (data) {
 					displayDevices(data)
 				}).fail(function (e) {
 					console.log(e)
 					error("Failed To Refresh")
-					
+
 				})
 			})
 
@@ -367,6 +411,28 @@
 			})
 		})
 
+		$(function () {
+			$("#delete-user").click(function (e) {
+				var user_id = $(e.currentTarget).attr("data-cf-user-id"), user_email = $(e.currentTarget).attr("data-cf-user-email")
+				send(`user/${user_email}/${user_id}`, {}, "DELETE").done(function (data) {
+				}).fail(function (err) {
+					error(`${err.responseText}`, err.statusText)
+				})
+			})
+		})
+		function addUser() {
+			var form = document.getElementById("addUserForm")
+			if (form.checkValidity() === true) {
+				var user_data = getFormData("addUserForm")
+				console.log(user_data)
+				send("/api/add_new_user", user_data, "POST").done(function (data) {
+
+				}).fail(function (err) {
+					error(`${err.responseText}`, err.statusText)
+				})
+			}
+			$(form).addClass("was-validated");
+		}
 	</script>
 
 </body>

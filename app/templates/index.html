@@ -28,12 +28,13 @@
 							<div class="d-flex align-items-end row">
 								<div class="col-sm-7">
 									<div class="card-body">
-										<h5 class="card-title text-primary h4">👋Welcome Back, {% if current_user.first_name -%}
+										<h5 class="card-title text-primary h4">👋Welcome Back, {% if
+											current_user.first_name -%}
 											{{ current_user.first_name }}
 											{% else -%}
 											{{ current_user.email }}
 											{%- endif %}👨‍💻</h5>
-										
+
 									</div>
 								</div>
 								<div class="col-sm-5 text-center text-sm-left d-none d-sm-inline-block">
@@ -48,17 +49,22 @@
 					<div class="row">
 						<div class="col-xl-4 col-xxl-7 pt-2">
 							<div class="card flex-fill w-100">
-								<!-- <div class="card-header">
-
-									<h5 class="card-title mb-0">Irrigation for the last week</h5>
-								</div> -->
-								<div class="card-body d-flex w-100">
+								<div class="card-header m-0 p-1">
+									<div class="h5 float-start">Irrigation</div>
+									<select class=" float-end" id="data-selector">
+										<option value="weekly">Weekly</option>
+										<option value="monthly">Monthly</option>
+										<option value="yearly">Yearly</option>
+									</select>
+								</div>
+								<div class="card-body d-flex w-100 p-0 m-0">
 									<div class="align-self-center chart chart-sm">
 										<canvas id="irrigation-bar-chart"></canvas>
 									</div>
 								</div>
 							</div>
 						</div>
+
 						<div class="col-xl-4 col-xxl-7 pt-2">
 							<div class="card flex-fill w-100">
 								<!-- <div class="card-header">
@@ -84,36 +90,36 @@
 								</div>
 							</div>
 						</div>
-					</div>
 
-					<div class="row pt-3">
 
-						<div class="col-12 col-md-12 col-xxl-6 d-flex order-3 order-xxl-2">
-							<div class="card flex-fill w-100">
-								<div class="card-header">
+						<div class="row pt-3">
 
-									<h5 class="card-title mb-0">Recent Notification</h5>
-								</div>
-								<div class="card-body px-4">
-									<table class=" table">
-										
-										<tbody>
-											{% for note in notifications%}
-											<tr>
-												<td>{{note.notification_category}}</td>
-												<td>{{note.time_created}}</td>
-												<td>{{note.message}}</td>
-											</tr>
-											{%endfor%}
-										</tbody>
-									</table>
+							<div class="col-12 col-md-12 col-xxl-6 d-flex order-3 order-xxl-2">
+								<div class="card flex-fill w-100">
+									<div class="card-header">
+
+										<h5 class="card-title mb-0">Recent Notification</h5>
+									</div>
+									<div class="card-body px-4">
+										<table class=" table">
+
+											<tbody>
+												{% for note in notifications%}
+												<tr>
+													<td>{{note.notification_category}}</td>
+													<td>{{note.time_created}}</td>
+													<td>{{note.message}}</td>
+												</tr>
+												{%endfor%}
+											</tbody>
+										</table>
+									</div>
 								</div>
 							</div>
 						</div>
+
+
 					</div>
-
-
-				</div>
 			</main>
 
 			{%include "footer.html"%}
@@ -167,7 +173,7 @@
 						data: [54, 67, 41, 55, 62, 45, 55],
 						pointRadius: 0,
 					}, {
-						label:"Line Slope",
+						label: "Line Slope",
 						pointRadius: 0,
 						borderColor: "green",
 						data: calculateLineFunction({

@@ -1,2 +1,8 @@
-# cd C:/Users/dell/Documents/irrigation-and-drainage-system-main
-source ./v*/S*/a*e && py run.py
+#activate the enviroment
+source ./v*/S*/a*e 
+
+#Run tests
+# python -m unittest discover -v -s tests/
+
+#Run app
+python run.py

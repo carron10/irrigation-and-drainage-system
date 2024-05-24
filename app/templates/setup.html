@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% include 'head.html' %}
+    <style>
+        /* Set background image to cover the entire viewport */
+        .wrapper {
+            /* background-image: url('path_to_your_background_image.jpg'); */
+            background-size: cover;
+            background-position: center;
+            height: 100vh; /* Set height to viewport height */
+        }
+
+        /* Add your custom styles here */
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-6 offset-md-3">
+                    <div class="card rounded-0">
+                        <div class="card-body">
+                            <h2 class="card-title h4 text-center mb-4">Welcome to the Irrigation Automation System
+                            </h2>
+                            <hr>
+                            <p class="card-text">Let's get started by setting up your system. Please provide the
+                                following information:</p>
+                            {%for msg in msgs%}
+                                <div class=" alert alert-{{msg.type}} m-0 mb-1 p-1 text-center fw-bold">
+                                    <div>
+                                        {{msg.msg}}
+                                    </div>
+                                </div>
+                            {%endfor%}
+                            <form id="setupForm" action="/setup" method="post">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control form-control-sm" id="first_name" name="first_name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control form-control-sm" id="last_name" name="last_name" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control form-control-sm" id="email" name="email" required>
+                                    <small class="form-text text-muted">We'll send important updates and notifications
+                                        to this email address.</small>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="farmName" class="form-label">Farm Name</label>
+                                        <input type="text" class="form-control form-control-sm" id="farmName" name="farmName" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="location" class="form-label">Location</label>
+                                        {% include("countries.html")%}
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    
+                                    <div class="col-md-6">
+                                        <label for="password" class="form-label">Password</label>
+                                        <input type="password" class="form-control form-control-sm" id="password" name="password" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="confirmpassword" class="form-label">Confirm Password</label>
+                                        <input type="password" class="form-control form-control-sm" id="confirmpassword" name="confirmpassword" required>
+                                    </div>
+                                </div>
+                                <!-- Add more fields as needed -->
+                                <button type="submit" class="btn btn-primary">Continue</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

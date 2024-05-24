@@ -1,7 +1,10 @@
-from app.app import app
+from app.app import app,thread_running,mythread,run_pending_schedules
+from threading import Thread
 from app.models import db
 import logging
-monitored_folders = ['app', 'lib']
-app.logger.setLevel(logging.ERROR)
 if __name__ == "__main__":
-    app.run(debug=True,host="0.0.0.0",use_reloader=False)
+    # Start scheduler on new Thread
+    mythread = Thread(target=run_pending_schedules)
+    thread_running = True
+    mythread.start()
+    app.run(debug=True,host="0.0.0.0",port=5000)

@@ -115,16 +115,6 @@ def get_all_connected_sensors():
             sensors[sensor] = v
     return sensors
 
-
-@websocket.on("reconnect")
-def on_reconnect(ws, *args, **kwargs):
-    global connected_devices
-    try:
-        connected_devices[kwargs["devicename"]]["ws"] = ws
-    except:
-        on_connect(ws,*args, **kwargs)
-
-
 @websocket.on("connect")
 def on_connect(ws, *args, **kwargs):
     global websocket, connected_devices
@@ -141,6 +131,12 @@ def on_connect(ws, *args, **kwargs):
         )
     )
 
+@websocket.on("reconnect")
+def on_reconnect(ws, *args, **kwargs):
+    try:
+        connected_devices[kwargs["devicename"]]["ws"] = ws
+    except:
+        on_connect(ws,*args, **kwargs)
 
 @websocket.on("disconnect")
 def handle_disconnect(*args, **kwargs):

@@ -50,12 +50,23 @@ class WebSocket(Sock):
 
             while True:
                 data = ws.receive()
-                data = json.loads(data)
-                event = data["event"]
-                print("event.", event)
-                if event in self.events:
-                    for func in self.events[event]:
-                        func(data["data"], ws, *args, **kwargs)
+                try:
+                    data = json.loads(data)
+                    event = data["event"]
+                    print("event.", event)
+                    if event in self.events:
+                        for func in self.events[event]:
+                            func(data["data"], ws, *args, **kwargs)
+                except Exception as e:
+                    ws.send(
+                        json.dumps(
+                            {
+                                "data":"Error in the data sent",
+                                "event": "error",
+                            }
+                        )
+                    )
+                    print(f"Error occured {e}")
 
     def on(self, event: str):
         """The decorator to listen to events:

@@ -81,7 +81,7 @@
                                             {{ render_field_with_errors(login_user_form.password,placeholder="Enter your password") }}
 
 											<small>
-												<a href="/reset">Forgot password?</a>
+												<a href="{{ url_for_security('forgot_password') }}">Forgot password?</a>
 											</small>
 										</div>
 										<div>
@@ -93,7 +93,6 @@
                                             style="background-color: green; border-color: green;") }}
                                         </div>
                                     </form>
-            <p>Not yet signed up? Please <a href="{{ url_for('security.register') }}">register for an account</a>.</p>
 
                                 </div>
                             </div>

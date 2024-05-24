@@ -26,8 +26,8 @@ class MyModel(db.Model):
         return f"{TABLE_PREFIX}{cls.__name__}".lower()
 
 
-#Schedule table
-class Schedules(MyModel,SerializerMixin):
+# Schedule table
+class Schedules(MyModel, SerializerMixin):
     """To store irrigation and drainage Schedules
 
     Args:
@@ -35,22 +35,23 @@ class Schedules(MyModel,SerializerMixin):
         SerializerMixin (_type_): _description_
     """
     id = Column(Integer(), primary_key=True)
-    duration=Column(Integer,nullable=False)
-    time_created=Column(DateTime(timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
-    schedule_date=Column(DateTime(timezone=True))
-    field_id=Column(Integer, db.ForeignKey(f"{TABLE_PREFIX}fieldzone.id"),nullable=False)
-    status=Column(Boolean,default=False) #Executed or Not
-    for_=Column(String,nullable=False) #For irrigation or drainage
-    type=Column(String,default="Manual")
+    duration = Column(Integer, nullable=False)
+    time_created = Column(DateTime(
+        timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
+    schedule_date = Column(DateTime(timezone=True))
+    field_id = Column(Integer, db.ForeignKey(
+        f"{TABLE_PREFIX}fieldzone.id"), nullable=False)
+    status = Column(Boolean, default=False)  # Executed or Not
+    for_ = Column(String, nullable=False)  # For irrigation or drainage
+    type = Column(String, default="Manual")
 
     # for
-    
 
 
 # Role Model
 class Role(MyModel, RoleMixin):
     id = Column(Integer(), primary_key=True)
-    name = Column(String(80), unique=True)
+    name = Column(String(80), unique=True, default="user")
     description = Column(String(255))
 
 
@@ -94,22 +95,25 @@ class Meta(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
     for_ = Column(String(100), nullable=False)
     meta_key = Column(String(100))
-    time_created = Column(DateTime(timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
+    time_created = Column(DateTime(
+        timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
     meta_value = Column(Text, nullable=False)
 
 
-##Options, to store settings
+# Options, to store settings
 class Options(MyModel, SerializerMixin):
-    option_name = Column(String(100), nullable=False, unique=True,primary_key=True)
+    option_name = Column(String(100), nullable=False,
+                         unique=True, primary_key=True)
     option_value = Column(Text)
 
 
-##From sensors
+# From sensors
 class Statistics(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
     for_ = Column(String(100), nullable=False)
     history_type = Column(String(100))
-    time_created = Column(DateTime(timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
+    time_created = Column(DateTime(
+        timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
     value = Column(Text, nullable=False)
 
 
@@ -122,7 +126,7 @@ class FieldZone(MyModel, SerializerMixin):
     crop_status = relationship("CropsStatus", backref="field", uselist=False)
     schedules = relationship("Schedules", backref="field")
     soil_status = relationship("SoilStatus", backref="field", uselist=False)
-   
+
 
 class SoilStatus(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
@@ -147,19 +151,23 @@ class CropsStatus(MyModel, SerializerMixin):
 # To store history for irrigation/drainage/rainfall/ and etc
 class History(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
-    for_ = Column(String(100), nullable=False)  ##Irrigation or drainage
-    time_created = Column(DateTime(timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
-    value = Column(Integer,nullable=False)
-    start_time = Column(DateTime(timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
+    for_ = Column(String(100), nullable=False)  # Irrigation or drainage
+    time_created = Column(DateTime(
+        timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
+    value = Column(Integer, nullable=False)
+    start_time = Column(DateTime(timezone=True),
+                        server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
     end_time = Column(DateTime(timezone=True))
-    time_spent = Column(Integer,nullable=False)
-    field_id = Column(Integer,db.ForeignKey(f"{TABLE_PREFIX}fieldzone.id"),nullable=False, ) 
+    time_spent = Column(Integer, nullable=False)
+    field_id = Column(Integer, db.ForeignKey(
+        f"{TABLE_PREFIX}fieldzone.id"), nullable=False, )
 
 
 # Model/Table for notifications
 class Notifications(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
-    time_created = Column(DateTime(timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
+    time_created = Column(DateTime(
+        timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
     status = Column(Boolean(), default=False)
     message = Column(Text(), nullable=False)
     notification_category = Column(String(100), default="Alert")
@@ -177,119 +185,108 @@ def build_sample_db(app, user_datastore):
 
     import random
     import string
-
-    db.drop_all()
     db.create_all()
+    # Generate history data
+    for i in range(7):
+        for j in range(24 * 2):
+            date_ = datetime(2024, 3, 21, math.floor(j / 2), (j % 2) * 30)
+            hist_ = (
+                Statistics(
+                    for_="RainDrop",
+                    history_type="sensor_update",
+                    value=randint(50, 90),
+                    time_created=date_,
+                ),
+                Statistics(
+                    for_="Humidity",
+                    history_type="sensor_update",
+                    value=randint(50, 90),
+                    time_created=date_,
+                ),
+                Statistics(
+                    for_="Temperature",
+                    history_type="sensor_update",
+                    value=randint(50, 90),
+                    time_created=date_,
+                ),
+                Statistics(
+                    for_="SoilMoisture",
+                    history_type="sensor_update",
+                    value=randint(50, 90),
+                    time_created=date_,
+                ),
+            )
+            db.session.add_all(hist_)
 
-    with app.app_context():
-        user_role = Role(name="user")
-        super_user_role = Role(name="Admin")
-        db.session.add(user_role)
-        db.session.add(super_user_role)
-        db.session.commit()
-        # Generate history data 
-        for i in range(7):
-            for j in range(24 * 2):
-                date_ = datetime(2024, 3, 21, math.floor(j / 2), (j % 2) * 30)
-                hist_ = (
-                    Statistics(
-                        for_="RainDrop",
-                        history_type="sensor_update",
-                        value=randint(50, 90),
-                        time_created=date_,
-                    ),
-                    Statistics(
-                        for_="Humidity",
-                        history_type="sensor_update",
-                        value=randint(50, 90),
-                        time_created=date_,
-                    ),
-                    Statistics(
-                        for_="Temperature",
-                        history_type="sensor_update",
-                        value=randint(50, 90),
-                        time_created=date_,
-                    ),
-                    Statistics(
-                        for_="SoilMoisture",
-                        history_type="sensor_update",
-                        value=randint(50, 90),
-                        time_created=date_,
-                    ),
-                )
-                db.session.add_all(hist_)
+    # Generate irrigation history
 
+    fields = (
+        FieldZone(name="Entire Field"),
+        FieldZone(name="50CM Downhill from center"),
+        FieldZone(name="25cm Pivot"),
+        FieldZone(name="50m Uphill From Center"),
+    )
+    db.session.add_all(fields)
+    db.session.commit()
+    for task in ["irrigation", "drainage"]:
+        for i in range(1, 7):
+            end_ = datetime(2024, i+randint(2, 5), i,
+                            i, (i*4)+randint(0, 30))
+            _history = History(field_id=fields[randint(0, 3)].id, for_=task, value=randint(
+                100, 500), time_spent=randint(2, 6), end_time=end_)
+            db.session.add(_history)
 
-        ###Generate irrigation history
-        
-            
-        fields = (
-            FieldZone(name="Entire Field"),
-            FieldZone(name="50CM Downhill from center"),
-            FieldZone(name="25cm Pivot"),
-            FieldZone(name="50m Uphill From Center"),
+    soil_statuses = (
+        SoilStatus(
+            field=fields[0],
+            soil_type="Clay Soil",
+            soil_texture="Clay",
+            gradient="2M",
+        ),
+        SoilStatus(
+            field=fields[1],
+            soil_type="Loam Soil",
+            soil_texture="loamy",
+            gradient="3M",
+        ),
+        SoilStatus(
+            field=fields[2],
+            soil_type="Sand Soil",
+            soil_texture="Sandy",
+            gradient="4M",
+        ),
+        SoilStatus(
+            field=fields[3],
+            soil_type="Clay Soil",
+            soil_texture="Clay",
+            gradient="2M",
+        ),
+    )
+
+    for i in range(20):
+        irr_hist = History(
+            for_="irrigation",
+            value=randint(100,300),
+            start_time=1,
+            end_time=1,
+            time_spent=1,
+            # field_id=1,
         )
-        db.session.add_all(fields)
-        db.session.commit()
-        for task in ["irrigation","drainage"]:
-            for i in range(1,7):
-                end_=datetime(2024,i+randint(2,5),i,i,(i*4)+randint(0,30))
-                _history=History(field_id=fields[randint(0,3)].id,for_=task,value=randint(100,500),time_spent=randint(2,6),end_time=end_)
-                db.session.add(_history)
-            
-            
-            
-        soil_statuses = (
-            SoilStatus(
-                field=fields[0],
-                soil_type="Clay Soil",
-                soil_texture="Clay",
-                gradient="2M",
-            ),
-            SoilStatus(
-                field=fields[1],
-                soil_type="Loam Soil",
-                soil_texture="loamy",
-                gradient="3M",
-            ),
-            SoilStatus(
-                field=fields[2],
-                soil_type="Sand Soil",
-                soil_texture="Sandy",
-                gradient="4M",
-            ),
-            SoilStatus(
-                field=fields[3],
-                soil_type="Clay Soil",
-                soil_texture="Clay",
-                gradient="2M",
-            ),
+        drainage_hist = History(
+            for_="irrigation",
+            value=randint(100,300),
+            start_time=1,
+            end_time=1,
+            time_spent=1,
+            # field_id=1,
         )
+        db.session.add(drainage_hist)
+        db.session.add(irr_hist)
 
-        # for i in range(20):
-        #     irr_hist = History(
-        #         for_="irrigation",
-        #         value=randint(100,300),
-        #         start_time=1,
-        #         end_time=1,
-        #         time_spent=1,
-        #         # field_id=1,
-        #     )
-        #     drainage_hist = History(
-        #         for_="irrigation",
-        #         value=randint(100,300),
-        #         start_time=1,
-        #         end_time=1,
-        #         time_spent=1,
-        #         # field_id=1,
-        #     )
-        #     db.session.add(drainage_hist)
-        #     db.session.add(irr_hist)
-            
-        db.session.add_all(soil_statuses)
-        crop_statuses = CropsStatus(
-            field=fields[0], crop_type="Just", crop_name="Maize", crop_age=20
-        )
-        db.session.add(crop_statuses)
-        db.session.commit()
+    db.session.add_all(soil_statuses)
+    crop_statuses = CropsStatus(
+        field=fields[0], crop_type="Just", crop_name="Maize", crop_age=20
+    )
+    db.session.add(crop_statuses)
+    db.session.commit()
     return

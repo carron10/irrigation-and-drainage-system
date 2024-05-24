@@ -3,7 +3,6 @@ from datetime import timedelta
 import json
 import os
 import time
-
 from schedule import Scheduler
 import psycopg2
 from flask import (
@@ -60,30 +59,30 @@ from app.websocket.flask_sock import Sock
 from threading import Thread
 import schedule
 from app.utils import generate_unique_string
+from app.user_routes import user_bp,security,user_datastore
+from flask_mailman import Mail
 
 app = create_app()
 
+app.register_blueprint(user_bp)
+
+security.init_app(app)
 
 app.config["SQLALCHEMY_MODEL_BASE_CLASS"] = MyModel
 scheduler = Scheduler()
 # app.config["SCHEDULER"] = scheduler
 db.init_app(app)
 
-# Security
-user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+mail = Mail(app)
 
 
-# extend fields for registration form
-class ExtendedRegisterForm(RegisterForm):
-    first_name = StringField("First Name", [Required()])
-    last_name = StringField("Last Name", [Required()])
-
-
-# security
-security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
-#######Setup url route#####
-
-
+@app.before_request
+def before_request_handler():
+    if request.path == '/login' and request.method == 'GET':
+        if User.query.count() == 0:
+            # If no users exist, redirect to setup route
+            return redirect(url_for('user_bp.setup'))
+        
 # Function to execute when one visit /api/notifications
 @app.route("/api/notifications", methods=["GET"])
 def get_notifications():
@@ -115,8 +114,8 @@ def get_users():
     return [r.to_dict(rules=["-password"]) for r in results]
 
 
-@app.route("/api/history", methods=["GET"])
-def get_history():
+@app.route("/api/history/<for_>", methods=["GET"])
+def get_history(for_):
     """Return sensoers reading history
 
     Returns:
@@ -198,11 +197,15 @@ def get_fields():
         return redirect("/settings")
 
 
+@app.route('/hello')
+def hello():
+    return jsonify({'message': 'Hello, World!'})
+
 ##Home page
 @app.route("/", methods=["GET"])
 @app.route("/index.html", methods=["GET"])
-# @login_required
-def hello():
+@login_required
+def index():
     return pages("index")
 
 
@@ -220,8 +223,9 @@ def docs(filename):
 
 # Other pages
 @app.route("/<page>", methods=["GET"])
-# @login_required
+@login_required
 def pages(page: str):
+    print("shh")
     """To get a page... any page which maches <page>.html
     ===ToDo: Separate thes pages to have each with its own route..
      Args:
@@ -647,8 +651,9 @@ def stop_call_back(scheduled_task: Schedules):
     db.session.commit()
     return schedule.CancelJob
 
-
 def run_pending_schedules():
+    global thread_running
+    print("Hello world")
     """To run Irrigation, Drainage many more schedules"""
     ##Get schedules that are in database a run add them on
     with app.app_context():
@@ -656,13 +661,14 @@ def run_pending_schedules():
         for schedul in schedules:
             add_schedule(schedul)
 
-        irr_auto = Options.query.get({"option_name": "irrigation_auto_schedule"})
+        irr_auto =db.session.query(Options).filter(Options.option_name == "irrigation_auto_schedule").first()
+        # Options.query.get({"option_name": "irrigation_auto_schedule"})
         irrigation_auto_schedule = irr_auto.option_value == "ON" if irr_auto else False
         if irrigation_auto_schedule:
             scheduler.every().seconds.do(
                 start_auto_scheduler_checker, what="irrigation"
             ).tag("auto_irrigation_job")
-        drainage_auto = Options.query.get({"option_name": "drainage_auto_schedule"})
+        drainage_auto = db.session.query(Options).filter(Options.option_name == "drainage_auto_schedule").first() #Options.query.get({"option_name": "drainage_auto_schedule"})
         drainage_auto_schedule = (
             drainage_auto.option_value == "ON" if drainage_auto else False
         )
@@ -671,7 +677,8 @@ def run_pending_schedules():
                 start_auto_scheduler_checker, what="drainage"
             ).tag("auto_drainage_job")
 
-        while True:
+        while thread_running:
+            print("run pend")
             scheduler.run_pending()
             time.sleep(1)
 
@@ -679,14 +686,23 @@ def run_pending_schedules():
 with app.app_context():
     db.create_all()
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
-    ##Remove this to avoid generating sample data
-    app_dir = os.path.realpath(os.path.dirname(__file__))
-    dataBase_path = os.path.join(app_dir, app.config["DATABASE_FILE"])
-    if not os.path.exists(dataBase_path):
-        # build_sample_db(app=app, user_datastore=user_datastore)
-        pass
+    db.session.commit()
+    
+
+# Flag to indicate if the thread is running
+thread_running = False
+
+# Global reference to the thread
+mythread = None
+@app.teardown_appcontext
+def shutdown_thread(exception):
+    global thread_running, mythread
+
+    # Stop the thread
+    thread_running = False
+
+    # Wait for the thread to exit
+    if mythread and mythread.is_alive():
+        mythread.join()
 
 
-# Start scheduler on new Thread
-mythread = Thread(target=run_pending_schedules)
-mythread.start()
