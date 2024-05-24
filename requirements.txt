@@ -9,3 +9,5 @@ email_validator
 sqlalchemy_serializer
 simple_websocket
 schedule
+Flask-Testing
+pytest
