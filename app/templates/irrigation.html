@@ -9,37 +9,13 @@
 	<div class="wrapper">
 		{%include 'sidebar.html'%}
 
-		<div class="main">
+		<div class="main  ">
 			{%include 'navbar.html'%}
 
-			<div class=" text-center rounded-0">
-				<h1 class="h3 my-3">Irrigation</h1>
-			</div>
 
-			<div class=" border-top d-flex justify-content-center">
-				<div class="nav nav-tabs me-3 pt-2" id="list-tab" role="tablist">
-					<button class="bg-danger mx-1 nav-link active " id="user-accounts-tab" data-bs-toggle="pill"
-						data-bs-target="#manual" type="button" role="tab" aria-selected="false">
-						Manual Controls
-					</button>
-					<button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
-						data-bs-target="#history" type="button">
-						History
-					</button>
-					<button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
-						data-bs-target="#status" type="button">
-						Status
-					</button><button class="bg-danger mx-1 nav-link " id="user-accounts-tab" data-bs-toggle="pill"
-						data-bs-target="#schedules" type="button">
-						Schedules
-					</button>
-
-
-				</div>
-			</div>
-
-			<main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
-				<style>
+			<main class="content">
+				<!-- style="background-image: url('/img/dripirrigation-1.jpg') !important;"> -->
+				<!-- <style>
 					.nav-link {
 						color: white;
 					}
@@ -48,14 +24,41 @@
 						background-color: white !important;
 						color: dark !important;
 					}
-				</style>
-				<div class="container-fluid p-0">
+				</style> -->
+				<div class="container p-0">
+
+					<div class="rounded-0">
+						<h1 class="h3 my-3">Irrigation</h1>
+						<hr class="w-25 float-center">
+					</div>
+
+					<div class="d-flex border-bottom justify-content-center">
+						<div class="nav border-0 nav-tabs me-3 pt-2" id="list-tab" role="tablist">
+							<button class="bg-danger-test mx-1  nav-link text-dark rounded-0 active "
+								id="user-accounts-tab" data-bs-toggle="pill" data-bs-target="#manual" type="button"
+								role="tab" aria-selected="false">
+								Manual Controls
+							</button>
+							<button class="bg-danger-test mx-1  nav-link text-dark rounded-0 " role="button"
+								id="user-accounts-tab" data-bs-toggle="pill" data-bs-target="#history" type="button">
+								History
+							</button>
+							<button class="bg-danger-test mx-1  nav-link text-dark rounded-0 " id="user-accounts-tab"
+								data-bs-toggle="pill" data-bs-target="#status" type="button">
+								Status
+							</button><button class="bg-danger-test mx-1  nav-link text-dark rounded-0 "
+								id="user-accounts-tab" data-bs-toggle="pill" data-bs-target="#schedules" type="button">
+								Schedules
+							</button>
+						</div>
+					</div>
 					<div class="tab-content sub-form">
 						<div class="tab-pane fade hide_if_grouped show active " id="manual" role="tabpanel"
 							titleledby="general1-list">
 
-							<div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.5);"
-								id="manual" role="tabpanel" titleledby="general1-list">
+							<div class="tab-pane fade show active" id="manual" role="tabpanel"
+								titleledby="general1-list">
+								<!-- style="background-color: rgba(255, 255, 255, 0.5);" -->
 								<div class="pt-1">
 									<!-- <div class="fw-bold h5-m">Irrigation is <span class="text-danger">off</span></div>
 								<button class="start-irrigation btn btn-sm btn-success my-2">Start</button> --->
@@ -91,9 +94,9 @@
 
 
 						</div>
-						<div class="tab-pane fade" id="history" role="tabpanel" titleledby="general1-list"
-							style="background-color: rgba(255, 255, 255, 0.8);">
-							<table class="table table-striped">
+						<div class="tab-pane fade" id="history" role="tabpanel" titleledby="general1-list">
+							<!-- style="background-color: rgba(255, 255, 255, 0.8);"> -->
+							<table class="table table-striped border">
 								<thead>
 									<tr>
 										<th scope="col">Field</th>
@@ -164,7 +167,7 @@
 									{%if auto_schedule=='ON'%}
 									<span class="bg-success auto_schedule_status badge">On</span>
 									{%else%}
-									<span class="bg-danger badge auto_schedule_status">Off</span>
+									<span class="bg-danger-test badge auto_schedule_status">Off</span>
 									{%endif%}
 								</div>
 							</div>
@@ -287,11 +290,11 @@
 					if (is_on) {
 						$(".set-auto-schedule").removeClass("on_").addClass("off_")
 						$(".set-auto-schedule").text("Enable Auto Shedule")
-						$(".auto_schedule_status").text("Off").addClass("bg-danger").removeClass("bg-success")
+						$(".auto_schedule_status").text("Off").addClass("bg-danger-test").removeClass("bg-success")
 					} else {
 						$(".set-auto-schedule").removeClass("off_").addClass("on_")
 						$(".set-auto-schedule").text("Disable Auto Shedule")
-						$(".auto_schedule_status").text("On").removeClass("bg-danger").addClass("bg-success")
+						$(".auto_schedule_status").text("On").removeClass("bg-danger-test").addClass("bg-success")
 
 					}
 				}).fail(function (err) {
@@ -328,7 +331,7 @@
 				$('#loaderModal').modal('hide');
 			}).fail(function (err) {
 				$('#loaderModal').modal('hide');
-				console.log(err)
+				console.log($('#loaderModal'));
 				error(`${err.responseText}`, err.statusText)
 				$(e.target).prop('checked', on ? false : true)
 			})

@@ -5,6 +5,7 @@ import os
 import time
 from schedule import Scheduler
 import psycopg2
+from sqlalchemy import func
 from flask import (
     Blueprint,
     Flask,
@@ -39,6 +40,7 @@ from app.micro_controllers_ws_server import (
     send_data,
     get_sensor_value,
 )
+import pandas as pd
 from app.models import (
     CropsStatus,
     FieldZone,
@@ -116,14 +118,31 @@ def get_users():
 
 @app.route("/api/history/<for_>", methods=["GET"])
 def get_history(for_):
-    """Return sensoers reading history
+    """Return sensors reading history
 
     Returns:
-        _type_: _description_
+        List of sensor readings history
     """
-    results = Statistics.query.all()
-    return [r.to_dict() for r in results]
 
+    interval = request.args.get('interval')
+    start_date =datetime.datetime.strptime(request.args.get('start'),"%d-%m-%Y")
+    end_date =datetime.datetime.strptime(request.args.get('end'),"%d-%m-%Y")
+    results = db.session.query(History).filter(History.for_ == for_).filter(History.end_time >= start_date).filter(History.end_time <= end_date).all()
+    results=[r.to_dict()  for r in results]
+    df = pd.DataFrame(results, columns=['end_time', 'value'])
+    df['end_time'] = pd.to_datetime(df['end_time'])
+    interval_df=None
+    df.set_index('end_time', inplace=True)
+    if interval == 'daily':
+        interval_df = df.resample('D').sum()
+    elif interval == 'monthly':
+        interval_df = df.resample('M').sum()
+    elif interval == 'yearly':
+        interval_df = df.resample('Y').sum()
+    elif interval == 'weekly':
+        interval_df = df.resample('W').sum()
+    formatted_results = interval_df.reset_index().rename(columns={'end_time': 'date'}).to_dict(orient='records')
+    return formatted_results
 
 @app.route("/api/soil_data", methods=["GET", "POST"])
 def get_soil_data():
@@ -204,7 +223,7 @@ def hello():
 ##Home page
 @app.route("/", methods=["GET"])
 @app.route("/index.html", methods=["GET"])
-@login_required
+#@login_required
 def index():
     return pages("index")
 
@@ -223,7 +242,7 @@ def docs(filename):
 
 # Other pages
 @app.route("/<page>", methods=["GET"])
-@login_required
+#@login_required
 def pages(page: str):
     print("shh")
     """To get a page... any page which maches <page>.html
@@ -685,7 +704,7 @@ def run_pending_schedules():
 with app.app_context():
     db.create_all()
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
-    
+    build_sample_db(user_bp, user_datastore)
     db.session.commit()
     
 

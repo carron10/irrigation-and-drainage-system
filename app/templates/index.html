@@ -10,51 +10,65 @@
 <body>
 	<div class="wrapper">
 		{%include 'sidebar.html'%}
-
+		<style>
+			.btn-like {
+				display: inline-block;
+				font-weight: 400;
+				line-height: 1.5;
+				color: #212529;
+				text-align: center;
+				text-decoration: none;
+				vertical-align: middle;
+				cursor: pointer;
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				user-select: none;
+				background-color: transparent;
+				border: 1px solid transparent;
+				padding: .375rem .75rem;
+				font-size: 1rem;
+				border-radius: .25rem;
+				transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+			}
+		</style>
 		<div class="main">
 			{%include 'navbar.html'%}
 
-			<main class="content"
-				style="background-image: url('/img/farming-irrigation-system-1000x1000.webp') !important;">
-				<div class=" text-center rounded-0">
-					<h1 class="h3 my-3 fw-bold">Dashboard </h1>
-				</div>
+			<main class="content">
+				<!-- style="background-image: url('/img/farming-irrigation-system-1000x1000.webp') !important;"> -->
+
 				<div class="container-fluid p-0">
 
-					<div class="mb-2 order-0">
-
-						<div class="alert card mx-1 alert-white p-0  fade show " style="border-left: solid blue; "
-							role="alert">
-							<div class="d-flex align-items-end row">
-								<div class="col-sm-7">
-									<div class="card-body">
-										<h5 class="card-title text-primary h4">👋Welcome Back, {% if
-											current_user.first_name -%}
-											{{ current_user.first_name }}
-											{% else -%}
-											{{ current_user.email }}
-											{%- endif %}👨‍💻</h5>
-
-									</div>
-								</div>
-								<div class="col-sm-5 text-center text-sm-left d-none d-sm-inline-block">
-									<div class="card-body pb-0 px-0 px-md-4">
-										<!-- <img src="/img/man-with-laptop-light.png" height="140" alt="View Badge User"> -->
-									</div>
-								</div>
-							</div>
-
+					<div class="justify-content-between d-flex">
+						<div class="rounded-0">
+							<h1 class="h3  fw-bold">Dashboard </h1>
 						</div>
+						<div>
+							<select class="btn-like interval border bg-white" id="time-selector">
+								<option selected value="daily">Daily</option>
+								<option value="weekly">Weekly</option>
+								<option value="monthly">Monthly</option>
+								<option value="yearly">Yearly</option>
+							</select>
+							<button id="reportrange" class="btn border bg-white">
+								<i class="align-middle" data-feather="calendar"></i>
+								<span></span>
+								<i class="align-middle" data-feather="chevron-down"></i>
+							</button>
+						</div>
+
 					</div>
+
 					<div class="row">
-						<div class="col-xl-4 col-xxl-7 pt-2">
+						<div class="col-md-6 mt-1 chart-container" id="irrigation">
 							<div class="card flex-fill w-100">
 								<div class="card-header m-0 p-1">
 									<div class="h5 float-start">Irrigation</div>
-									<select class=" float-end" id="data-selector">
-										<option value="weekly">Weekly</option>
-										<option value="monthly">Monthly</option>
-										<option value="yearly">Yearly</option>
+									<select class="float-end border bg-white" id="graph-type">
+										<option value="bar">bar</option>
+										<option value="line">Line</option>
+										<option value="hist">Scatter</option>
+										<option value="hist_line">Histogram+line</option>
 									</select>
 								</div>
 								<div class="card-body d-flex w-100 p-0 m-0">
@@ -64,62 +78,52 @@
 								</div>
 							</div>
 						</div>
-
-						<div class="col-xl-4 col-xxl-7 pt-2">
+						<div class="col-md-6 mt-1 chart-container" id="drainage">
 							<div class="card flex-fill w-100">
-								<!-- <div class="card-header">
-									<h5 class="card-title mb-0">Drainage for the last Week</h5>
-								</div> -->
-								<div class="card-body py-3">
-									<div class="chart chart-sm">
+								<div class="card-header m-0 p-1">
+									<div class="h5 float-start">Drainage</div>
+									<select class="float-end border bg-white" id="graph-type">
+										<option value="bar">bar</option>
+										<option value="line">Line</option>
+										<option value="hist">Histogram</option>
+										<option value="hist_line">Histogram+line</option>
+									</select>
+								</div>
+								<div class="card-body d-flex w-100 p-0 m-0">
+									<div class="align-self-center chart chart-sm">
 										<canvas id="drainage-bar-chart"></canvas>
 									</div>
 								</div>
 							</div>
 						</div>
-						<div class="col-xl-4 col-xxl-7 pt-2">
-							<div class="card flex-fill w-100">
-								<!-- <div class="card-header">
-
-									<h5 class="card-title mb-0">Soil Moisture levels for the past week</h5>
-								</div> -->
-								<div class="card-body py-3">
-									<div class="chart chart-sm">
-										<canvas id="soil-moisture-line-chart"></canvas>
-									</div>
-								</div>
-							</div>
-						</div>
-
-
-						<div class="row pt-3">
-
-							<div class="col-12 col-md-12 col-xxl-6 d-flex order-3 order-xxl-2">
-								<div class="card flex-fill w-100">
-									<div class="card-header">
-
-										<h5 class="card-title mb-0">Recent Notification</h5>
-									</div>
-									<div class="card-body px-4">
-										<table class=" table">
-
-											<tbody>
-												{% for note in notifications%}
-												<tr>
-													<td>{{note.notification_category}}</td>
-													<td>{{note.time_created}}</td>
-													<td>{{note.message}}</td>
-												</tr>
-												{%endfor%}
-											</tbody>
-										</table>
-									</div>
-								</div>
-							</div>
-						</div>
-
-
 					</div>
+
+					<div class="row pt-3">
+
+						<div class="col-12 col-md-12 col-xxl-6 d-flex order-3 order-xxl-2">
+							<div class="card flex-fill w-100">
+								<div class="card-header">
+
+									<h5 class="card-title mb-0">Recent Notification</h5>
+								</div>
+								<div class="card-body px-4">
+									<table class=" table">
+
+										<tbody>
+											{% for note in notifications%}
+											<tr>
+												<td>{{note.notification_category}}</td>
+												<td>{{note.time_created}}</td>
+												<td>{{note.message}}</td>
+											</tr>
+											{%endfor%}
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</main>
 
 			{%include "footer.html"%}
@@ -156,132 +160,106 @@
 			}
 
 		}
+		Chart.defaults.elements.line.borderWidth = 1;
+		Chart.defaults.elements.point.radius = 1;
+		function drawGraph(element, data, type = "bar", label) {
+			var existingChart = Chart.getChart(element);
+			if (existingChart) {
+				existingChart.destroy();
+			}
+			var labels = data.map(entry => new Date(entry.date).toLocaleDateString());
+			var values = data.map(entry => entry.value);
+
+			var v = new Chart(document.getElementById(element), {
+				type: type,
+				data: {
+					labels: labels,
+					datasets: [{
+						label: label,
+						backgroundColor: window.theme.primary,
+						borderColor: window.theme.primary,
+						hoverBackgroundColor: window.theme.primary,
+						hoverBorderColor: window.theme.primary,
+						data: values,
+						barPercentage: .75,
+						categoryPercentage: .5
+					}]
+				},
+				options: {
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							display: false
+						}
+					}
+				}
+			});
+			return v;
+		}
 
 		document.addEventListener("DOMContentLoaded", function () {
-			// Bar chart
-			new Chart(document.getElementById("soil-moisture-line-chart"), {
-				type: "line",
-				data: {
-					labels: ["S", "M", "T", "W", "T", "F", "S"],
-					datasets: [{
-						tension: 0.2,
-						label: "Drainage for the last Week",
-						backgroundColor: window.theme.primary,
-						borderColor: window.theme.primary,
-						hoverBackgroundColor: window.theme.primary,
-						hoverBorderColor: window.theme.primary,
-						data: [54, 67, 41, 55, 62, 45, 55],
-						pointRadius: 0,
-					}, {
-						label: "Line Slope",
-						pointRadius: 0,
-						borderColor: "green",
-						data: calculateLineFunction({
-							x: [1, 2, 3, 4, 5, 6, 7],
-							y: [54, 67, 41, 55, 62, 45, 55]
-						}).predicted,
-						tension: 0.2
-					}]
-				},
-				options: {
-					maintainAspectRatio: false,
-					scales: {
-						yAxes: [{
-							gridLines: {
-								display: false
-							},
-							stacked: false,
-							ticks: {
-								stepSize: 20
-							}
-						}],
-						xAxes: [{
-							stacked: false,
-							gridLines: {
-								color: "transparent"
-							}
-						}]
-					}
+
+			var chats = ['drainage', "irrigation"]
+			function updateGraphs(start, end, interval) {
+				start_time = start.format('D-MM-YYYY')
+				end_time = end.format('D-MM-YYYY')
+				for (let i = 0; i < chats.length; i++) {
+					const type = chats[i];
+
+					send("/api/history/" + type, { 'interval': interval, "start": start_time, "end": end_time }).done(function (data) {
+						drawGraph(type + "-bar-chart", data, 'line', 'shsh')
+					}).fail(function (err) {
+						error(`${err.responseText}`, err.statusText)
+					})
 				}
-			});
-			new Chart(document.getElementById("drainage-bar-chart"), {
-				type: "bar",
-				data: {
-					labels: ["S", "M", "T", "W", "T", "F", "S"],
-					datasets: [{
-						label: "Drainage for the last Week",
-						backgroundColor: window.theme.primary,
-						borderColor: window.theme.primary,
-						hoverBackgroundColor: window.theme.primary,
-						hoverBorderColor: window.theme.primary,
-						data: [54, 67, 41, 55, 62, 45, 55],
-						barPercentage: .75,
-						categoryPercentage: .5
-					}]
-				},
-				options: {
-					maintainAspectRatio: false,
-					legend: {
-						display: false
-					},
-					scales: {
-						yAxes: [{
-							gridLines: {
-								display: false
-							},
-							stacked: false,
-							ticks: {
-								stepSize: 20
-							}
-						}],
-						xAxes: [{
-							stacked: false,
-							gridLines: {
-								color: "transparent"
-							}
-						}]
-					}
+			}
+			updateConfig();
+			function get_interval() {
+				var element = $("#time-selector");
+				return element.val()
+			}
+
+			var start_date, end_date;
+			$("#time-selector").change(function (e) {
+				var element = $(e.target), interval = element.val();
+				updateGraphs(start_date, end_date, interval)
+			})
+			$("#graph-type").change(function (e) {
+				var element = $(e.target), graph_type = element.val(), chart = element.parents(".chart-container").first();
+			
+				var existingChart = Chart.getChart(chart.find("canvas").attr("id"));
+				// Update the chart configuration to change the chart type
+				existingChart.config.type = graph_type;
+				// Update the chart with the new configuration
+				existingChart.update();
+			})
+			function updateConfig() {
+				start_date = moment().subtract(29, 'days');
+				end_date = moment();
+				function cb(start, end) {
+					start_date = start
+					end_date = end
+					$('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+					updateGraphs(start, end, get_interval())
 				}
-			});
-			new Chart(document.getElementById("irrigation-bar-chart"), {
-				type: "bar",
-				data: {
-					labels: ["S", "M", "T", "W", "T", "F", "S"],
-					datasets: [{
-						label: "Irrigation for the last week",
-						backgroundColor: window.theme.primary,
-						borderColor: window.theme.primary,
-						hoverBackgroundColor: window.theme.primary,
-						hoverBorderColor: window.theme.primary,
-						data: [54, 67, 41, 55, 62, 45, 55],
-						barPercentage: .75,
-						categoryPercentage: .5
-					}]
-				},
-				options: {
-					maintainAspectRatio: false,
-					legend: {
-						display: false
-					},
-					scales: {
-						yAxes: [{
-							gridLines: {
-								display: false
-							},
-							stacked: false,
-							ticks: {
-								stepSize: 20
-							}
-						}],
-						xAxes: [{
-							stacked: false,
-							gridLines: {
-								color: "transparent"
-							}
-						}]
+				$('#reportrange').daterangepicker({
+					startDate: start_date,
+					endDate: end_date,
+					opens: "left",
+					ranges: {
+						'Today': [moment(), moment()],
+						'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+						'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+						'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+						'This Month': [moment().startOf('month'), moment().endOf('month')],
+						'This Year': [moment().startOf('year'), moment().endOf('year')],
+						'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
 					}
-				}
-			});
+				}, cb);
+
+				cb(start_date, end_date);
+			}
+
 		});
 	</script>
 

@@ -26,8 +26,11 @@ security = Security(datastore=user_datastore)
 @user_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
     # Check if there are existing users in the database
-    if User.query.count() > 0:
-        return redirect(url_for('security.login'))
+    admin_role = Role.query.filter_by(name="admin").first()
+    if admin_role:
+        admin_users_count = admin_role.users.count()
+        if admin_users_count > 0:
+            return redirect(url_for('security.login'))
 
     if request.method == 'POST':
         # Retrieve form data
@@ -49,19 +52,38 @@ def setup():
         add_or_update_option("company_name", company)
         add_or_update_option("company_location", location)
 
-        # Create roles
         try:
-            user_role = Role(name="user")
-            super_user_role = Role(name="admin")
-            db.session.add(user_role)
-            db.session.add(super_user_role)
+            # Check if roles already exist before adding
+            user_role = Role.query.filter_by(name="user").first()
+            if not user_role:
+                user_role = Role(name="user")
+                db.session.add(user_role)
+
+            admin_role = Role.query.filter_by(name="admin").first()
+
+            if not admin_role:
+                admin_role = Role(name="admin")
+                db.session.add(admin_role)
+
+            super_role = Role.query.filter_by(name="super").first()
+            if not super_role:
+                super_role = Role(name="super")
+                db.session.add(super_role)
+
             db.session.commit()
-        except:
-            pass
-        # Create the initial user
-        user = user_datastore.create_user(roles=["admin","user"], first_name=first_name,
-                                          last_name=last_name, email=email, password=hash_password(password))
-        build_sample_db(user_bp,user_datastore)
+            # Create the initial user if it doesn't already exist
+            if not user_datastore.find_user(email=email):
+                user = user_datastore.create_user(roles=[user_role, super_role, admin_role],
+                                                  first_name=first_name,
+                                                  last_name=last_name,
+                                                  email=email,
+                                                  password=hash_password(password))
+            db.session.commit()
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        build_sample_db(user_bp, user_datastore)
         db.session.commit()
         return redirect(url_for('security.login'))
 
@@ -85,16 +107,35 @@ def view_user_information(email: str, id: int):
 
     if request.method == 'GET':
         # Handle GET request (view user information)
-        # Example: return jsonify({'email': user.email, 'id': user.id})
+        # return jsonify({'email': user.email, 'id': user.id})
 
         # For simplicity, just return a message for demonstration
         return jsonify({'message': 'User information'}), 200
     elif request.method == 'DELETE':
-        print(current_user)
+
+        # make sure there is atleast 1 admin left after deleting
+        admin_role = Role.query.filter_by(name="admin").first()
+        if admin_role:
+            admin_users_count = admin_role.users.count()
+            if admin_users_count > 1:
+                return jsonify({'message': 'Atleast one account should left for an admin to operate'}), 404
+        # Make sure user doesnt remove themeselves
+        if user == current_user:
+            return jsonify({'message': 'You are not allowed to remove Your own account'}), 500
+
+        # Check if this is a super user
+        roles = user.roles
+        # Now you can access the roles associated with the user
+        for role in roles:
+            if "super" == role.name:
+                return jsonify({'message': 'Super users cannot be deleted'}), 500
+
+        
         # Handle DELETE request (delete user)
         user_datastore.delete_user(user)
         db.session.commit()
         return jsonify({'message': 'User deleted successfully'}), 200
+
 
 @user_bp.route('/api/add_new_user', methods=['POST'])
 @login_required
