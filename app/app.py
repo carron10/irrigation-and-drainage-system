@@ -375,7 +375,7 @@ def add_get_update_option():
     else:
         option.option_value = data["value"]
         db.session.add(option)
-
+        
     is_on = data["value"] == "ON"
     if data["name"] == "drainage_auto_schedule":
         job = scheduler.get_jobs("auto_drainage_job")
