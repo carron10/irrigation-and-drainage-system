@@ -185,6 +185,7 @@ def build_sample_db(app, user_datastore):
 
     import random
     import string
+    db.drop_all()
     db.create_all()
     # Generate history data
     for i in range(7):
@@ -263,25 +264,25 @@ def build_sample_db(app, user_datastore):
         ),
     )
 
-    for i in range(20):
-        irr_hist = History(
-            for_="irrigation",
-            value=randint(100,300),
-            start_time=1,
-            end_time=1,
-            time_spent=1,
-            # field_id=1,
-        )
-        drainage_hist = History(
-            for_="irrigation",
-            value=randint(100,300),
-            start_time=1,
-            end_time=1,
-            time_spent=1,
-            # field_id=1,
-        )
-        db.session.add(drainage_hist)
-        db.session.add(irr_hist)
+    # for i in range(20):
+    #     irr_hist = History(
+    #         for_="irrigation",
+    #         value=randint(100,300),
+    #         start_time=1,
+    #         end_time=1,
+    #         time_spent=1,
+    #         # field_id=1,
+    #     )
+    #     drainage_hist = History(
+    #         for_="irrigation",
+    #         value=randint(100,300),
+    #         start_time=1,
+    #         end_time=1,
+    #         time_spent=1,
+    #         # field_id=1,
+    #     )
+        # db.session.add(drainage_hist)
+        # db.session.add(irr_hist)
 
     db.session.add_all(soil_statuses)
     crop_statuses = CropsStatus(

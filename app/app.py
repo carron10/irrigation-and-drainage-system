@@ -686,6 +686,7 @@ def run_pending_schedules():
 with app.app_context():
     db.create_all()
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
+    
     db.session.commit()
     
 
