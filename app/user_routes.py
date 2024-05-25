@@ -96,7 +96,6 @@ def view_user_information(email: str, id: int):
         db.session.commit()
         return jsonify({'message': 'User deleted successfully'}), 200
 
-
 @user_bp.route('/api/add_new_user', methods=['POST'])
 @login_required
 @roles_required('admin')
