@@ -653,7 +653,11 @@ def stop_call_back(scheduled_task: Schedules):
 
 def run_pending_schedules():
     global thread_running
+<<<<<<< HEAD
     print("Hello world")
+=======
+    print("Started")
+>>>>>>> 3ee5dbbcb52d776050f7b99cbbd1682bc87a7107
     """To run Irrigation, Drainage many more schedules"""
     ##Get schedules that are in database a run add them on
     with app.app_context():
@@ -678,7 +682,10 @@ def run_pending_schedules():
             ).tag("auto_drainage_job")
 
         while thread_running:
+<<<<<<< HEAD
             print("run pend")
+=======
+>>>>>>> 3ee5dbbcb52d776050f7b99cbbd1682bc87a7107
             scheduler.run_pending()
             time.sleep(1)
 
@@ -707,3 +714,23 @@ def shutdown_thread(exception):
         mythread.join()
 
 
+<<<<<<< HEAD
+=======
+# Flag to indicate if the thread is running
+thread_running = False
+
+# Global reference to the thread
+mythread = None
+@app.teardown_appcontext
+def shutdown_thread(exception):
+    global thread_running, mythread
+
+    # Stop the thread
+    thread_running = False
+
+    # Wait for the thread to exit
+    if mythread and mythread.is_alive():
+        mythread.join()
+
+
+>>>>>>> 3ee5dbbcb52d776050f7b99cbbd1682bc87a7107
