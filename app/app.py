@@ -354,7 +354,6 @@ def add_irrigation_or_drainage_schedule():
     )
     return results
 
-
 @app.route("/api/options", methods=["POST", "GET"])
 def add_get_update_option():
     """To add/update options
