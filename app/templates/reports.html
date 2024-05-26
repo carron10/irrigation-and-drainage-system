@@ -1,3 +1,5 @@
+{% if current_user.is_authenticated %}
+{% endif %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,344 +10,213 @@
 <body>
 	<div class="wrapper">
 		{%include 'sidebar.html'%}
-
+		
 		<div class="main">
 			{%include 'navbar.html'%}
 
-			<main class="content"
-				style="background-image: url('/img/farming-irrigation-system-1000x1000.webp') !important;">
+			<main class="content">
+				<!-- style="background-image: url('/img/farming-irrigation-system-1000x1000.webp') !important;"> -->
 
 				<div class="container-fluid p-0">
 
-					<div class=" text-center rounded-0">
-						<h1 class="h3 my-3 fw-bold">Reports </h1>
-						<p>View Reports Here</p>
-					</div>
-					<div class="row">
-						<div class="col-xl-4 col-xxl-7 pt-2">
-							<div class="card flex-fill w-100">
-								<!-- <div class="card-header">
+					<div class="justify-content-between d-flex">
+						<div class="rounded-0">
+							<h1 class="h3  fw-bold text-primary">Reports </h1>
+						</div>
+						<div>
+							<select class="btn-like interval  bg-white" id="time-selector">
+								<option selected value="daily">Daily</option>
+								<option value="weekly">Weekly</option>
+								<option value="monthly">Monthly</option>
+								<option value="yearly">Yearly</option>
+							</select>
+							<button id="reportrange" class="btn bg-white" style="color: #1d3b4a;border-width: 0 1px 4px;">
+								<i class="align-middle" data-feather="calendar"></i>
+								<span></span>
+								<i class="align-middle" data-feather="chevron-down"></i>
+							</button>
+						</div>
 
-									<h5 class="card-title mb-0">Irrigation for the last week</h5>
-								</div> -->
-								<div class="card-body d-flex w-100">
+					</div>
+
+					<div class="row">
+						<div class="col-md-6 mt-1 chart-container" id="irrigation">
+							<div class="card rounded-0 flex-fill w-100">
+								<div class="card-header m-0 p-1">
+									<div class="h5 float-start">Irrigation</div>
+									<select class="float-end border bg-white" id="graph-type">
+										<option value="bar">bar</option>
+										<option selected value="line">Line</option>
+										<option value="scatter">Scatter</option>
+										<option value="hist_line">Histogram+line</option>
+									</select>
+								</div>
+								<div class="card-body d-flex w-100 p-0 m-0">
 									<div class="align-self-center chart chart-sm">
 										<canvas id="irrigation-bar-chart"></canvas>
 									</div>
 								</div>
 							</div>
 						</div>
-						<div class="col-xl-4 col-xxl-7 pt-2">
-							<div class="card flex-fill w-100">
-								<!-- <div class="card-header">
-									<h5 class="card-title mb-0">Drainage for the last Week</h5>
-								</div> -->
-								<div class="card-body py-3">
-									<div class="chart chart-sm">
+						<div class="col-md-6 mt-1 chart-container" id="drainage">
+							<div class="card rounded-0 flex-fill w-100">
+								<div class="card-header m-0 p-1">
+									<div class="h5 float-start">Drainage</div>
+									<select class="float-end border bg-white" id="graph-type">
+										<option value="bar">bar</option>
+										<option selected value="line">Line</option>
+										<option value="scatter">Histogram</option>
+										<option value="hist_line">Histogram+line</option>
+									</select>
+								</div>
+								<div class="card-body d-flex w-100 p-0 m-0">
+									<div class="align-self-center chart chart-sm">
 										<canvas id="drainage-bar-chart"></canvas>
 									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-xl-4 col-xxl-7 pt-2">
-							<div class="card flex-fill w-100">
-								<!-- <div class="card-header">
-
-									<h5 class="card-title mb-0">Soil Moisture levels for the past week</h5>
-								</div> -->
-								<div class="card-body py-3">
-									<div class="chart chart-sm">
-										<canvas id="soil-moisture-line-chart"></canvas>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div id="no_sensors" class="bg-white py-3 my-3 text-center text-danger fw-bolder visually-hidden">
-						<div class="py-5 my-5">
-							<h5>There are no sensors......Please make sure the devices are connected
-								properly and sensors are connected</h5>
-							<button class="refresh btn btn-sm btn-success py-2">Try Refresh</button>
-						</div>
-					</div>
-					<div id="sensor-not-connected"
-						class="bg-white py-1 text-center my-3 alert alert-dismissable text-danger fw-bolder visually-hidden">
-						<div class="py-2 my-2">
-							<h5>Some sensors are not connected...Please check the sensors or refresh..</h5>
-							<h6 class="text-dark text-start ms-2">Check Sensors::</h6>
-							<ul class="flex-column text-dark text-start">
-							</ul>
-						</div>
-					</div>
-					<div class="row py-3">
-						<div class="col-xl-4 col-xxl-7 pie-chart visually-hidden">
-							<div class=" flex-fill w-100">
-								<div class="d-flex w-100 py-2">
-									<div class="align-self-center chart chart-sm">
-										<canvas></canvas>
-									</div>
-								</div>
-								<div class="chart-label text-center h2 fw-bold" style=" color: rgb(175, 240, 240);">
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			</main>
-			<script>
-				//y=a+bx
-				function calculateLineFunction(data) {
-					var x = data.x, y = data.y, total_x = 0, total_y = 0, x_bar = 0, y_bar = 0, a, b, sum_xy = 0, sum_x_squared = 0;
-					for (let i = 0; i < data.x.length; i++) {
-						total_y += data.y[i];
-						total_x += data.x[i];
-						sum_xy += data.x[i] * data.y[i];
-						sum_x_squared += Math.pow(data.x[i], 2);
-					}
-
-					b = (sum_xy - ((total_x * total_y) / data.x.length)) / (sum_x_squared - (Math.pow(total_x, 2) / data.x.length));
-
-					x_bar = total_x / data.x.length;
-					y_bar = total_y / data.y.length;
-
-					a = y_bar - b * x_bar;
-					var predicted_data = [];
-					for (let i = 0; i < data.x.length; i++) {
-						predicted_data[i] = a + b * data.x[i];
-					}
-					return {
-						slope: b, intersept: a, predicted: predicted_data
-					}
-
-				}
-
-				document.addEventListener("DOMContentLoaded", function () {
-					// Bar chart
-					new Chart(document.getElementById("soil-moisture-line-chart"), {
-						type: "line",
-						data: {
-							labels: ["S", "M", "T", "W", "T", "F", "S"],
-							datasets: [{
-								tension: 0.2,
-								label: "Drainage for the last Week",
-								backgroundColor: window.theme.primary,
-								borderColor: window.theme.primary,
-								hoverBackgroundColor: window.theme.primary,
-								hoverBorderColor: window.theme.primary,
-								data: [54, 67, 41, 55, 62, 45, 55],
-								pointRadius: 0,
-							}, {
-								label: "Line Slope",
-								pointRadius: 0,
-								borderColor: "green",
-								data: calculateLineFunction({
-									x: [1, 2, 3, 4, 5, 6, 7],
-									y: [54, 67, 41, 55, 62, 45, 55]
-								}).predicted,
-								tension: 0.2
-							}]
-						},
-						options: {
-							maintainAspectRatio: false,
-							scales: {
-								yAxes: [{
-									gridLines: {
-										display: false
-									},
-									stacked: false,
-									ticks: {
-										stepSize: 20
-									}
-								}],
-								xAxes: [{
-									stacked: false,
-									gridLines: {
-										color: "transparent"
-									}
-								}]
-							}
-						}
-					});
-					new Chart(document.getElementById("drainage-bar-chart"), {
-						type: "bar",
-						data: {
-							labels: ["S", "M", "T", "W", "T", "F", "S"],
-							datasets: [{
-								label: "Drainage for the last Week",
-								backgroundColor: window.theme.primary,
-								borderColor: window.theme.primary,
-								hoverBackgroundColor: window.theme.primary,
-								hoverBorderColor: window.theme.primary,
-								data: [54, 67, 41, 55, 62, 45, 55],
-								barPercentage: .75,
-								categoryPercentage: .5
-							}]
-						},
-						options: {
-							maintainAspectRatio: false,
-							legend: {
-								display: false
-							},
-							scales: {
-								yAxes: [{
-									gridLines: {
-										display: false
-									},
-									stacked: false,
-									ticks: {
-										stepSize: 20
-									}
-								}],
-								xAxes: [{
-									stacked: false,
-									gridLines: {
-										color: "transparent"
-									}
-								}]
-							}
-						}
-					});
-					new Chart(document.getElementById("irrigation-bar-chart"), {
-						type: "bar",
-						data: {
-							labels: ["S", "M", "T", "W", "T", "F", "S"],
-							datasets: [{
-								label: "Irrigation for the last week",
-								backgroundColor: window.theme.primary,
-								borderColor: window.theme.primary,
-								hoverBackgroundColor: window.theme.primary,
-								hoverBorderColor: window.theme.primary,
-								data: [54, 67, 41, 55, 62, 45, 55],
-								barPercentage: .75,
-								categoryPercentage: .5
-							}]
-						},
-						options: {
-							maintainAspectRatio: false,
-							legend: {
-								display: false
-							},
-							scales: {
-								yAxes: [{
-									gridLines: {
-										display: false
-									},
-									stacked: false,
-									ticks: {
-										stepSize: 20
-									}
-								}],
-								xAxes: [{
-									stacked: false,
-									gridLines: {
-										color: "transparent"
-									}
-								}]
-							}
-						}
-					});
-				});
-			</script>
-			
-			<script>
-
-				document.addEventListener("DOMContentLoaded", function () {
-					
-					var plugin = {
-						beforeDraw: function (chart) {
-							var width = chart.width,
-								height = chart.height,
-								ctx = chart.ctx;
-		
-							ctx.restore();
-							var fontSize = (height / 114).toFixed(2);
-							ctx.font = fontSize + "em sans-serif";
-							ctx.textBaseline = "middle";
-		
-							var text = chart.config.data.datasets[0].data[1] + "%",
-								textX = Math.round((width - ctx.measureText(text).width) / 2),
-								textY = height / 2;
-		
-							ctx.fillText(text, textX, textY);
-							ctx.save();
-						}
-					}
-					function drawChart(label, data) {
-						var chart_container = $(".pie-chart.visually-hidden").clone();
-						chart_container.find("canvas").first().attr("id", 'pie-' + label)
-		
-						var chart = new Chart(chart_container.find("canvas")[0], {
-							type: "pie",
-							data: {
-								labels: ["-", label],
-								datasets: [{
-									data: [(100 - data.last_value), data.last_value],
-									backgroundColor: [
-										"#e6eded",
-										"rgb(175, 240, 240)"
-									],
-									borderWidth: 0
-								}]
-							},
-							plugins: [plugin],
-							options: {
-								plugins: {
-									legend: {
-										display: false,
-									}
-								},
-								responsive: !window.MSInputMethodContext,
-								maintainAspectRatio: false,
-								cutout: 90
-							}
-						});
-						chart_container.removeClass("visually-hidden")
-						chart_container.find(".chart-label").first().text(label)
-						chart_container.insertAfter($(".pie-chart.visually-hidden"))
-					}
-					function refresh() {
-						var charts = $(".pie-chart:not(.visually-hidden)");
-						var sensor_error_alert = $("#sensor-not-connected");
-						$("#sensor-not-connected").find("ul").html("")
-						sensor_error_alert.addClass("visually-hidden")
-						charts.remove()
-						send("/api/real_time_ecological_factors").done(function (data) {
-							if (Object.keys(data).length === 0) {
-								$("#no_sensors").removeClass("visually-hidden")
-								$(".temperature-record").addClass("visually-hidden")
-							} else {
-								$("#no_sensors").addClass("visually-hidden")
-								$(".temperature-record").addClass("visually-hidden")
-								for (const [sensor, sensorData] of Object.entries(data)) {
-									if (sensorData.status === false) {
-										sensor_error_alert.find("ul").first().append(`<li class='nav-item'>${sensor}</li>`)
-										sensor_error_alert.removeClass("visually-hidden")
-									} else {
-										if (sensor !== "Temperature") {
-											drawChart(sensor, sensorData)
-										} else {
-											$(".temperature-record").removeClass("visually-hidden").find("span").text(sensorData.last_value)
-										}
-									}
-		
-								}
-							}
-						}).fail(function (e) {
-							console.log(e)
-							error("Failed To Refresh")
-						})
-					}
-		
-					
-					refresh()
-					$(".refresh").click(refresh)
-				});
-			</script>
-
 
 			{%include "footer.html"%}
 		</div>
 	</div>
+
+	<!-- <script src="js/app.js"></script> -->
+
+
+
+	<script>
+		//y=a+bx
+		function calculateLineFunction(data) {
+			var x = data.x, y = data.y, total_x = 0, total_y = 0, x_bar = 0, y_bar = 0, a, b, sum_xy = 0, sum_x_squared = 0;
+			for (let i = 0; i < data.x.length; i++) {
+				total_y += data.y[i];
+				total_x += data.x[i];
+				sum_xy += data.x[i] * data.y[i];
+				sum_x_squared += Math.pow(data.x[i], 2);
+			}
+
+			b = (sum_xy - ((total_x * total_y) / data.x.length)) / (sum_x_squared - (Math.pow(total_x, 2) / data.x.length));
+
+			x_bar = total_x / data.x.length;
+			y_bar = total_y / data.y.length;
+
+			a = y_bar - b * x_bar;
+			var predicted_data = [];
+			for (let i = 0; i < data.x.length; i++) {
+				predicted_data[i] = a + b * data.x[i];
+			}
+			return {
+				slope: b, intersept: a, predicted: predicted_data
+			}
+
+		}
+		Chart.defaults.elements.line.borderWidth = 1;
+		Chart.defaults.elements.point.radius = 1;
+		function drawGraph(element, data, type = "bar", label) {
+			var existingChart = Chart.getChart(element);
+			if (existingChart) {
+				existingChart.destroy();
+			}
+			var labels = data.map(entry => new Date(entry.date).toLocaleDateString());
+			var values = data.map(entry => entry.value);
+
+			var v = new Chart(document.getElementById(element), {
+				type: type,
+				data: {
+					labels: labels,
+					datasets: [{
+						label: label,
+						backgroundColor: window.theme.primary,
+						borderColor: window.theme.primary,
+						hoverBackgroundColor: window.theme.primary,
+						hoverBorderColor: window.theme.primary,
+						data: values,
+						barPercentage: .75,
+						categoryPercentage: .5
+					}]
+				},
+				options: {
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							display: false
+						}
+					}
+				}
+			});
+			return v;
+		}
+
+		document.addEventListener("DOMContentLoaded", function () {
+
+			var chats = ['drainage', "irrigation"]
+			function updateGraphs(start, end, interval) {
+				start_time = start.format('D-MM-YYYY')
+				end_time = end.format('D-MM-YYYY')
+				for (let i = 0; i < chats.length; i++) {
+					const type = chats[i];
+
+					send("/api/history/" + type, { 'interval': interval, "start": start_time, "end": end_time }).done(function (data) {
+						drawGraph(type + "-bar-chart", data, 'line', 'shsh')
+					}).fail(function (err) {
+						error(`${err.responseText}`, err.statusText)
+					})
+				}
+			}
+			updateConfig();
+			function get_interval() {
+				var element = $("#time-selector");
+				return element.val()
+			}
+
+			var start_date, end_date;
+			$("#time-selector").change(function (e) {
+				var element = $(e.target), interval = element.val();
+				updateGraphs(start_date, end_date, interval)
+			})
+			$("#graph-type").change(function (e) {
+				var element = $(e.target), graph_type = element.val(), chart = element.parents(".chart-container").first();
+			
+				var existingChart = Chart.getChart(chart.find("canvas").attr("id"));
+				// Update the chart configuration to change the chart type
+				existingChart.config.type = graph_type;
+				// Update the chart with the new configuration
+				existingChart.update();
+			})
+			function updateConfig() {
+				start_date = moment().subtract(29, 'days');
+				end_date = moment();
+				function cb(start, end) {
+					start_date = start
+					end_date = end
+					$('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+					updateGraphs(start, end, get_interval())
+				}
+				$('#reportrange').daterangepicker({
+					startDate: start_date,
+					endDate: end_date,
+					opens: "left",
+					ranges: {
+						'Today': [moment(), moment()],
+						'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+						'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+						'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+						'This Month': [moment().startOf('month'), moment().endOf('month')],
+						
+						'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+						'This Year': [moment().startOf('year'), moment().endOf('year')]
+					}
+				}, cb);
+
+				cb(start_date, end_date);
+			}
+
+		});
+	</script>
 
 
 </body>

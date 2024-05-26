@@ -244,7 +244,6 @@ def docs(filename):
 @app.route("/<page>", methods=["GET"])
 #@login_required
 def pages(page: str):
-    print("shh")
     """To get a page... any page which maches <page>.html
     ===ToDo: Separate thes pages to have each with its own route..
      Args:
@@ -269,7 +268,7 @@ def pages(page: str):
             }
         )
     if page == "settings":
-        users = User.query.all()
+        
         # users=[r.to_dict(rules=['-password']) for r in users]
         fields = FieldZone.query.all()
         data["fields"] = str(
@@ -282,7 +281,7 @@ def pages(page: str):
                 ]
             )
         )
-        data["users"] = users
+        
 
         ##Add current hardware status
         connected_devices_copy = connected_devices.copy()
@@ -344,6 +343,9 @@ def pages(page: str):
             r.to_dict(rules=["-crop_status", "-soil_status", "-schedules"])
             for r in fields
         ]
+    elif page=="users":
+        users = User.query.all()
+        data["users"] = users
 
     return render_template(
         page + ".html",

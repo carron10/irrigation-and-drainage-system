@@ -18,22 +18,22 @@
         background: white
     }
 </style>
-<nav id="sidebar" class="sidebar js-sidebar sticky-top">
+<nav id="sidebar" class="sidebar js-sidebar border-end sticky-top">
     <div class="sidebar-content js-simplebar" style="display:flex !important;">
-        <a class="sidebar-brand" href="index.html">
+        <a class="sidebar-brand bg-primary  text-white" style="text-decoration:none; padding-top: .85rem; padding-bottom: .75rem;" href="index.html">
             <span class="align-middle">FarmAdmin</span>
         </a>
 
         <ul class="sidebar-nav">
 
 
-            <li class="sidebar-item  border-bottom border-top {{'active' if page=='index'}}">
+            <li class="sidebar-item  border-bottom  {{'active' if page=='index'}}">
                 <a class="sidebar-link" href="index.html">
                     <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
                 </a>
             </li>
 
-            <li class="sidebar-item  border-bottom {{'active' if page=='irrigation'}}">
+            <li class="sidebar-item text-light border-bottom {{'active' if page=='irrigation'}}">
                 <a class="sidebar-link" href="irrigation">
                     <i class="align-middle" data-feather="cloud-drizzle"></i> <span
                         class="align-middle">Irrigation</span>
@@ -52,14 +52,20 @@
                         Factors</span>
                 </a>
             </li>
+           
+            <li class="sidebar-item border-bottom {{'active' if page=='reports'}}">
+                <a class="sidebar-link" href="reports">
+                    <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Reports</span>
+                </a>
+            </li>
             <li class="sidebar-item border-bottom {{'active' if page=='settings'}}">
                 <a class="sidebar-link" href="/settings">
                     <i class="align-middle" data-feather="settings"></i> <span class="align-middle">Settings</span>
                 </a>
             </li>
-            <li class="sidebar-item border-bottom {{'active' if page=='reports'}}">
-                <a class="sidebar-link" href="reports">
-                    <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Reports</span>
+            <li class="sidebar-item border-bottom {{'active' if page=='users'}}">
+                <a class="sidebar-link" href="/users">
+                    <i class="align-middle" data-feather="users"></i> <span class="align-middle">Users</span>
                 </a>
             </li>
         </ul>

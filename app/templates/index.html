@@ -10,27 +10,7 @@
 <body>
 	<div class="wrapper">
 		{%include 'sidebar.html'%}
-		<style>
-			.btn-like {
-				display: inline-block;
-				font-weight: 400;
-				line-height: 1.5;
-				color: #212529;
-				text-align: center;
-				text-decoration: none;
-				vertical-align: middle;
-				cursor: pointer;
-				-webkit-user-select: none;
-				-moz-user-select: none;
-				user-select: none;
-				background-color: transparent;
-				border: 1px solid transparent;
-				padding: .375rem .75rem;
-				font-size: 1rem;
-				border-radius: .25rem;
-				transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-			}
-		</style>
+		
 		<div class="main">
 			{%include 'navbar.html'%}
 
@@ -41,16 +21,16 @@
 
 					<div class="justify-content-between d-flex">
 						<div class="rounded-0">
-							<h1 class="h3  fw-bold">Dashboard </h1>
+							<h1 class="h3  fw-bold text-primary">Dashboard </h1>
 						</div>
 						<div>
-							<select class="btn-like interval border bg-white" id="time-selector">
+							<select class="btn-like interval  bg-white" id="time-selector">
 								<option selected value="daily">Daily</option>
 								<option value="weekly">Weekly</option>
 								<option value="monthly">Monthly</option>
 								<option value="yearly">Yearly</option>
 							</select>
-							<button id="reportrange" class="btn border bg-white">
+							<button id="reportrange" class="btn bg-white" style="color: #1d3b4a;border-width: 0 1px 4px;">
 								<i class="align-middle" data-feather="calendar"></i>
 								<span></span>
 								<i class="align-middle" data-feather="chevron-down"></i>
@@ -66,8 +46,8 @@
 									<div class="h5 float-start">Irrigation</div>
 									<select class="float-end border bg-white" id="graph-type">
 										<option value="bar">bar</option>
-										<option value="line">Line</option>
-										<option value="hist">Scatter</option>
+										<option selected value="line">Line</option>
+										<option value="scatter">Scatter</option>
 										<option value="hist_line">Histogram+line</option>
 									</select>
 								</div>
@@ -84,8 +64,8 @@
 									<div class="h5 float-start">Drainage</div>
 									<select class="float-end border bg-white" id="graph-type">
 										<option value="bar">bar</option>
-										<option value="line">Line</option>
-										<option value="hist">Histogram</option>
+										<option selected value="line">Line</option>
+										<option value="scatter">Histogram</option>
 										<option value="hist_line">Histogram+line</option>
 									</select>
 								</div>
@@ -252,8 +232,9 @@
 						'Last 7 Days': [moment().subtract(6, 'days'), moment()],
 						'Last 30 Days': [moment().subtract(29, 'days'), moment()],
 						'This Month': [moment().startOf('month'), moment().endOf('month')],
-						'This Year': [moment().startOf('year'), moment().endOf('year')],
-						'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+						
+						'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+						'This Year': [moment().startOf('year'), moment().endOf('year')]
 					}
 				}, cb);
 

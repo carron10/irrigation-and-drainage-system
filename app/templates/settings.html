@@ -26,9 +26,7 @@
 			</style>
 			<div class=" border-bottom border-top pt-2 d-flex justify-content-center">
 				<div class="nav nav-tabs me-3 setting-tabs" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-					<button class=" mx-1 bg-danger nav-link active" id="user-accounts-tab" data-bs-toggle="pill"
-						data-bs-target="#user-accounts" type="button" role="tab" aria-controls="user-accounts"
-						aria-selected="false">User Accounts</button>
+					
 					<button class="bg-danger nav-link border  mx-1" id="products-tab" data-bs-toggle="pill"
 						data-bs-target="#soil-type" type="button" role="tab" aria-controls="soil-type"
 						aria-selected="false">Set Soil Type</button>
@@ -44,48 +42,6 @@
 
 				<div class="container-fluid p-0">
 					<div class="tab-content sub-form">
-						<div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.8);"
-							id="user-accounts" role="tabpanel" titleledby="general1-list">
-							<div class="d-flex justify-content-end p-2">
-
-								<button type="button" class="btn btn-sm btn-success " data-bs-toggle="modal"
-									data-bs-target="#addUserModal">Add New User</button>
-							</div>
-							<table class="table table-striped">
-								<thead>
-									<tr>
-										<th scope="col">ID</th>
-										<th scope="col">First Name</th>
-										<th scope="col">Last Name</th>
-										<th scope="col">Email</th>
-										<th scope="col">Roles</th>
-										<th scope="col">Action</th>
-									</tr>
-								</thead>
-								<tbody>
-									{%for user in users%}
-									<tr id="{{user.id}}">
-										<td scope="row">{{user.id}}</td>
-										<td>{{user.first_name}}</td>
-										<td>{{user.last_name}}</td>
-										<td>{{user.email}}</td>
-										<td>
-											{%for role in user.roles%}
-											<span>{{role.name}} ,</span>
-											{%endfor%}
-										</td>
-										<td>
-											<a role="button" id="delete-user" data-cf-user-id="{{user.id}}" data-cf-user-email="{{user.email}}"><i
-													data-feather="trash-2"></i></a>
-											<a href="/user/{{user.email}}/{{user.id}}"><i
-													data-feather="external-link"></i></a>
-										</td>
-									</tr>
-									{%endfor%}
-								</tbody>
-							</table>
-
-						</div>
 						<div class="tab-pane fade" id="soil-type" role="tabpanel" titleledby="general1-list">
 							<div class="container px-lg-6 mx-auto d-table h-100">
 								<div class="d-table-cell align-middle">
@@ -410,29 +366,6 @@
 
 			})
 		})
-
-		$(function () {
-			$("#delete-user").click(function (e) {
-				var user_id = $(e.currentTarget).attr("data-cf-user-id"), user_email = $(e.currentTarget).attr("data-cf-user-email")
-				send(`user/${user_email}/${user_id}`, {}, "DELETE").done(function (data) {
-				}).fail(function (err) {
-					error(`${err.responseText}`, err.statusText)
-				})
-			})
-		})
-		function addUser() {
-			var form = document.getElementById("addUserForm")
-			if (form.checkValidity() === true) {
-				var user_data = getFormData("addUserForm")
-				console.log(user_data)
-				send("/api/add_new_user", user_data, "POST").done(function (data) {
-
-				}).fail(function (err) {
-					error(`${err.responseText}`, err.statusText)
-				})
-			}
-			$(form).addClass("was-validated");
-		}
 	</script>
 
 </body>
