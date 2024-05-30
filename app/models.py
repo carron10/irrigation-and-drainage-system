@@ -119,6 +119,7 @@ class User(MyModel, UserMixin, SerializerMixin):
         """
         Check if the user is a super user.
         """
+        
         return self.has_role("super")
 
     def is_admin(self):

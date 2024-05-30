@@ -7,11 +7,11 @@ from flask_security import (
 )
 from flask_security.utils import hash_password, login_user
 from flask_security import current_user, login_required, roles_required
-from app.utils import add_or_update_option
+from app.utils import add_or_update_option, send_notification_mail, send_invitation_email
 from flask import abort, redirect, url_for
 from flask_security import roles_required, Security, UserMixin, mail_util
 from app.models import User, Role, db, build_sample_db
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, current_app
 import uuid
 from flask import jsonify
 
@@ -27,6 +27,7 @@ security = Security(datastore=user_datastore)
 def setup():
     # Check if there are existing users in the database
     admin_role = Role.query.filter_by(name="admin").first()
+    
     if admin_role:
         admin_users_count = admin_role.users.count()
         if admin_users_count > 0:
@@ -72,20 +73,24 @@ def setup():
 
             db.session.commit()
             # Create the initial user if it doesn't already exist
-            if not user_datastore.find_user(email=email):
-                user = user_datastore.create_user(roles=[user_role, super_role, admin_role],
+            if not user_datastore.find_user(email=email,case_insensitive=True):
+                print("User Not There")
+                user_datastore.create_user(roles=[user_role, super_role, admin_role],
                                                   first_name=first_name,
                                                   last_name=last_name,
                                                   email=email,
                                                   password=hash_password(password))
+                db.session.commit()
+                build_sample_db(user_bp, user_datastore)
             db.session.commit()
-
+            return redirect(url_for('security.login'))
+            # return "Done"
         except Exception as e:
             print(f"An error occurred: {e}")
-
-        build_sample_db(user_bp, user_datastore)
-        db.session.commit()
-        return redirect(url_for('security.login'))
+            return render_template('setup.html', msgs=[{
+                "msg": f"An error occurred: {e}",
+                "type": "danger",
+            }]), 500
 
     return render_template('setup.html')
 
@@ -130,7 +135,6 @@ def view_user_information(email: str, id: int):
             if "super" == role.name:
                 return jsonify({'message': 'Super users cannot be deleted'}), 500
 
-        
         # Handle DELETE request (delete user)
         user_datastore.delete_user(user)
         db.session.commit()
@@ -145,11 +149,12 @@ def add_new_user():
     invite_user = user_datastore.create_user(email=email, active=False)
     try:
         user_datastore.commit()
-        token = user_datastore.get_confirmation_token(invite_user)
-        send_invitation_email(invite_user, token)
+        token = invite_user.get_auth_token()
+        domain = current_app.config.get("SYSTEM_DOMAIN")
+        msg = f"You have been invited, continue create your account  {domain}/comfirn_user/{token}"
+        send_notification_mail("Create Accout", msg, email)
         flash('Invitation sent successfully!')
-        return redirect(url_for('admin_dashboard'))
+        # return redirect(url_for('admin_dashboard'))
+        return "Done", 200
     except Exception as e:
-        user_datastore.rollback()
-        flash(f'Error inviting user: {str(e)}')
-        return redirect(url_for('invite_user'))
+        return f"Error {e}", 500

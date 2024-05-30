@@ -60,9 +60,9 @@ from app.models import (
 from app.websocket.flask_sock import Sock
 from threading import Thread
 import schedule
-from app.utils import generate_unique_string
-from app.user_routes import user_bp,security,user_datastore
-from flask_mailman import Mail
+from app.utils import generate_unique_string,send_notification_mail
+from app.user_routes import user_bp, security, user_datastore
+from flask_mailman import Mail, EmailMessage
 
 app = create_app()
 
@@ -75,17 +75,20 @@ scheduler = Scheduler()
 # app.config["SCHEDULER"] = scheduler
 db.init_app(app)
 
+#create mail object
 mail = Mail(app)
 
-
+##Before request check if the a user in the system
 @app.before_request
 def before_request_handler():
     if request.path == '/login' and request.method == 'GET':
         if User.query.count() == 0:
             # If no users exist, redirect to setup route
             return redirect(url_for('user_bp.setup'))
-        
+
 # Function to execute when one visit /api/notifications
+
+
 @app.route("/api/notifications", methods=["GET"])
 def get_notifications():
     """To get notifications
@@ -116,6 +119,7 @@ def get_users():
     return [r.to_dict(rules=["-password"]) for r in results]
 
 
+###Getting historical data
 @app.route("/api/history/<for_>", methods=["GET"])
 def get_history(for_):
     """Return sensors reading history
@@ -125,13 +129,15 @@ def get_history(for_):
     """
 
     interval = request.args.get('interval')
-    start_date =datetime.datetime.strptime(request.args.get('start'),"%d-%m-%Y")
-    end_date =datetime.datetime.strptime(request.args.get('end'),"%d-%m-%Y")
-    results = db.session.query(History).filter(History.for_ == for_).filter(History.end_time >= start_date).filter(History.end_time <= end_date).all()
-    results=[r.to_dict()  for r in results]
+    start_date = datetime.datetime.strptime(
+        request.args.get('start'), "%d-%m-%Y")
+    end_date = datetime.datetime.strptime(request.args.get('end'), "%d-%m-%Y")
+    results = db.session.query(History).filter(History.for_ == for_).filter(
+        History.end_time >= start_date).filter(History.end_time <= end_date).all()
+    results = [r.to_dict() for r in results]
     df = pd.DataFrame(results, columns=['end_time', 'value'])
     df['end_time'] = pd.to_datetime(df['end_time'])
-    interval_df=None
+    interval_df = None
     df.set_index('end_time', inplace=True)
     if interval == 'daily':
         interval_df = df.resample('D').sum()
@@ -141,8 +147,10 @@ def get_history(for_):
         interval_df = df.resample('Y').sum()
     elif interval == 'weekly':
         interval_df = df.resample('W').sum()
-    formatted_results = interval_df.reset_index().rename(columns={'end_time': 'date'}).to_dict(orient='records')
+    formatted_results = interval_df.reset_index().rename(
+        columns={'end_time': 'date'}).to_dict(orient='records')
     return formatted_results
+
 
 @app.route("/api/soil_data", methods=["GET", "POST"])
 def get_soil_data():
@@ -220,10 +228,12 @@ def get_fields():
 def hello():
     return jsonify({'message': 'Hello, World!'})
 
-##Home page
+# Home page
+
+
 @app.route("/", methods=["GET"])
 @app.route("/index.html", methods=["GET"])
-#@login_required
+@login_required
 def index():
     return pages("index")
 
@@ -241,8 +251,10 @@ def docs(filename):
 
 
 # Other pages
+
+
 @app.route("/<page>", methods=["GET"])
-#@login_required
+@login_required
 def pages(page: str):
     """To get a page... any page which maches <page>.html
     ===ToDo: Separate thes pages to have each with its own route..
@@ -255,7 +267,8 @@ def pages(page: str):
     if page == "favicon.ico":
         return send_from_directory(app.static_folder, page), 200
 
-    notifications = db.session.execute(select(Notifications).limit(4)).scalars()
+    notifications = db.session.execute(
+        select(Notifications).limit(4)).scalars()
     notifications = [r.to_dict() for r in notifications]
     r2 = Notifications.query.filter_by(status=False).count()
     data = {}
@@ -268,22 +281,22 @@ def pages(page: str):
             }
         )
     if page == "settings":
-        
+
         # users=[r.to_dict(rules=['-password']) for r in users]
         fields = FieldZone.query.all()
         data["fields"] = str(
             json.dumps(
                 [
                     r.to_dict(
-                        rules=["-crop_status.field", "-schedules", "-soil_status.field"]
+                        rules=["-crop_status.field",
+                               "-schedules", "-soil_status.field"]
                     )
                     for r in fields
                 ]
             )
         )
-        
 
-        ##Add current hardware status
+        # Add current hardware status
         connected_devices_copy = connected_devices.copy()
         if len(connected_devices_copy.keys()) > 0:
             for k, v in connected_devices_copy.items():
@@ -296,7 +309,8 @@ def pages(page: str):
         ).all()
         data["scheduled_fields"] = [
             r.to_dict(
-                rules=["-field.crop_status", "-field.schedules", "-field.soil_status"]
+                rules=["-field.crop_status",
+                       "-field.schedules", "-field.soil_status"]
             )
             for r in scheduled_fields
         ]
@@ -304,7 +318,8 @@ def pages(page: str):
             r.to_dict() for r in History.query.filter_by(for_="drainage").all()
         ]
         for hist_ in data["scheduled_history"]:
-            hist_["field"] = FieldZone.query.filter_by(id=hist_["field_id"]).first()
+            hist_["field"] = FieldZone.query.filter_by(
+                id=hist_["field_id"]).first()
 
         data["auto_schedule"] = "OFF"
         auto = Options.query.get({"option_name": "drainage_auto_schedule"})
@@ -323,7 +338,8 @@ def pages(page: str):
         ).all()
         data["scheduled_fields"] = [
             r.to_dict(
-                rules=["-field.crop_status", "-field.schedules", "-field.soil_status"]
+                rules=["-field.crop_status",
+                       "-field.schedules", "-field.soil_status"]
             )
             for r in scheduled_fields
         ]
@@ -331,7 +347,8 @@ def pages(page: str):
             r.to_dict() for r in History.query.filter_by(for_="irrigation").all()
         ]
         for hist_ in data["scheduled_history"]:
-            hist_["field"] = FieldZone.query.filter_by(id=hist_["field_id"]).first()
+            hist_["field"] = FieldZone.query.filter_by(
+                id=hist_["field_id"]).first()
 
         data["auto_schedule"] = "OFF"
         auto = Options.query.get({"option_name": "irrigation_auto_schedule"})
@@ -343,7 +360,7 @@ def pages(page: str):
             r.to_dict(rules=["-crop_status", "-soil_status", "-schedules"])
             for r in fields
         ]
-    elif page=="users":
+    elif page == "users":
         users = User.query.all()
         data["users"] = users
 
@@ -359,7 +376,8 @@ def pages(page: str):
 @app.route("/api/add_schedule", methods=["POST"])
 def add_irrigation_or_drainage_schedule():
     data = request.form.to_dict()
-    schedule_date = datetime.datetime.strptime(data["schedule_date"], "%Y-%m-%dT%H:%M")
+    schedule_date = datetime.datetime.strptime(
+        data["schedule_date"], "%Y-%m-%dT%H:%M")
     scheduler = Schedules(
         duration=data["duration"],
         field_id=data["field_id"],
@@ -374,6 +392,7 @@ def add_irrigation_or_drainage_schedule():
         rules=["-field.crop_status", "-field.schedules", "-field.soil_status"]
     )
     return results
+
 
 @app.route("/api/options", methods=["POST", "GET"])
 def add_get_update_option():
@@ -395,7 +414,7 @@ def add_get_update_option():
     else:
         option.option_value = data["value"]
         db.session.add(option)
-        
+
     is_on = data["value"] == "ON"
     if data["name"] == "drainage_auto_schedule":
         job = scheduler.get_jobs("auto_drainage_job")
@@ -459,11 +478,14 @@ def stop_start_irrigation_or_drainage(action, what):
     # ToDo: To make sure the message is delivered and there is a callback specified
     if len(connected_devices_copy.keys()) > 0:
         if send_command(f"{what} {action}", require_return=True, time_out=20):
-            field_query = update(FieldZone).where(FieldZone.id == data["field_id"])
+            field_query = update(FieldZone).where(
+                FieldZone.id == data["field_id"])
             if what == "irrigation":
-                field_query = field_query.values(irrigation_status=(action == "start"))
+                field_query = field_query.values(
+                    irrigation_status=(action == "start"))
             else:
-                field_query = field_query.values(drainage_status=(action == "start"))
+                field_query = field_query.values(
+                    drainage_status=(action == "start"))
             db.session.execute(field_query)
             db.session.commit()
             return "Done"
@@ -530,7 +552,7 @@ def add_schedule(task: Schedules):
     what = task.for_
     schedule_date = task.schedule_date
     stop_date = schedule_date + timedelta(minutes=duration)
-    ##Add the start scheduler in scheduler
+    # Add the start scheduler in scheduler
     current_date = datetime.datetime.now()
     time_format = "%H:%M"
     # date_format = "%d-%m-%Y %H:%M:%S"
@@ -545,12 +567,13 @@ def add_schedule(task: Schedules):
     stop_in_days = 1 if stop_in_days == 0 else stop_in_days
 
     if start_in_days < 0:
-        ##Notify the users about missed scheduler
-        note = Notifications(
-            f"A scheduler  was missed at {schedule_date} , maybe the {what} started but the System was offline"
-        )
+        # Notify the users about missed scheduler
+        msg=f"A scheduler  was missed at {schedule_date} , {what} did not start,the system was Offline!!"
+        note = Notifications(msg)
+        send_notification_mail("Missed Schedule!!",msg,"admin@tekon.co.zw")
         db.session.add(note)
         db.session.commit()
+        
     else:
         scheduler.every(start_in_days).days.at(schedule_date.strftime(time_format)).do(
             start_stop_irrigation_and_drainage,
@@ -559,7 +582,7 @@ def add_schedule(task: Schedules):
             call_back_fun=start_call_back,
             call_back_args=task,
         )
-        ##Add stop scheduler..... the irrigation should stop at schedule_data+duration(mins)
+        # Add stop scheduler..... the irrigation should stop at schedule_data+duration(mins)
         scheduler.every(stop_in_days).days.at(stop_date.strftime(time_format)).do(
             start_stop_irrigation_and_drainage,
             what=what,
@@ -567,7 +590,8 @@ def add_schedule(task: Schedules):
             call_back_fun=stop_call_back,
             call_back_args=task,
         )
-        note = Notifications(f"{what} was successfully scheduled at {schedule_date}")
+        note = Notifications(
+            f"{what} was successfully scheduled at {schedule_date}")
         db.session.add(note)
     db.session.commit()
 
@@ -587,7 +611,8 @@ def start_call_back(scheduled_task: Schedules):
         f"{scheduled_task.for_} has started at {scheduled_task.schedule_date} succesfully"
     )
     db.session.add(note)
-    field_query = update(FieldZone).where(FieldZone.id == scheduled_task.field_id)
+    field_query = update(FieldZone).where(
+        FieldZone.id == scheduled_task.field_id)
     if scheduled_task.for_ == "irrigation":
         field_query = field_query.values(irrigation_status=True)
     else:
@@ -662,7 +687,8 @@ def stop_call_back(scheduled_task: Schedules):
     )
     note = Notifications(f"{scheduled_task.for_} has ended  at {stop_date}")
     db.session.add(note)
-    field_query = update(FieldZone).where(FieldZone.id == scheduled_task.field_id)
+    field_query = update(FieldZone).where(
+        FieldZone.id == scheduled_task.field_id)
     if scheduled_task.for_ == "irrigation":
         field_query = field_query.values(irrigation_status=False)
     else:
@@ -671,24 +697,28 @@ def stop_call_back(scheduled_task: Schedules):
     db.session.commit()
     return schedule.CancelJob
 
+
 def run_pending_schedules():
     global thread_running
     print("Hello world")
     """To run Irrigation, Drainage many more schedules"""
-    ##Get schedules that are in database a run add them on
+    # Get schedules that are in database a run add them on
     with app.app_context():
         schedules = Schedules.query.filter_by(status=False).all()
         for schedul in schedules:
             add_schedule(schedul)
 
-        irr_auto =db.session.query(Options).filter(Options.option_name == "irrigation_auto_schedule").first()
+        irr_auto = db.session.query(Options).filter(
+            Options.option_name == "irrigation_auto_schedule").first()
         # Options.query.get({"option_name": "irrigation_auto_schedule"})
         irrigation_auto_schedule = irr_auto.option_value == "ON" if irr_auto else False
         if irrigation_auto_schedule:
             scheduler.every().seconds.do(
                 start_auto_scheduler_checker, what="irrigation"
             ).tag("auto_irrigation_job")
-        drainage_auto = db.session.query(Options).filter(Options.option_name == "drainage_auto_schedule").first() #Options.query.get({"option_name": "drainage_auto_schedule"})
+        # Options.query.get({"option_name": "drainage_auto_schedule"})
+        drainage_auto = db.session.query(Options).filter(
+            Options.option_name == "drainage_auto_schedule").first()
         drainage_auto_schedule = (
             drainage_auto.option_value == "ON" if drainage_auto else False
         )
@@ -706,15 +736,17 @@ def run_pending_schedules():
 with app.app_context():
     db.create_all()
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
-    build_sample_db(user_bp, user_datastore)
+    # build_sample_db(user_bp, user_datastore)
     db.session.commit()
-    
+
 
 # Flag to indicate if the thread is running
 thread_running = False
 
 # Global reference to the thread
 mythread = None
+
+
 @app.teardown_appcontext
 def shutdown_thread(exception):
     global thread_running, mythread
@@ -725,5 +757,3 @@ def shutdown_thread(exception):
     # Wait for the thread to exit
     if mythread and mythread.is_alive():
         mythread.join()
-
-

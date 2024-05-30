@@ -26,10 +26,17 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 SECURITY_RECOVERABLE=True
 
 
+DEBUG = False
+TESTING = False
 
-#Setting security configuration
-MAIL_SERVER = 'smtp.example.com'
+# Flask-Mail configurations
+MAIL_SERVER = 'mail.tekon.co.zw'
+MAIL_HOST=MAIL_SERVER
 MAIL_PORT = 587
 MAIL_USE_TLS = True
-MAIL_USERNAME = 'username'
-MAIL_PASSWORD = 'password'
+MAIL_USERNAME = 'noreply@tekon.co.zw'
+MAIL_PASSWORD = 'unAHqC3fLqGeF4X'
+MAIL_DEFAULT_SENDER="noreply@tekon.co.zw"
+
+#Configure the admin Email
+SYSTEM_DOMAIN="https://irrigation-and-drainage-system.onrender.com/"
