@@ -58,7 +58,7 @@ class UserCaps(MyModel):
 # Role Model
 
 
-class Role(MyModel, RoleMixin):
+class Role(MyModel, RoleMixin,SerializerMixin):
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True, default="user")
     description = Column(String(255))

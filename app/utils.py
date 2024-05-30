@@ -16,6 +16,7 @@ from app.models import (
     build_sample_db,
     db,
 )
+from flask import current_app
 from flask_mailman import Mail, EmailMessage
 generated_strings = set()
 
@@ -30,15 +31,16 @@ def generate_unique_string(length=10):
 
 
 def add_or_update_option(name, value):
-    option = Options.query.get(name)
-    if not option:
-        option = Options(option_name=name, option_value=value)
+    with current_app.app_context():
+        option = Options.query.get(name)
+        if not option:
+            option = Options(option_name=name, option_value=value)
+            db.session.add(option)
+        else:
+            option.option_value = value
         db.session.add(option)
-    else:
-        option.option_value = value
-        db.session.add(option)
-    db.session.commit()
-    return option.to_dict()
+        db.session.commit()
+        return option.to_dict()
 
 def send_invitation_email():
     pass
