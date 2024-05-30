@@ -85,9 +85,11 @@ mail = Mail(app)
 @app.before_request
 def before_request_handler():
     if request.path == '/login' and request.method == 'GET':
-        if User.query.count() == 0:
-            # If no users exist, redirect to setup route
-            return redirect(url_for('user_bp.setup'))
+           super_role = Role.query.filter_by(name="super").first()
+           if super_role:
+                admin_users_count = super_role.users.count()
+                if admin_users_count==0:
+                    return redirect(url_for('user_bp.setup'))
 
 # Function to execute when one visit /api/notifications
 
@@ -739,7 +741,7 @@ def run_pending_schedules():
 with app.app_context():
     db.create_all()
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
-    # build_sample_db(user_bp, user_datastore)
+    build_sample_db(user_bp, user_datastore)
     db.session.commit()
     app.config['USER_DATA_STORE']=user_datastore
     app.config['SECURITY']=security

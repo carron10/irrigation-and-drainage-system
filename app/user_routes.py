@@ -28,7 +28,7 @@ security = Security(datastore=user_datastore)
 @user_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
     # Check if there are existing users in the database
-    admin_role = Role.query.filter_by(name="admin").first()
+    admin_role = Role.query.filter_by(name="super").first()
     
     if admin_role:
         admin_users_count = admin_role.users.count()
@@ -37,7 +37,7 @@ def setup():
 
     if request.method == 'POST':
         # Retrieve form data
-
+        
         password = request.form['password']
         cpassword = request.form['confirmpassword']
         if password != cpassword:
@@ -78,7 +78,6 @@ def setup():
             db.session.commit()
             # Create the initial user if it doesn't already exist
             if not user_datastore.find_user(email=email,case_insensitive=True):
-                print("User Not There")
                 user_datastore.create_user(first_name=first_name,
                                                   last_name=last_name,
                                                   email=email,

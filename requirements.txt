@@ -10,7 +10,7 @@ sqlalchemy_serializer
 simple_websocket
 schedule
 Flask-Testing
+setuptools
 Flask-Mailman
-pytest
 pytest-flask
 pytest

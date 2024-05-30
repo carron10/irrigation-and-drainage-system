@@ -42,18 +42,20 @@ def get_admin_user():
     with current_app.app_context():
         admin_user_email=get_option("company_admin_user")
         if admin_user_email:
-            user=current_app.user_datastore
+            user_dstore=get_user_datastore()
+            user=user_dstore.find_user(case_insensitive=True,email=admin_user_email)
+            return user
         return None
 
 def get_option(name:str):
     with current_app.app_context():
-        option = Options.query.get(name)
+        option = db.session.get(Options, name)
         if not option:
             return None
         return option.option_value
 def add_or_update_option(name, value):
     with current_app.app_context():
-        option = Options.query.get(name)
+        option = db.session.get(Options, name)
         if not option:
             option = Options(option_name=name, option_value=value)
             db.session.add(option)

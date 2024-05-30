@@ -271,9 +271,14 @@ def build_sample_db(app, user_datastore):
     import random
     import string
     
-    db.drop_all()
-    db.create_all()
+    History.query.delete()
+    Statistics.query.delete()
+    FieldZone.query.delete()
+    SoilStatus.query.delete()
+    CropsStatus.query.delete()
     
+    db.create_all()
+
     # Generate history data
     for i in range(7):
         for j in range(24 * 2):
