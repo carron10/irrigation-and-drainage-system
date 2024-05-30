@@ -60,7 +60,7 @@ from app.models import (
 from app.websocket.flask_sock import Sock
 from threading import Thread
 import schedule
-from app.utils import generate_unique_string,send_notification_mail
+from app.utils import generate_unique_string,send_notification_mail,get_admin_user
 from app.user_routes import user_bp, security, user_datastore
 from flask_mailman import Mail, EmailMessage
 
@@ -70,6 +70,9 @@ app.register_blueprint(user_bp)
 
 security.init_app(app)
 
+app.user_datastore=user_datastore
+app.security=security
+    
 app.config["SQLALCHEMY_MODEL_BASE_CLASS"] = MyModel
 scheduler = Scheduler()
 # app.config["SCHEDULER"] = scheduler
@@ -738,6 +741,9 @@ with app.app_context():
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
     # build_sample_db(user_bp, user_datastore)
     db.session.commit()
+    app.config['USER_DATA_STORE']=user_datastore
+    app.config['SECURITY']=security
+    
 
 
 # Flag to indicate if the thread is running
