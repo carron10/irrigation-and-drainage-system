@@ -65,9 +65,10 @@ def add_or_update_option(name, value):
         db.session.commit()
         return option.to_dict()
 
-def send_invitation_email():
-    pass
+
 def send_notification_mail(subject: str, notification_body: str, emails: list):
+    if not isinstance(emails, list):
+        emails=[emails]
     try:
         msg = EmailMessage(
             subject=subject,
@@ -80,5 +81,24 @@ def send_notification_mail(subject: str, notification_body: str, emails: list):
     except Exception as e:
         print(f'An exception occurred: {e}')
         return False  # Return False if an exception occurs during the email sending process
+
+def get_super_and_admin_users_emails():
+    return {user.email for user in get_super_and_admin_users()}
+
+
+def get_super_and_admin_users()-> set:
+    with current_app.app_context():
+        admin_roles = Role.query.filter_by(name="super").filter_by(name="admin")
+        users = set()  # Define users as a set
+        for admin_role in admin_roles:
+            users.update(admin_role.users)  # Add unique users to the set
+        return users
+    
+def send_irrigation_stop_start_email(what,status,emails=None):
+    current_time=datetime.datetime.now()
+    if not emails:
+        emails=get_super_and_admin_users_emails()
+    return send_notification_mail(f"{what} Updates!",f"This is to notify you that {what} has {"started" if status else "Stopped"} at {current_time}",emails)
+    
 
     

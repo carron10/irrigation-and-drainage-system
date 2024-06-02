@@ -31,21 +31,21 @@
 						<h1 class="h3 my-3  text-primary">Irrigation</h1>
 					</div>
 
-					<div class="d-flex border-bottom justify-content-center">
+					<div class="d-flex border-bottom">
 						<div class="nav border-0 nav-tabs me-3 pt-2" id="list-tab" role="tablist">
-							<button class="bg-danger-test mx-1  nav-link text-dark rounded-0 active "
+							<button class="bg-primary-2 mx-1  nav-link text-dark rounded-0 active "
 								id="user-accounts-tab" data-bs-toggle="pill" data-bs-target="#manual" type="button"
 								role="tab" aria-selected="false">
 								Manual Controls
 							</button>
-							<button class="bg-danger-test mx-1  nav-link text-dark rounded-0 " role="button"
+							<button class="bg-primary-2 mx-1  nav-link text-dark rounded-0 " role="button"
 								id="user-accounts-tab" data-bs-toggle="pill" data-bs-target="#history" type="button">
 								History
 							</button>
-							<button class="bg-danger-test mx-1  nav-link text-dark rounded-0 " id="user-accounts-tab"
+							<button class="bg-primary-2 mx-1  nav-link text-dark rounded-0 " id="user-accounts-tab"
 								data-bs-toggle="pill" data-bs-target="#status" type="button">
 								Status
-							</button><button class="bg-danger-test mx-1  nav-link text-dark rounded-0 "
+							</button><button class="bg-primary-2 mx-1  nav-link text-dark rounded-0 "
 								id="user-accounts-tab" data-bs-toggle="pill" data-bs-target="#schedules" type="button">
 								Schedules
 							</button>
@@ -73,7 +73,7 @@
 											<tr id="{{field['name']}}">
 												<td>{{field['name']}}</td>
 												<td>
-													<div class="py-4">
+													<!-- <div class="py-1"> -->
 														<div class="button r" id="button-1">
 															<input type="checkbox" data_field_name="{{field.name}}"
 																data_field_id="{{field.id}}"
@@ -82,7 +82,7 @@
 															<div class="knobs"></div>
 															<div class="layer"></div>
 														</div>
-													</div>
+													<!-- </div> -->
 												</td>
 											</tr>
 											{%endfor%}
@@ -95,7 +95,7 @@
 						</div>
 						<div class="tab-pane fade" id="history" role="tabpanel" titleledby="general1-list">
 							<!-- style="background-color: rgba(255, 255, 255, 0.8);"> -->
-							<table class="table table-striped border">
+							<table class="table table-striped border w-100" id="irrigatiom-history-table">
 								<thead>
 									<tr>
 										<th scope="col">Field</th>
@@ -166,7 +166,7 @@
 									{%if auto_schedule=='ON'%}
 									<span class="bg-success auto_schedule_status badge">On</span>
 									{%else%}
-									<span class="bg-danger-test badge auto_schedule_status">Off</span>
+									<span class="bg-primary-2 badge auto_schedule_status">Off</span>
 									{%endif%}
 								</div>
 							</div>
@@ -280,6 +280,7 @@
 
 	<script>
 		$(function () {
+			new DataTable('#irrigatiom-history-table');
 
 			//Set Auto Schedule On/Off
 			$(".set-auto-schedule").click(function () {
@@ -289,11 +290,11 @@
 					if (is_on) {
 						$(".set-auto-schedule").removeClass("on_").addClass("off_")
 						$(".set-auto-schedule").text("Enable Auto Shedule")
-						$(".auto_schedule_status").text("Off").addClass("bg-danger-test").removeClass("bg-success")
+						$(".auto_schedule_status").text("Off").addClass("bg-primary-2").removeClass("bg-success")
 					} else {
 						$(".set-auto-schedule").removeClass("off_").addClass("on_")
 						$(".set-auto-schedule").text("Disable Auto Shedule")
-						$(".auto_schedule_status").text("On").removeClass("bg-danger-test").addClass("bg-success")
+						$(".auto_schedule_status").text("On").removeClass("bg-primary-2").addClass("bg-success")
 
 					}
 				}).fail(function (err) {

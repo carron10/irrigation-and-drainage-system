@@ -30,7 +30,7 @@ data = {}
 
 
 # # Define sensors
-rain = RainDropSensor()
+rain = RainDropSensor(config.get("raindrop_sensor_pin"))
 humidity_and_tempeture = HumidityTemperatureSensor(config.get("humidity_and_temperature_pin"))
 moisture = SoilMoistureSensor()
 
@@ -91,6 +91,7 @@ async def on_disconnect():
 
 
 async def send_sensor_statuses_loop():
+    print("Sensor updated called")
     """To send sensor statuses to server in async manner"""
     global lock
     global ws
@@ -98,6 +99,7 @@ async def send_sensor_statuses_loop():
     global humidity_and_tempeture
     last_sent_time = None
     while True:
+        print("____from status___")
         if ws is not None:
             if await ws.open():
                 try:
@@ -175,10 +177,10 @@ async def send_humidity_loop():
     last_sent_time = None
     while True:
         if ws is not None:
+            print("Humidity ws-not null")
             if await ws.open():
                 try:
                     if humidity_and_tempeture.isconnected():
-                        await a.sleep(2)
                         temp, humidity = humidity_and_tempeture.read()
                         print("Sending====humidity")
                         await ws.send(
@@ -200,10 +202,10 @@ async def send_humidity_loop():
                     end_time = time.time()
                     elapsed_time = end_time - last_sent_time
                     t_diff = config.get("socket_send_data_seconds") - elapsed_time
-                    await a.sleep(3 if t_diff < 0 else t_diff)
+                    await a.sleep(1 if t_diff < 0 else t_diff)
                 else:
-                    await a.sleep(3)
-        await a.sleep(3)
+                    await a.sleep(1)
+        await a.sleep(1)
 
 
 async def send_rainfall_loop():

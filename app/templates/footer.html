@@ -29,6 +29,7 @@
             </div>
         </div>
     </div>
+
     <div class="container-fluid">
         <div class="row text-muted">
             <div class="col-6 text-start">
@@ -86,6 +87,8 @@
         <script src="/js/bootstrap.bundle.min.js"></script>
         <script src="/js/moment.min.js"></script>
         <script src="/js/daterangepicker.js"></script>
+        <script src="/js/datatables.min.js"></script>
+
 
         <script src="/js/chart.umd.min.js"></script>
 
@@ -219,10 +222,22 @@
             };
             function error(str, title) {
                 $("#alert").modal("show").find('.modal-content').addClass(
-                    "bg-danger").removeClass("bg-primary").find(
+                    "bg-danger").removeClass("bg-primary-2").find(
                         '.modal-body').html(
                             "<b>" + str + "</b>");
                 $('#alert').find('.title').html('<b>' + (title == undefined ? "Error" : title) + '</b>').addClass('text-white');
+            }
+            function success(str, title) {
+                $("#alert").modal("show").find('.modal-content').addClass(
+                    "bg-primary-2").removeClass("bg-danger").find(
+                        '.modal-body').html(
+                            "<b>" + str + "</b>");
+                $('#alert').find('.title').html('<b>' + (title == undefined ? "Success" : title) + '</b>').addClass('text-white');
+            }
+            function reloadPage(delay = 0) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, delay)
             }
             function send(url, data, method) {
                 return $.ajax({

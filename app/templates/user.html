@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {%include 'head.html' %}
+</head>
+
+<body>
+    <div class="wrapper">
+        {%include 'sidebar.html'%}
+
+        <div class="main">
+            {%include 'navbar.html'%}
+
+            <main class="content"> <!-- style="background-image: url('/img/dripirrigation-1.jpg') !important;" -->
+                    <div class="card">
+                        <div class="card-header">
+                            User Details
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <img src="{{ user.avatar }}" class="img-fluid rounded-circle mb-3"
+                                        alt="User Avatar">
+                                </div>
+                                <div class="col-md-8">
+                                    <form id="userForm">
+                                        <ul class="list-group list-group-flush">
+                                            <li class="list-group-item">ID: <span id="userId">{{ user.id }}</span></li>
+                                            <li class="list-group-item">Username: <input type="text" id="username"
+                                                    value="{{ user.username }}"></li>
+                                            <li class="list-group-item">Email: <input type="email" id="email"
+                                                    value="{{ user.email }}"></li>
+                                            <li class="list-group-item">First Name: <input type="text" id="firstName"
+                                                    value="{{ user.first_name }}"></li>
+                                            <li class="list-group-item">Last Name: <input type="text" id="lastName"
+                                                    value="{{ user.last_name }}"></li>
+                                            <li class="list-group-item">Last Login: {{ user.last_login_at }}</li>
+                                            <li class="list-group-item">Login Count: {{ user.login_count }}</li>
+                                            <li class="list-group-item">Active: <input type="checkbox" id="active"
+                                                    {{ "checked" if user.active else "" }}></li>
+                                            <li class="list-group-item">Confirmed At: {{ user.confirmed_at }}</li>
+                                            <!-- Add more user details as needed -->
+                                        </ul>
+                                        <button type="submit" class="btn btn-primary mt-3">Update</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+            </main>
+
+            {%include "footer.html"%}
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#userForm').submit(function (event) {
+                event.preventDefault(); // Prevent default form submission
+                var userData = {
+                    id: $('#userId').text(),
+                    username: $('#username').val(),
+                    email: $('#email').val(),
+                    firstName: $('#firstName').val(),
+                    lastName: $('#lastName').val(),
+                    active: $('#active').is(':checked')
+                };
+                // AJAX request to send user data to the server
+                $.ajax({
+                    type: 'POST',
+                    url: '/update_user', // Update with your server endpoint
+                    data: JSON.stringify(userData),
+                    contentType: 'application/json',
+                    success: function (response) {
+                        // Handle success response
+                        console.log(response);
+                        // Optionally, show a success message to the user
+                    },
+                    error: function (xhr, status, error) {
+                        // Handle error response
+                        console.error(xhr.responseText);
+                        // Optionally, show an error message to the user
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

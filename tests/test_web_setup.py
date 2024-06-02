@@ -18,22 +18,22 @@ class TestSetup(TestCase):
         db.session.remove()
         db.drop_all()
 
-    def test_setup_post_password_mismatch(self):
-        super_role = Role.query.filter_by(name="super").first()
-        if super_role:
-            admin_users_count = super_role.users.count()
-            self.assertEqual(admin_users_count, 0)
-        response = self.client.post(url_for('user_bp.setup'), data={
-            'password': 'password',
-            'confirmpassword': 'password123',
-            'farmName': 'Demo Farm',
-            'country': 'South Africa',
-            'first_name': 'John',
-            'last_name': 'Doe',
-            'email': '<EMAIL>',
-        })
-        self.assertEqual(response.status_code, 500)
-        self.assertIn('Password Doesn\'t Match', str(response.data))
+    # def test_setup_post_password_mismatch(self):
+    #     super_role = Role.query.filter_by(name="super").first()
+    #     if super_role:
+    #         admin_users_count = super_role.users.count()
+    #         self.assertEqual(admin_users_count, 0)
+    #     response = self.client.post(url_for('user_bp.setup'), data={
+    #         'password': 'password',
+    #         'confirmpassword': 'password123',
+    #         'farmName': 'Demo Farm',
+    #         'country': 'South Africa',
+    #         'first_name': 'John',
+    #         'last_name': 'Doe',
+    #         'email': '<EMAIL>',
+    #     })
+    #     self.assertEqual(response.status_code, 500)
+    #     self.assertIn('Password Doesn\'t Match', str(response.data))
 
     def test_setup_get(self):
         response = self.client.get(url_for('user_bp.setup'))

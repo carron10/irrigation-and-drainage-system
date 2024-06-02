@@ -10,7 +10,7 @@
 <body>
 	<div class="wrapper">
 		{%include 'sidebar.html'%}
-		
+
 		<div class="main">
 			{%include 'navbar.html'%}
 
@@ -30,7 +30,8 @@
 								<option value="monthly">Monthly</option>
 								<option value="yearly">Yearly</option>
 							</select>
-							<button id="reportrange" class="btn bg-white" style="color: #1d3b4a;border-width: 0 1px 4px;">
+							<button id="reportrange" class="btn bg-white"
+								style="color: #1d3b4a;border-width: 0 1px 4px;">
 								<i class="align-middle" data-feather="calendar"></i>
 								<span></span>
 								<i class="align-middle" data-feather="chevron-down"></i>
@@ -44,11 +45,11 @@
 							<div class="card rounded-0 flex-fill w-100">
 								<div class="card-header m-0 p-1">
 									<div class="h5 float-start">Irrigation</div>
-									<select class="float-end border bg-white" id="graph-type">
+									<select class="float-end border bg-white  graph-type">
 										<option value="bar">bar</option>
 										<option selected value="line">Line</option>
 										<option value="scatter">Scatter</option>
-										<option value="hist_line">Histogram+line</option>
+										<!-- <option value="hist_line">Histogram+line</option> -->
 									</select>
 								</div>
 								<div class="card-body d-flex w-100 p-0 m-0">
@@ -62,16 +63,93 @@
 							<div class="card rounded-0 flex-fill w-100">
 								<div class="card-header m-0 p-1">
 									<div class="h5 float-start">Drainage</div>
-									<select class="float-end border bg-white" id="graph-type">
+									<select class="float-end border bg-white  graph-type">
 										<option value="bar">bar</option>
 										<option selected value="line">Line</option>
 										<option value="scatter">Histogram</option>
-										<option value="hist_line">Histogram+line</option>
+										<!-- <option value="hist_line">Histogram+line</option> -->
 									</select>
 								</div>
 								<div class="card-body d-flex w-100 p-0 m-0">
 									<div class="align-self-center chart chart-sm">
 										<canvas id="drainage-bar-chart"></canvas>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="justify-content-between d-flex mt-5">
+						<div class="rounded-0">
+							<h1 class="h4  fw-bold text-primary">Ecological Factors </h1>
+						</div>
+						<div>
+							<select class="btn-like interval  bg-white" id="etime-selector">
+								<option  value="hourly">Hourly</option>
+								<option selected value="daily">Daily</option>
+								<option value="weekly">Weekly</option>
+								<option value="monthly">Monthly</option>
+							</select>
+							<button id="ereportrange" class="btn bg-white"
+								style="color: #1d3b4a;border-width: 0 1px 4px;">
+								<i class="align-middle" data-feather="calendar"></i>
+								<span></span>
+								<i class="align-middle" data-feather="chevron-down"></i>
+							</button>
+						</div>
+
+					</div>
+					<div class="row">
+						<div class="col-md-6 mt-1 chart-container" id="Temperature">
+							<div class="card rounded-0 flex-fill w-100">
+								<div class="card-header m-0 p-1">
+									<div class="h5 float-start">Temperature</div>
+									<select class="float-end border bg-white  graph-type">
+										<option value="bar">bar</option>
+										<option selected value="line">Line</option>
+										<option value="scatter">Scatter</option>
+										<!-- <option value="hist_line">Histogram+line</option> -->
+									</select>
+								</div>
+								<div class="card-body d-flex w-100 p-0 m-0">
+									<div class="align-self-center chart chart-sm">
+										<canvas id="Temperature-bar-chart"></canvas>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6 mt-1 chart-container" id="Humidity">
+							<div class="card rounded-0 flex-fill w-100">
+								<div class="card-header m-0 p-1">
+									<div class="h5 float-start">Humidity</div>
+									<select class="float-end border bg-white  graph-type">
+										<option selected  value="bar">bar</option>
+										<option value="line">Line</option>
+										<option value="scatter">Scatter</option>
+										<!-- <option value="hist_line">Histogram+line</option> -->
+									</select>
+								</div>
+								<div class="card-body d-flex w-100 p-0 m-0">
+									<div class="align-self-center chart chart-sm">
+										<canvas id="Humidity-bar-chart"></canvas>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6 mt-1 chart-container" id="SoilMoisture">
+							<div class="card rounded-0 flex-fill w-100">
+								<div class="card-header m-0 p-1">
+									<div class="h5 float-start">Moisture</div>
+									<select class="float-end border bg-white  graph-type">
+										<option value="bar">bar</option>
+										<option selected value="line">Line</option>
+										<option value="scatter">Scatter</option>
+										<!-- <option value="hist_line">Histogram+line</option> -->
+									</select>
+								</div>
+								<div class="card-body d-flex w-100 p-0 m-0">
+									<div class="align-self-center chart chart-sm">
+										<canvas id="SoilMoisture-bar-chart"></canvas>
 									</div>
 								</div>
 							</div>
@@ -153,23 +231,36 @@
 
 		document.addEventListener("DOMContentLoaded", function () {
 
-			var chats = ['drainage', "irrigation"]
+			var chats = ['drainage', "irrigation"],
+				eco_factors = ["Temperature", "Humidity", "SoilMoisture"];
 			function updateGraphs(start, end, interval) {
 				start_time = start.format('D-MM-YYYY')
 				end_time = end.format('D-MM-YYYY')
 				for (let i = 0; i < chats.length; i++) {
-					const type = chats[i];
-
+					const type = chats[i], graph = $(`#${type} .graph-type`).val();
 					send("/api/history/" + type, { 'interval': interval, "start": start_time, "end": end_time }).done(function (data) {
-						drawGraph(type + "-bar-chart", data, 'line', 'shsh')
+						drawGraph(type + "-bar-chart", data, graph, 'shsh')
+					}).fail(function (err) {
+						error(`${err.responseText}`, err.statusText)
+					})
+				}
+			}
+			function updateEGraphs(start, end, interval) {
+				start_time = start.format('D-MM-YYYY')
+				end_time = end.format('D-MM-YYYY')
+				for (let i = 0; i < eco_factors.length; i++) {
+					const type = eco_factors[i], graph = $(`#${type} .graph-type`).val();
+					send("/api/history/" + type, { 'interval': interval,metric:"average", "start": start_time, "end": end_time }).done(function (data) {
+						drawGraph(type + "-bar-chart", data, graph, 'shsh')
 					}).fail(function (err) {
 						error(`${err.responseText}`, err.statusText)
 					})
 				}
 			}
 			updateConfig();
-			function get_interval() {
-				var element = $("#time-selector");
+			updateConfig_efactors();
+			function get_interval(n) {
+				var element = n?$("#etime-selector"):$("#time-selector");
 				return element.val()
 			}
 
@@ -178,9 +269,13 @@
 				var element = $(e.target), interval = element.val();
 				updateGraphs(start_date, end_date, interval)
 			})
-			$("#graph-type").change(function (e) {
+			$("#etime-selector").change(function (e) {
+				var element = $(e.target), einterval = element.val();
+				updateEGraphs(start_date, end_date, einterval)
+			})
+			$(".graph-type").change(function (e) {
 				var element = $(e.target), graph_type = element.val(), chart = element.parents(".chart-container").first();
-			
+
 				var existingChart = Chart.getChart(chart.find("canvas").attr("id"));
 				// Update the chart configuration to change the chart type
 				existingChart.config.type = graph_type;
@@ -206,9 +301,36 @@
 						'Last 7 Days': [moment().subtract(6, 'days'), moment()],
 						'Last 30 Days': [moment().subtract(29, 'days'), moment()],
 						'This Month': [moment().startOf('month'), moment().endOf('month')],
-						
+
 						'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
 						'This Year': [moment().startOf('year'), moment().endOf('year')]
+					}
+				}, cb);
+
+				cb(start_date, end_date);
+			}
+			function updateConfig_efactors() {
+				start_date = moment().subtract(29, 'days');
+				end_date = moment();
+				function cb(start, end) {
+					start_date = start
+					end_date = end
+					$('#ereportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+					updateEGraphs(start, end, get_interval(1))
+				}
+				$('#ereportrange').daterangepicker({
+					startDate: start_date,
+					endDate: end_date,
+					opens: "left",
+					ranges: {
+						'Today': [moment(), moment()],
+						'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+						'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+						'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+						'This Month': [moment().startOf('month'), moment().endOf('month')],
+
+						// 'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+						// 'This Year': [moment().startOf('year'), moment().endOf('year')]
 					}
 				}, cb);
 

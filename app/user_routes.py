@@ -7,7 +7,7 @@ from flask_security import (
 )
 from flask_security.utils import hash_password, login_user
 from flask_security import current_user, login_required, roles_required
-from app.utils import add_or_update_option, send_notification_mail, send_invitation_email
+from app.utils import add_or_update_option, send_notification_mail
 from flask import abort, redirect, url_for
 from flask_security import roles_required, Security, UserMixin, mail_util
 from app.models import User, Role, db, build_sample_db
@@ -34,6 +34,7 @@ def setup():
         admin_users_count = admin_role.users.count()
         if admin_users_count > 0:
             return redirect(url_for('security.login'))
+        
 
     if request.method == 'POST':
         # Retrieve form data
@@ -78,13 +79,14 @@ def setup():
             db.session.commit()
             # Create the initial user if it doesn't already exist
             if not user_datastore.find_user(email=email,case_insensitive=True):
-                user_datastore.create_user(first_name=first_name,
+                user=user_datastore.create_user(first_name=first_name,
                                                   last_name=last_name,
                                                   email=email,
                                                   password=hash_password(password),roles=[user_role, super_role, admin_role])
                 
                 db.session.commit()
-                return redirect(url_for('security.login'))
+                login_user(user)
+                return redirect(url_for('/'))
             # return "Done"
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -112,19 +114,16 @@ def view_user_information(email: str, id: int):
         return jsonify({'error': 'User not found'}), 404
 
     if request.method == 'GET':
-        # Handle GET request (view user information)
-        # return jsonify({'email': user.email, 'id': user.id})
-
-        # For simplicity, just return a message for demonstration
-        return jsonify({'message': 'User information'}), 200
+        
+        return render_template("user.html",user=user), 200
     elif request.method == 'DELETE':
 
         # make sure there is atleast 1 admin left after deleting
-        admin_role = Role.query.filter_by(name="admin").first()
+        admin_role = Role.query.filter_by(name="super").first()
         if admin_role:
             admin_users_count = admin_role.users.count()
-            if admin_users_count > 1:
-                return jsonify({'message': 'Atleast one account should left for an admin to operate'}), 404
+            if admin_users_count <2 and 'super' in user.roles:
+                return jsonify({'message': 'Atleast one account should left for an super to operate'}), 404
         # Make sure user doesnt remove themeselves
         if user == current_user:
             return jsonify({'message': 'You are not allowed to remove Your own account'}), 500
@@ -147,13 +146,22 @@ def view_user_information(email: str, id: int):
 @roles_required('admin')
 def add_new_user():
     email = request.form['email']
-    invite_user = user_datastore.create_user(email=email, active=False)
+    password=request.form['password']
+    first_name=request.form['first_name']
+    last_name=request.form['last_name']
+    role=Role.query.filter_by(name=request.form['role']).first()
+
+    
     try:
+        invite_user = user_datastore.create_user(roles=[role],email=email,first_name=first_name,last_name=last_name,password=password, active=False)
         user_datastore.commit()
         token = invite_user.get_auth_token()
         domain = current_app.config.get("SYSTEM_DOMAIN")
         msg = f"You have been invited, continue create your account  {domain}/comfirn_user/{token}"
-        send_notification_mail("Create Accout", msg, email)
+        if not send_notification_mail("Create Accout", msg, [email]):
+            user_datastore.delete_user(invite_user)
+            user_datastore.commit()
+            return "Failed to add new user, email servicee failed",5000
         flash('Invitation sent successfully!')
         # return redirect(url_for('admin_dashboard'))
         return "Done", 200

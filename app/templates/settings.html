@@ -11,85 +11,69 @@
 
 		<div class="main">
 			{%include 'navbar.html'%}
-			<div class=" text-center rounded-0">
-				<h1 class="h3 my-2">Settings</h1>
-			</div>
-			<style>
-				.nav-link {
-					color: white;
-				}
 
-				.nav-link.active {
-					background-color: white !important;
-					color: dark !important;
-				}
-			</style>
-			<div class=" border-bottom border-top pt-2 d-flex justify-content-center">
-				<div class="nav nav-tabs me-3 setting-tabs" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-					
-					<button class="bg-danger nav-link border  mx-1" id="products-tab" data-bs-toggle="pill"
-						data-bs-target="#soil-type" type="button" role="tab" aria-controls="soil-type"
-						aria-selected="false">Set Soil Type</button>
-					<button class="bg-danger nav-link  border mx-1" id="tax-tab" data-bs-toggle="pill"
-						data-bs-target="#status" type="button" role="tab" aria-selected="false">Crop Status</button>
-
-					<button class="bg-danger nav-link  " id="hardware-tab" data-bs-toggle="pill"
-						data-bs-target="#hardware" type="button" role="tab" aria-controls="hardware"
-						aria-selected="true">Hardware</button>
+			<main class="content"> <!-- style="background-image: url('/img/dripirrigation-1.jpg') !important;" -->
+				<div class=" text-center rounded-0">
+					<h1 class="h3 my-2">Settings</h1>
 				</div>
-			</div>
-			<main class="content" style="background-image: url('/img/dripirrigation-1.jpg') !important;">
+				<div class=" border-bottom border-top pt-2">
+					<div class="nav nav-tabs me-3 setting-tabs" id="v-pills-tab" role="tablist"
+						aria-orientation="vertical">
 
+						<button class="bg-primary-2 rounded-0 nav-link border active  mx-1" id="products-tab"
+							data-bs-toggle="pill" data-bs-target="#soil-type" type="button" role="tab"
+							aria-controls="soil-type" aria-selected="false">Set Soil Type</button>
+						<button class="bg-primary-2 rounded-0 nav-link  border mx-1" id="tax-tab" data-bs-toggle="pill"
+							data-bs-target="#status" type="button" role="tab" aria-selected="false">Crop Status</button>
+
+						<button class="bg-primary-2 rounded-0 nav-link  " id="hardware-tab" data-bs-toggle="pill"
+							data-bs-target="#hardware" type="button" role="tab" aria-controls="hardware"
+							aria-selected="true">Hardware</button>
+					</div>
+				</div>
 				<div class="container-fluid p-0">
 					<div class="tab-content sub-form">
-						<div class="tab-pane fade" id="soil-type" role="tabpanel" titleledby="general1-list">
-							<div class="container px-lg-6 mx-auto d-table h-100">
-								<div class="d-table-cell align-middle">
-									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
-										<form class="needs-validation" action="/api/soil_data" method="post" novalidate>
-											<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
-											<label for="id">Field Zone</label>
-											<select name="id" id="soil_field_type" class=" form-select form-select-sm"
-												required>
+						<div class="tab-pane fade show active" id="soil-type" role="tabpanel"
+							titleledby="general1-list">
 
-											</select>
-											<label for="soil_type">Soil Type</label>
-											<input type="text" class=" form-control form-control-sm" name="soil_type">
-											<label for="soil_texture">Texture</label>
-											<input type="text" class=" form-control form-control-sm"
-												name="soil_texture">
-											<label for="gradient">Gradient</label>
-											<input type="text" class=" form-control form-control-sm" name="gradient">
-											<button class=" btn btn-success w-25 my-2">Set</button>
-										</form>
-									</div>
-								</div>
+							<div class="card rounded-0 card-body" style="background-color: rgba(255, 255, 255, 0.5);">
+								<form class="needs-validation" action="/api/soil_data" method="post" novalidate>
+									<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
+									<label for="id">Field Zone</label>
+									<select name="id" id="soil_field_type" class=" form-select form-select-sm" required>
+
+									</select>
+									<label for="soil_type">Soil Type</label>
+									<input type="text" class=" form-control form-control-sm" name="soil_type">
+									<label for="soil_texture">Texture</label>
+									<input type="text" class=" form-control form-control-sm" name="soil_texture">
+									<label for="gradient">Gradient</label>
+									<input type="text" class=" form-control form-control-sm" name="gradient">
+									<button class=" btn btn-success w-25 my-2">Set</button>
+								</form>
 							</div>
+
 
 						</div>
 						<div class="tab-pane fade " id="status" role="tabpanel" titleledby="general1-list">
-							<div class="container px-lg-6 mx-auto d-table h-100">
-								<div class="d-table-cell align-middle">
-									<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
-										<form class="needs-validation" action="/api/crops_data" method="post"
-											novalidate>
-											<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
-											<label for="id">Field Zone</label>
-											<select name="id" id="crop_field_type" class=" form-select form-select-sm"
-												required>
 
-											</select>
-											<label for="crop_name">Crop Name</label>
-											<input type="text" class=" form-control form-control-sm" name="crop_name">
-											<label for="crop_type">Crop Type</label>
-											<input type="text" class=" form-control form-control-sm" name="crop_type">
-											<label for="crop_age">Crop Age(In Days)</label>
-											<input type="text" class=" form-control form-control-sm" name="crop_age">
-											<button class=" btn btn-success w-25 my-2">Set</button>
-										</form>
-									</div>
-								</div>
+							<div class="card card-body" style="background-color: rgba(255, 255, 255, 0.5);">
+								<form class="needs-validation" action="/api/crops_data" method="post" novalidate>
+									<h1 class="h4 fw-bold text-center py-2">Soil Data</h1>
+									<label for="id">Field Zone</label>
+									<select name="id" id="crop_field_type" class=" form-select form-select-sm" required>
+
+									</select>
+									<label for="crop_name">Crop Name</label>
+									<input type="text" class=" form-control form-control-sm" name="crop_name">
+									<label for="crop_type">Crop Type</label>
+									<input type="text" class=" form-control form-control-sm" name="crop_type">
+									<label for="crop_age">Crop Age(In Days)</label>
+									<input type="text" class=" form-control form-control-sm" name="crop_age">
+									<button class=" btn btn-success w-25 my-2">Set</button>
+								</form>
 							</div>
+
 						</div>
 						<div class="tab-pane fade " id="hardware" role="tabpanel" titleledby="general1-list"
 							style="background-color: rgba(255, 255, 255, 0.9);">

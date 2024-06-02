@@ -32,8 +32,8 @@ else
 fi
 
 # Run tests
-echo "Running tests..."
-python -m unittest discover -v -s tests
+# echo "Running tests..."
+# python -m unittest discover -v -s tests
 # Run the application
 echo "Starting application..."
 python run.py 

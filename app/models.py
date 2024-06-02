@@ -1,8 +1,9 @@
 import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-
+import random
 import calendar
+import datetime as dt
 from random import randint
 import numpy as np
 from flask_security import RoleMixin, UserMixin
@@ -10,6 +11,8 @@ from flask_security.utils import hash_password
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String, JSON,
                         Text)
+from dateutil.rrule import MO
+from dateutil.relativedelta import relativedelta
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref, relationship
 # from sqlalchemy.sql import func
@@ -58,11 +61,15 @@ class UserCaps(MyModel):
 # Role Model
 
 
-class Role(MyModel, RoleMixin,SerializerMixin):
+class Role(MyModel, RoleMixin, SerializerMixin):
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True, default="user")
     description = Column(String(255))
     permissions = Column(JSON)
+
+    def to_dict(self, only=..., rules=..., date_format=None, datetime_format=None, time_format=None, tzinfo=None, decimal_format=None, serialize_types=None):
+        rules = ['-users']
+        return super().to_dict(only, rules, date_format, datetime_format, time_format, tzinfo, decimal_format, serialize_types)
     caps = relationship(
         "UserCaps",
         secondary=f"{TABLE_PREFIX}roles_caps",
@@ -119,7 +126,7 @@ class User(MyModel, UserMixin, SerializerMixin):
         """
         Check if the user is a super user.
         """
-        
+
         return self.has_role("super")
 
     def is_admin(self):
@@ -238,7 +245,8 @@ class CropsStatus(MyModel, SerializerMixin):
 class History(MyModel, SerializerMixin):
     id = Column(Integer, primary_key=True)
     for_ = Column(String(100), nullable=False)  # Irrigation or drainage
-    time_created = Column(DateTime(timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
+    time_created = Column(DateTime(
+        timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
     value = Column(Integer, nullable=False)
     start_time = Column(DateTime(timezone=True),
                         server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
@@ -261,6 +269,39 @@ class Notifications(MyModel, SerializerMixin):
     def __init__(self, message) -> None:
         self.message = message
 
+def generate_sensor_data(months_back=3):
+    """Generates sensor data for the last 'months_back' months, capturing every 30 minutes.
+
+    Args:
+        months_back (int, optional): The number of months to go back from the current
+                                    date (default: 3).
+
+    Returns:
+        list: A list of Statistics objects representing sensor data.
+    """
+    today = dt.date.today()
+    start_date = today - dt.timedelta(days=today.weekday(), weeks=(today.weekday() == 6))
+
+    # Calculate start_date considering months_back
+    start_date = start_date - relativedelta(day=1, weeks=-1, weekday=MO(1))
+    # Subtract the desired number of months
+    start_date = start_date - relativedelta(months=months_back)
+
+    sensor_data = []
+    for day in range((today - start_date).days + 1):
+        current_date = start_date + dt.timedelta(days=day)
+        for hour in range(24):
+            for minute in range(0, 60, 30):  # Capture every 30 minutes
+                time_created = dt.datetime(current_date.year, current_date.month, current_date.day, hour, minute)
+                
+                sensor_data.extend([
+                    Statistics(for_="RainDrop", history_type="sensor_update", value=random.randint(0, 60), time_created=time_created),
+                    Statistics(for_="Humidity", history_type="sensor_update", value=random.randint(0, 100), time_created=time_created),
+                    Statistics(for_="Temperature", history_type="sensor_update", value=random.randint(10, 40), time_created=time_created),
+                    Statistics(for_="SoilMoisture", history_type="sensor_update", value=random.randint(0, 90), time_created=time_created),
+                ])
+                
+    return sensor_data
 
 # Build sample data into database
 def build_sample_db(app, user_datastore):
@@ -270,48 +311,21 @@ def build_sample_db(app, user_datastore):
 
     import random
     import string
-    
+
     History.query.delete()
     Statistics.query.delete()
     FieldZone.query.delete()
     SoilStatus.query.delete()
     CropsStatus.query.delete()
-    
+    db.session.commit()
     db.create_all()
 
-    # Generate history data
-    for i in range(7):
-        for j in range(24 * 2):
-            date_ = datetime(2024, 3, 21, math.floor(j / 2), (j % 2) * 30)
-            hist_ = (
-                Statistics(
-                    for_="RainDrop",
-                    history_type="sensor_update",
-                    value=randint(50, 90),
-                    time_created=date_,
-                ),
-                Statistics(
-                    for_="Humidity",
-                    history_type="sensor_update",
-                    value=randint(50, 90),
-                    time_created=date_,
-                ),
-                Statistics(
-                    for_="Temperature",
-                    history_type="sensor_update",
-                    value=randint(50, 90),
-                    time_created=date_,
-                ),
-                Statistics(
-                    for_="SoilMoisture",
-                    history_type="sensor_update",
-                    value=randint(50, 90),
-                    time_created=date_,
-                ),
-            )
-            db.session.add_all(hist_)
+    # Generate data for the last 3 months
+    sensor_data = generate_sensor_data(months_back=3)
+    print(f"Generated {len(sensor_data)} sensor data points.")
 
-    # Generate irrigation history
+    db.session.add_all(sensor_data)
+    db.session.commit()
 
     fields = (
         FieldZone(name="Entire Field"),
@@ -325,22 +339,25 @@ def build_sample_db(app, user_datastore):
     # Generate data for irrigation and drainage
     start_date = datetime(2015, 1, 1).date()
     end_date = datetime(2024, 1, 1).date()
-    months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
+    months = (end_date.year - start_date.year) * \
+        12 + (end_date.month - start_date.month)
     for task in ["irrigation", "drainage"]:
         for year in range(start_date.year, end_date.year + 1):
-            for month in range(1,12):
+            for month in range(1, 12):
                 # Get the number of days in the month
                 num_days = calendar.monthrange(year, month)[1]
 
                 # Randomly select 60% of days in the month
-                days = np.random.choice(range(1, num_days + 1), int(num_days * 0.6))
+                days = np.random.choice(
+                    range(1, num_days + 1), int(num_days * 0.6))
 
                 for day in days:
-                    start_time=datetime(year, month, day,randint(0,23),randint(0,59))
-                    time_spent_hrs=randint(2,6)
+                    start_time = datetime(
+                        year, month, day, randint(0, 23), randint(0, 59))
+                    time_spent_hrs = randint(2, 6)
                     end_ = start_time+timedelta(hours=time_spent_hrs)
                     _history = History(field_id=fields[randint(0, 3)].id, for_=task, value=randint(
-                        100, 500), time_spent=time_spent_hrs, end_time=end_,start_time=start_time)
+                        100, 500), time_spent=time_spent_hrs, end_time=end_, start_time=start_time)
                     db.session.add(_history)
 
     soil_statuses = (

@@ -4,6 +4,7 @@ import json
 import os
 import time
 from schedule import Scheduler
+from threading import Event
 import psycopg2
 from sqlalchemy import func
 from flask import (
@@ -27,7 +28,7 @@ from flask_security import (
 from flask_security.forms import RegisterForm, Required, StringField
 from flask_security.utils import hash_password
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import MetaData, Table, select, update
+from sqlalchemy import MetaData, Table, select, update, desc, asc
 from sqlalchemy.ext.declarative import declared_attr
 
 from app import create_app
@@ -60,36 +61,40 @@ from app.models import (
 from app.websocket.flask_sock import Sock
 from threading import Thread
 import schedule
-from app.utils import generate_unique_string,send_notification_mail,get_admin_user
+from app.utils import generate_unique_string, send_irrigation_stop_start_email, send_notification_mail, get_admin_user, get_super_and_admin_users_emails
 from app.user_routes import user_bp, security, user_datastore
 from flask_mailman import Mail, EmailMessage
-
 app = create_app()
 
 app.register_blueprint(user_bp)
 
 security.init_app(app)
 
-app.user_datastore=user_datastore
-app.security=security
-    
+app.user_datastore = user_datastore
+app.security = security
+
 app.config["SQLALCHEMY_MODEL_BASE_CLASS"] = MyModel
 scheduler = Scheduler()
+app.scheduler = scheduler
 # app.config["SCHEDULER"] = scheduler
 db.init_app(app)
 
-#create mail object
+# create mail object
 mail = Mail(app)
 
-##Before request check if the a user in the system
+# Before request check if the a setup have been done
+
+
 @app.before_request
 def before_request_handler():
-    if request.path == '/login' and request.method == 'GET':
-           super_role = Role.query.filter_by(name="super").first()
-           if super_role:
-                admin_users_count = super_role.users.count()
-                if admin_users_count==0:
-                    return redirect(url_for('user_bp.setup'))
+    if request.path == '/login':
+        super_role = Role.query.filter_by(name="super").first()
+        if super_role:
+            admin_users_count = super_role.users.count()
+            if admin_users_count == 0:
+                return redirect(url_for('user_bp.setup'))
+        else:
+            return redirect(url_for('user_bp.setup'))
 
 # Function to execute when one visit /api/notifications
 
@@ -121,10 +126,10 @@ def get_users():
     if not limit:
         limit = 20
     results = User.query.limit(limit).all()
-    return [r.to_dict(rules=["-password"]) for r in results]
+    return [r.to_dict(rules=["-password", "-roles"]) for r in results]
 
 
-###Getting historical data
+# Getting historical data
 @app.route("/api/history/<for_>", methods=["GET"])
 def get_history(for_):
     """Return sensors reading history
@@ -132,28 +137,64 @@ def get_history(for_):
     Returns:
         List of sensor readings history
     """
-
+    echological = ['Temperature', 'Humidity', 'SoilMoisture']
+    results = []
     interval = request.args.get('interval')
+    if not (interval in ['daily', 'hourly', 'monthly', 'yearly', 'quarterly']):
+        return "Interval should be one of daily,hourly,monthly or yearly"
+
+    metric = request.args.get('metric')
+    metric = 'sum' if not metric else metric
+    if not (metric in ['sum', 'average']):
+        return "Metric should be sum or average", 404
+
     start_date = datetime.datetime.strptime(
         request.args.get('start'), "%d-%m-%Y")
     end_date = datetime.datetime.strptime(request.args.get('end'), "%d-%m-%Y")
-    results = db.session.query(History).filter(History.for_ == for_).filter(
-        History.end_time >= start_date).filter(History.end_time <= end_date).all()
+    # results = db.session.query(Statistics).filter(
+    #     Statistics.for_ == for_).all()
+    # return [r.to_dict() for r in results]
+    time_col = 'end_time'
+    if for_ in echological:
+        results = db.session.query(Statistics).filter(
+            Statistics.for_ == for_).filter(
+            Statistics.time_created >= start_date).filter(
+            Statistics.time_created <= end_date).all()
+        time_col = "time_created"
+    else:
+        results = db.session.query(History).filter(
+            History.for_ == for_).filter(
+            History.end_time >= start_date).filter(
+            History.end_time <= end_date).all()
+
     results = [r.to_dict() for r in results]
-    df = pd.DataFrame(results, columns=['end_time', 'value'])
-    df['end_time'] = pd.to_datetime(df['end_time'])
+    df = pd.DataFrame(results, columns=[time_col, 'value'])
+    df[time_col] = pd.to_datetime(df[time_col])
+    df['value'] = pd.to_numeric(df['value'])
+
     interval_df = None
-    df.set_index('end_time', inplace=True)
+    df.set_index(time_col, inplace=True)
     if interval == 'daily':
-        interval_df = df.resample('D').sum()
+        interval_df = df.resample('D').sum(
+        ) if metric == 'sum' else df.resample('D').mean()
     elif interval == 'monthly':
-        interval_df = df.resample('M').sum()
-    elif interval == 'yearly':
-        interval_df = df.resample('Y').sum()
+        interval_df = df.resample('M').sum(
+        ) if metric == 'sum' else df.resample('M').mean()
     elif interval == 'weekly':
-        interval_df = df.resample('W').sum()
+        interval_df = df.resample('W').sum(
+        ) if metric == 'sum' else df.resample('W').mean()
+    elif interval == 'yearly':
+        interval_df = df.resample('Y').sum(
+        ) if metric == 'sum' else df.resample('Y').mean()
+    elif interval == 'hourly':
+        interval_df = df.resample('H').sum(
+        ) if metric == 'sum' else df.resample('H').mean()
+    elif interval == 'quarterly':
+        # Handle quarterly resampling (consider using 'Q' or custom logic)
+        interval_df = df.resample('Q').sum(
+        ) if metric == 'sum' else df.resample('Q').mean()
     formatted_results = interval_df.reset_index().rename(
-        columns={'end_time': 'date'}).to_dict(orient='records')
+        columns={time_col: 'date'}).to_dict(orient='records')
     return formatted_results
 
 
@@ -320,7 +361,7 @@ def pages(page: str):
             for r in scheduled_fields
         ]
         data["scheduled_history"] = [
-            r.to_dict() for r in History.query.filter_by(for_="drainage").all()
+            r.to_dict() for r in History.query.filter_by(for_="drainage").order_by(desc(History.end_time)).all()
         ]
         for hist_ in data["scheduled_history"]:
             hist_["field"] = FieldZone.query.filter_by(
@@ -349,7 +390,7 @@ def pages(page: str):
             for r in scheduled_fields
         ]
         data["scheduled_history"] = [
-            r.to_dict() for r in History.query.filter_by(for_="irrigation").all()
+            r.to_dict() for r in History.query.filter_by(for_="irrigation").order_by(desc(History.end_time)).all()
         ]
         for hist_ in data["scheduled_history"]:
             hist_["field"] = FieldZone.query.filter_by(
@@ -368,7 +409,9 @@ def pages(page: str):
     elif page == "users":
         users = User.query.all()
         data["users"] = users
-
+    elif page == "irrigation":
+        all_notifications = Notifications.query.all()
+        data["all_notifications"] = all_notifications
     return render_template(
         page + ".html",
         page=page,
@@ -441,6 +484,7 @@ def add_get_update_option():
         job = scheduler.get_jobs("auto_irrigation_job")
         if is_on:
             if len(job) < 1:
+                print("No job")
                 scheduler.every().seconds.do(
                     start_auto_scheduler_checker, what="irrigation"
                 ).tag("auto_irrigation_job")
@@ -483,6 +527,9 @@ def stop_start_irrigation_or_drainage(action, what):
     # ToDo: To make sure the message is delivered and there is a callback specified
     if len(connected_devices_copy.keys()) > 0:
         if send_command(f"{what} {action}", require_return=True, time_out=20):
+            if send_irrigation_stop_start_email(what, action == "start"):
+                print(f"Failed to send email for {what}")
+            
             field_query = update(FieldZone).where(
                 FieldZone.id == data["field_id"])
             if what == "irrigation":
@@ -514,12 +561,7 @@ def refresh_hardware_infor():
     Returns:
         _type_: List of components and connected sensors
     """
-    connected_devices_copy = connected_devices.copy()
-    if len(connected_devices_copy.keys()) > 0:
-        for k, v in connected_devices_copy.items():
-            if "ws" in connected_devices_copy[k]:
-                del connected_devices_copy[k]["ws"]
-    return connected_devices_copy
+    return get_all_connected_sensors(True)
 
 
 @websocket.route("/client/live_hardware_infor")
@@ -573,12 +615,12 @@ def add_schedule(task: Schedules):
 
     if start_in_days < 0:
         # Notify the users about missed scheduler
-        msg=f"A scheduler  was missed at {schedule_date} , {what} did not start,the system was Offline!!"
+        msg = f"A scheduler  was missed at {schedule_date} , {what} did not start,the system was Offline!!"
         note = Notifications(msg)
-        send_notification_mail("Missed Schedule!!",msg,"admin@tekon.co.zw")
+        send_notification_mail("Missed Schedule!!", msg, ["admin@tekon.co.zw"])
         db.session.add(note)
         db.session.commit()
-        
+
     else:
         scheduler.every(start_in_days).days.at(schedule_date.strftime(time_format)).do(
             start_stop_irrigation_and_drainage,
@@ -624,34 +666,41 @@ def start_call_back(scheduled_task: Schedules):
         field_query = field_query.values(drainage_status=True)
     db.session.execute(field_query)
     db.session.commit()
+    if send_irrigation_stop_start_email(scheduled_task.for_, True):
+        print("Failed to send email for irrigation start")
     return schedule.CancelJob
 
 
 # check if irr or drainage is on
 def is_on(what):
-    fields = FieldZone.query.all()
+    with app.app_context():
+        fields = FieldZone.query.all()
 
-    if what == "irrigation":
-        for field in fields:
-            if field.irrigation_status:
-                return True
-    else:
-        for field in fields:
-            if field.drainage_status:
-                return True
-    return False
+        if what == "irrigation":
+            for field in fields:
+                if field.irrigation_status:
+                    return True
+        else:
+            for field in fields:
+                if field.drainage_status:
+                    return True
+        return False
 
 
 def update_field_status(data):
-    what, status = data["what"], data["status"]
-    field_query = update(FieldZone).where(FieldZone.name == "Entire Field")
-    if what == "irrigation":
-        field_query = field_query.values(irrigation_status=status)
-    else:
-        field_query = field_query.values(drainage_status=status)
+    with app.app_context():
+        what, status = data["what"], data["status"]
 
-    db.session.execute(field_query)
-    db.session.commit()
+        field_query = update(FieldZone).where(FieldZone.name == "Entire Field")
+        if what == "irrigation":
+            field_query = field_query.values(irrigation_status=status)
+        else:
+            field_query = field_query.values(drainage_status=status)
+
+        db.session.execute(field_query)
+        db.session.commit()
+        if send_irrigation_stop_start_email(what, status):
+            print("Failed to send email for irrigation start")
 
 
 def start_auto_scheduler_checker(what):
@@ -700,12 +749,12 @@ def stop_call_back(scheduled_task: Schedules):
         field_query = field_query.values(drainage_status=False)
     db.session.execute(field_query)
     db.session.commit()
+    if send_irrigation_stop_start_email(scheduled_task.for_, False):
+        print("Failed to send email for irrigation stop")
     return schedule.CancelJob
 
 
 def run_pending_schedules():
-    global thread_running
-    print("Hello world")
     """To run Irrigation, Drainage many more schedules"""
     # Get schedules that are in database a run add them on
     with app.app_context():
@@ -718,9 +767,11 @@ def run_pending_schedules():
         # Options.query.get({"option_name": "irrigation_auto_schedule"})
         irrigation_auto_schedule = irr_auto.option_value == "ON" if irr_auto else False
         if irrigation_auto_schedule:
+            print("Autor started")
             scheduler.every().seconds.do(
                 start_auto_scheduler_checker, what="irrigation"
             ).tag("auto_irrigation_job")
+
         # Options.query.get({"option_name": "drainage_auto_schedule"})
         drainage_auto = db.session.query(Options).filter(
             Options.option_name == "drainage_auto_schedule").first()
@@ -732,36 +783,29 @@ def run_pending_schedules():
                 start_auto_scheduler_checker, what="drainage"
             ).tag("auto_drainage_job")
 
-        while thread_running:
-            print("run pend")
-            scheduler.run_pending()
-            time.sleep(1)
-
 
 with app.app_context():
     db.create_all()
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
-    build_sample_db(user_bp, user_datastore)
+    # build_sample_db(user_bp, user_datastore)
     db.session.commit()
-    app.config['USER_DATA_STORE']=user_datastore
-    app.config['SECURITY']=security
-    
+    app.config['USER_DATA_STORE'] = user_datastore
+    app.config['SECURITY'] = security
+    app.config['SCHEDULER'] = scheduler
 
 
 # Flag to indicate if the thread is running
-thread_running = False
+# thread_running = True
 
 # Global reference to the thread
-mythread = None
+# mythread = None
 
-
-@app.teardown_appcontext
-def shutdown_thread(exception):
-    global thread_running, mythread
-
-    # Stop the thread
-    thread_running = False
-
-    # Wait for the thread to exit
-    if mythread and mythread.is_alive():
-        mythread.join()
+# @app.teardown_appcontext
+# def shutdown_thread(exception):
+#     global thread_running, mythread
+#     print("App shut dpwn")
+#     # Stop the thread
+#     thread_running = False
+#     # Wait for the thread to exit
+#     if mythread and mythread.is_alive():
+#         mythread.join()

@@ -20,42 +20,30 @@
                         <div>
                             <h1 class="h3 text-primary">Notifications</h1>
                         </div>
-                        <button type="button" class="btn btn-sm btn-primary " data-bs-toggle="modal"
-                            data-bs-target="#addUserModal">Add New User</button>
+
                     </div>
 
-                    <div class="tab-pane fade show active" style="background-color: rgba(255, 255, 255, 0.8);"
-                        id="user-accounts" role="tabpanel" titleledby="general1-list">
+                    <div class="py-2 px-1" style="background-color: rgba(255, 255, 255, 0.8);"
+                        id="notifications" role="tabpanel" titleledby="general1-list">
 
                         <table class="table table-striped">
                             <thead>
                                 <tr>
                                     <th scope="col">ID</th>
-                                    <th scope="col">First Name</th>
-                                    <th scope="col">Last Name</th>
-                                    <th scope="col">Email</th>
-                                    <th scope="col">Roles</th>
-                                    <th scope="col">Action</th>
+                                    <th scope="col">MSG</th>
+                                    <th scope="col">Time Created</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Category</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {%for user in users%}
-                                <tr id="{{user.id}}">
-                                    <td scope="row">{{user.id}}</td>
-                                    <td>{{user.first_name}}</td>
-                                    <td>{{user.last_name}}</td>
-                                    <td>{{user.email}}</td>
-                                    <td>
-                                        {%for role in user.roles%}
-                                        <span>{{role.name}} ,</span>
-                                        {%endfor%}
-                                    </td>
-                                    <td>
-                                        <a role="button" id="delete-user" data-cf-user-id="{{user.id}}"
-                                            data-cf-user-email="{{user.email}}"><i data-feather="trash-2"></i></a>
-                                        <a href="/user/{{user.email}}/{{user.id}}"><i
-                                                data-feather="external-link"></i></a>
-                                    </td>
+                                {%for notification in all_notificationss%}
+                                <tr id="{{notification.id}}">
+                                    <td scope="row">{{notification.id}}</td>
+                                    <td>{{notification.message}}</td>
+                                    <td>{{notification.time_created}}</td>
+                                    <td>{{notification.status}}</td>
+                                    <td>{{notification.notification_category}}</td>
                                 </tr>
                                 {%endfor%}
                             </tbody>
@@ -121,27 +109,8 @@
 
 
         $(function () {
-            $("#delete-user").click(function (e) {
-                var user_id = $(e.currentTarget).attr("data-cf-user-id"), user_email = $(e.currentTarget).attr("data-cf-user-email")
-                send(`user/${user_email}/${user_id}`, {}, "DELETE").done(function (data) {
-                }).fail(function (err) {
-                    error(`${err.responseText}`, err.statusText)
-                })
-            })
+            new DataTable('#notifications table');
         })
-        function addUser() {
-            var form = document.getElementById("addUserForm")
-            if (form.checkValidity() === true) {
-                var user_data = getFormData("addUserForm")
-                console.log(user_data)
-                send("/api/add_new_user", user_data, "POST").done(function (data) {
-
-                }).fail(function (err) {
-                    error(`${err.responseText}`, err.statusText)
-                })
-            }
-            $(form).addClass("was-validated");
-        }
     </script>
 
 </body>

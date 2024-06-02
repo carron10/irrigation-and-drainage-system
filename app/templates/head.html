@@ -11,11 +11,11 @@
 
 <title>Irrigation and Drainage System</title>
 
-<link href="css/app.css" rel="stylesheet">
+<link href="/css/app.css" rel="stylesheet">
 <!-- <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet"> -->
 <link href="/css/bootstrap.min.css" rel="stylesheet">
 <link href="/css/daterangepicker.css" rel="stylesheet">
-
+<link rel="stylesheet" href="/css/datatables.min.css">
 
 <style>
 	body {
@@ -95,17 +95,17 @@
 		left: 0;
 	}
 
-	.button {
+	#button-1 {
 		position: relative;
 		top: 50%;
-		width: 90px;
-		height: 48px;
-		margin: -20px auto 0 auto;
+		width: 70px;
+		height: 35px;
+		/* margin: -5px auto 0 auto; */
 		overflow: hidden;
 	}
 
-	.button.r,
-	.button.r .layer {
+	#button-1,
+	#button-1 .layer {
 		border-radius: 100px;
 	}
 
@@ -134,29 +134,32 @@
 		transition: 0.3s ease all;
 		z-index: 1;
 	}
-
+	.bg-primary-2{
+		background-color: #03a9f4 !important;
+		color: white !important;
+	}
 	/* Button 1 */
 	#button-1 .knobs:before {
 		content: "ON";
 		position: absolute;
-		top: 4px;
+		top: 2px;
 		left: 4px;
-		width: 40px;
-		height: 40px;
+		width: 30px;
+		height: 30px;
 		color: #fff;
-		font-size: 15px;
+		font-size: 10px;
 		font-weight: bold;
 		text-align: center;
 		line-height: 1;
 		padding: 9px 4px;
-		background-color: #03a9f4;
+		background-color: #03a9f4 !important;
 		border-radius: 50%;
 		transition: 0.3s cubic-bezier(0.18, 0.89, 0.35, 1.15) all;
 	}
 
 	#button-1 .checkbox:checked+.knobs:before {
 		content: "OFF";
-		left: 45px;
+		left: 35px;
 		background-color: #f44336;
 	}
 

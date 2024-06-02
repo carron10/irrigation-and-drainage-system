@@ -44,6 +44,7 @@ def send_command(command, require_return=False, time_out=7) -> bool:
         time_out=time_out,
     )
 
+
 def get_drainage_status(time_out=7):
     """To get drainage status from the micro controller
 
@@ -53,10 +54,12 @@ def get_drainage_status(time_out=7):
     Returns:
         int: 1 or 0
     """
-    return send_command("drainage status",require_return=True,time_out=time_out)
+    return send_command("drainage status", require_return=True, time_out=time_out)
 
-def get_irrigation_status( time_out=7):
-    return send_command("irrigation status",require_return=True,time_out=time_out)
+
+def get_irrigation_status(time_out=7):
+    return send_command("irrigation status", require_return=True, time_out=time_out)
+
 
 def get_sensor_value(sensor_name):
     if len(connected_devices.keys()) > 0:
@@ -66,6 +69,7 @@ def get_sensor_value(sensor_name):
                     "last_value"
                 ]
     return None
+
 
 def send_data(data, time_out=7, require_return=False) -> bool:
     done = False
@@ -107,16 +111,35 @@ def send_data(data, time_out=7, require_return=False) -> bool:
     return True
 
 
-def get_all_connected_sensors():
+def get_all_connected_sensors(with_devices=False):
     global connected_devices
-    sensors = {}
-    for k, v in connected_devices.items():
-        for sensor, v in v["sensors"].items():
-            sensors[sensor] = v
-    return sensors
+    if not with_devices:
+        sensors = {}
+        for k, v in connected_devices.items():
+            for sensor, v in v["sensors"].items():
+                sensors[sensor] = v
+        print("SENSORS", sensors)
+        return sensors
+    else:
+        connected_devices_copy = connected_devices.copy()
+        if len(connected_devices_copy.keys()) > 0:
+            for k, v in connected_devices_copy.items():
+                if "ws" in connected_devices_copy[k]:
+                    del connected_devices_copy[k]["ws"]
+        return connected_devices_copy
+
+
+@websocket.on("reconnect")
+def on_reconnect(ws, *args, **kwargs):
+    try:
+        connected_devices[kwargs["devicename"]]["ws"] = ws
+    except:
+        on_connect(ws, *args, **kwargs)
+
 
 @websocket.on("connect")
 def on_connect(ws, *args, **kwargs):
+    "Called when the websocket connects microcontroller"
     global websocket, connected_devices
     device = {"name": kwargs["devicename"], "ws": ws, "sensors": {}}
     connected_devices[kwargs["devicename"]] = device
@@ -124,19 +147,29 @@ def on_connect(ws, *args, **kwargs):
         json.dumps(
             {
                 "data": {
-                    "cmd": "config --socket_send_data_seconds 10 --send_sensor_status_seconds 5"
+                    "cmd": "config --socket_send_data_seconds 3 --send_sensor_status_seconds 2"
                 },
                 "event": "command",
             }
         )
     )
 
+
 @websocket.on("reconnect")
 def on_reconnect(ws, *args, **kwargs):
     try:
         connected_devices[kwargs["devicename"]]["ws"] = ws
     except:
-        on_connect(ws,*args, **kwargs)
+        on_connect(ws, *args, **kwargs)
+
+
+@websocket.on("reconnect")
+def on_reconnect(ws, *args, **kwargs):
+    try:
+        connected_devices[kwargs["devicename"]]["ws"] = ws
+    except:
+        on_connect(ws, *args, **kwargs)
+
 
 @websocket.on("disconnect")
 def handle_disconnect(*args, **kwargs):
@@ -157,20 +190,23 @@ def register_sensors(data, ws, devicename):
 
 @websocket.on("sensor_update")
 def sensor_update(data, ws, devicename):
-    global connected_devices
+    global connected_devices, last_sensors_updates, db
+    print("UPDATED", data)
     try:
         for k, v in data.items():
             last_sensors_updates[k] = v
             stats = Statistics(for_=k, value=v, history_type="sensor_update")
             db.session.add(stats)
             connected_devices[devicename]["sensors"][k]["last_value"] = v
-    except:
+    except Exception as e:
+        print(e)
         pass
 
 
 @websocket.on("sensor_status")
 def registor_sensors_status(data, ws, devicename):
     global connected_devices
+    print("STATUS", data)
     try:
         for sensor in data:
             if sensor not in connected_devices[devicename]["sensors"].keys():
@@ -197,9 +233,8 @@ def start_stop_irrigation_and_drainage(
     global scheduler
     action = "start" if start else "stop"
     print("===Start/Stop irrigation called==")
-    sent = send_command(f"{what} {action}",require_return=True,time_out=40)
+    sent = send_command(f"{what} {action}", require_return=True, time_out=40)
     if sent:
         if call_back_fun:
-            call_back_fun(call_back_args)
+            return call_back_fun(call_back_args)
         return schedule.CancelJob
-    
