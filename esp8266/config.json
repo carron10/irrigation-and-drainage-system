@@ -1,12 +1,12 @@
 {
     "wifi": {
         "auto_connect":true,
-        "SSID": "tshumafam",
-        "password": "lucky@5027",
+        "SSID": "Carron Muleya",
+        "password": "45-A2o53",
         "attempts": 3,
         "delay_in_msec": 200
     },
-    "server": "ws://192.168.1.102:5000/controller/Esp8266",
+    "server": "ws://196.220.120.132:5000/controller/Esp8266",
     "socket_delay_ms": 5,
     "socket_send_data_seconds":30,
     "socket_reconnect_seconds":25,

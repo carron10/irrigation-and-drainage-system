@@ -61,7 +61,9 @@ from app.models import (
 from app.websocket.flask_sock import Sock
 from threading import Thread
 import schedule
-from app.utils import generate_unique_string, send_irrigation_stop_start_email, send_notification_mail, get_admin_user, get_super_and_admin_users_emails
+from app.utils import (
+    generate_unique_string, add_notification, send_irrigation_stop_start_email,
+    send_notification_mail, get_admin_user, get_super_and_admin_users_emails,get_super_and_admin_users)
 from app.user_routes import user_bp, security, user_datastore
 from flask_mailman import Mail, EmailMessage
 app = create_app()
@@ -220,8 +222,11 @@ def get_soil_data():
             soil_status = SoilStatus(field=field_query, **data)
             db.session.add(soil_status)
         else:
-            soil_status = soil_status.values(**data)
-            db.session.execute(soil_status)
+            soil_status.soil_type = data['soil_type']
+            soil_status.soil_texture = data['soil_texture']
+            soil_status.gradient = data['gradient']
+
+            db.session.add(soil_status)
         db.session.commit()
         return redirect("/settings")
 
@@ -249,8 +254,11 @@ def get_crops_data():
             crop_status = CropsStatus(field=field_query, **data)
             db.session.add(crop_status)
         else:
-            crop_status = crop_status.values(**data)
-            db.session.execute(crop_status)
+            crop_status.crop_name = data['crop_name']
+            crop_status.crop_age = data['crop_age']
+            crop_status.crop_type = data['crop_type']
+
+            db.session.add(crop_status)
         db.session.commit()
         return redirect("/settings")
 
@@ -351,7 +359,7 @@ def pages(page: str):
         data["connected_devices"] = json.dumps(connected_devices_copy)
     elif page == "drainage":
         scheduled_fields = Schedules.query.filter_by(
-            status=False, for_="drainage"
+            status=0, for_="drainage"
         ).all()
         data["scheduled_fields"] = [
             r.to_dict(
@@ -380,7 +388,7 @@ def pages(page: str):
     elif page == "irrigation":
 
         scheduled_fields = Schedules.query.filter_by(
-            status=False, for_="irrigation"
+            status=0, for_="irrigation"
         ).all()
         data["scheduled_fields"] = [
             r.to_dict(
@@ -409,7 +417,7 @@ def pages(page: str):
     elif page == "users":
         users = User.query.all()
         data["users"] = users
-    elif page == "irrigation":
+    elif page == "notifications":
         all_notifications = Notifications.query.all()
         data["all_notifications"] = all_notifications
     return render_template(
@@ -529,7 +537,7 @@ def stop_start_irrigation_or_drainage(action, what):
         if send_command(f"{what} {action}", require_return=True, time_out=20):
             if send_irrigation_stop_start_email(what, action == "start"):
                 print(f"Failed to send email for {what}")
-            
+
             field_query = update(FieldZone).where(
                 FieldZone.id == data["field_id"])
             if what == "irrigation":
@@ -614,12 +622,15 @@ def add_schedule(task: Schedules):
     stop_in_days = 1 if stop_in_days == 0 else stop_in_days
 
     if start_in_days < 0:
-        # Notify the users about missed scheduler
-        msg = f"A scheduler  was missed at {schedule_date} , {what} did not start,the system was Offline!!"
-        note = Notifications(msg)
-        send_notification_mail("Missed Schedule!!", msg, ["admin@tekon.co.zw"])
-        db.session.add(note)
+        task.status=3
+        query=update(Schedules).where(Schedules.id==task.id)
+        db.session.execute(query)
         db.session.commit()
+        # Notify the users about missed scheduler
+        msg = f"A schedule  was missed at {schedule_date} , {what} did not start,the system was Offline!!"
+        add_notification(msg)
+        send_notification_mail("Missed Schedule!!", msg,
+                               get_super_and_admin_users_emails())
 
     else:
         scheduler.every(start_in_days).days.at(schedule_date.strftime(time_format)).do(
@@ -637,9 +648,10 @@ def add_schedule(task: Schedules):
             call_back_fun=stop_call_back,
             call_back_args=task,
         )
-        note = Notifications(
-            f"{what} was successfully scheduled at {schedule_date}")
-        db.session.add(note)
+        msg = f"{what} was successfully scheduled at {schedule_date}"
+        add_notification(msg)
+        send_notification_mail("New Schedule!!", msg,
+                               get_super_and_admin_users_emails())
     db.session.commit()
 
 
@@ -653,7 +665,7 @@ def start_call_back(scheduled_task: Schedules):
     Returns:
         CancelJob: Cancel job, not to continue running
     """
-    scheduled_task.status = True
+    scheduled_task.status = 1
     note = Notifications(
         f"{scheduled_task.for_} has started at {scheduled_task.schedule_date} succesfully"
     )
@@ -666,6 +678,9 @@ def start_call_back(scheduled_task: Schedules):
         field_query = field_query.values(drainage_status=True)
     db.session.execute(field_query)
     db.session.commit()
+    current_time = datetime.datetime.now()
+    add_notification(
+        f"Scheduled {scheduled_task.for_} started  successfully at {current_time}")
     if send_irrigation_stop_start_email(scheduled_task.for_, True):
         print("Failed to send email for irrigation start")
     return schedule.CancelJob
@@ -699,30 +714,50 @@ def update_field_status(data):
 
         db.session.execute(field_query)
         db.session.commit()
+        action = "started" if status else "stopped"
+        current_time = datetime.datetime.now()
+        add_notification(f"{what} {action}  successfully at {current_time}")
         if send_irrigation_stop_start_email(what, status):
             print("Failed to send email for irrigation start")
 
 
 def start_auto_scheduler_checker(what):
     soil_value = get_sensor_value("SoilMoisture")
+    print("Last Values", soil_value, what)
+
     if soil_value != None:
+        is_started = is_on(what)
         if soil_value < 48:
-            # Start irrigation
-            if not is_on(what):
+            if (what == 'irrigation' and (not is_started)):
                 start_stop_irrigation_and_drainage(
                     what=what,
                     start=True,
                     call_back_fun=update_field_status,
                     call_back_args={"what": what, "status": True},
                 )
-        elif soil_value > 52:
-            # Stop irrigation or drainage if already started
-            if is_on(what):
+            elif (what == 'drainage' and (is_started)):
                 start_stop_irrigation_and_drainage(
                     what=what,
                     start=False,
                     call_back_fun=update_field_status,
                     call_back_args={"what": what, "status": False},
+                )
+
+        elif soil_value > 52:
+            # Stop irrigation or drainage if already started
+            if (what == 'irrigation' and (is_started)):
+                start_stop_irrigation_and_drainage(
+                    what=what,
+                    start=False,
+                    call_back_fun=update_field_status,
+                    call_back_args={"what": what, "status": False},
+                )
+            elif (what == 'drainage' and (not is_started)):
+                start_stop_irrigation_and_drainage(
+                    what=what,
+                    start=True,
+                    call_back_fun=update_field_status,
+                    call_back_args={"what": what, "status": True},
                 )
 
 
@@ -735,7 +770,7 @@ def stop_call_back(scheduled_task: Schedules):
     Returns:
         CancelJob: Cancel job, not to continue running
     """
-    scheduled_task.status = False
+    scheduled_task.status = 0
     stop_date = scheduled_task.schedule_date + timedelta(
         minutes=scheduled_task.duration
     )
@@ -749,6 +784,10 @@ def stop_call_back(scheduled_task: Schedules):
         field_query = field_query.values(drainage_status=False)
     db.session.execute(field_query)
     db.session.commit()
+
+    current_time = datetime.datetime.now()
+    add_notification(
+        f"Scheduled {scheduled_task.for_} stopped  successfully at {current_time}")
     if send_irrigation_stop_start_email(scheduled_task.for_, False):
         print("Failed to send email for irrigation stop")
     return schedule.CancelJob
@@ -758,9 +797,9 @@ def run_pending_schedules():
     """To run Irrigation, Drainage many more schedules"""
     # Get schedules that are in database a run add them on
     with app.app_context():
-        schedules = Schedules.query.filter_by(status=False).all()
-        for schedul in schedules:
-            add_schedule(schedul)
+        schedules = Schedules.query.filter_by(status=0).all()
+        for schedule in schedules:
+            add_schedule(schedule)
 
         irr_auto = db.session.query(Options).filter(
             Options.option_name == "irrigation_auto_schedule").first()
@@ -787,7 +826,7 @@ def run_pending_schedules():
 with app.app_context():
     db.create_all()
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
-    # build_sample_db(user_bp, user_datastore)
+    build_sample_db(user_bp, user_datastore)
     db.session.commit()
     app.config['USER_DATA_STORE'] = user_datastore
     app.config['SECURITY'] = security

@@ -167,7 +167,10 @@ def on_reconnect(ws, *args, **kwargs):
 def on_reconnect(ws, *args, **kwargs):
     try:
         connected_devices[kwargs["devicename"]]["ws"] = ws
-    except:
+    except Exception as e:
+        print("Error on reconnect")
+        print(e,on_connect,ws)
+        
         on_connect(ws, *args, **kwargs)
 
 

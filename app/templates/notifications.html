@@ -32,17 +32,17 @@
                                     <th scope="col">ID</th>
                                     <th scope="col">MSG</th>
                                     <th scope="col">Time Created</th>
-                                    <th scope="col">Status</th>
+                                    <!-- <th scope="col">Status</th> -->
                                     <th scope="col">Category</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {%for notification in all_notificationss%}
+                                {%for notification in all_notifications%}
                                 <tr id="{{notification.id}}">
                                     <td scope="row">{{notification.id}}</td>
-                                    <td>{{notification.message}}</td>
+                                    <td class="text-">{{notification.message}}</td>
                                     <td>{{notification.time_created}}</td>
-                                    <td>{{notification.status}}</td>
+                                    <!-- <td>{{notification.status}}</td> -->
                                     <td>{{notification.notification_category}}</td>
                                 </tr>
                                 {%endfor%}

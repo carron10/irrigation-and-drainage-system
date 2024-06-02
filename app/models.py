@@ -46,7 +46,7 @@ class Schedules(MyModel, SerializerMixin):
     schedule_date = Column(DateTime(timezone=True))
     field_id = Column(Integer, db.ForeignKey(
         f"{TABLE_PREFIX}fieldzone.id"), nullable=False)
-    status = Column(Boolean, default=False)  # Executed or Not
+    status = Column(Integer, default=0)  # Executed or Not
     for_ = Column(String, nullable=False)  # For irrigation or drainage
     type = Column(String, default="Manual")
 
@@ -311,6 +311,7 @@ def build_sample_db(app, user_datastore):
 
     import random
     import string
+    # Schedules.query.delete()
 
     History.query.delete()
     Statistics.query.delete()
@@ -338,12 +339,13 @@ def build_sample_db(app, user_datastore):
 
     # Generate data for irrigation and drainage
     start_date = datetime(2015, 1, 1).date()
-    end_date = datetime(2024, 1, 1).date()
+    end_date = datetime(2024, 7, 1).date()
     months = (end_date.year - start_date.year) * \
         12 + (end_date.month - start_date.month)
     for task in ["irrigation", "drainage"]:
         for year in range(start_date.year, end_date.year + 1):
-            for month in range(1, 12):
+            n=6 if year==2024 else 12
+            for month in range(1, n):
                 # Get the number of days in the month
                 num_days = calendar.monthrange(year, month)[1]
 

@@ -10,7 +10,7 @@
 <body>
 	<div class="wrapper">
 		{%include 'sidebar.html'%}
-		
+
 		<div class="main">
 			{%include 'navbar.html'%}
 
@@ -30,7 +30,8 @@
 								<option value="monthly">Monthly</option>
 								<option value="yearly">Yearly</option>
 							</select>
-							<button id="reportrange" class="btn bg-white" style="color: #1d3b4a;border-width: 0 1px 4px;">
+							<button id="reportrange" class="btn bg-white"
+								style="color: #1d3b4a;border-width: 0 1px 4px;">
 								<i class="align-middle" data-feather="calendar"></i>
 								<span></span>
 								<i class="align-middle" data-feather="chevron-down"></i>
@@ -80,9 +81,9 @@
 
 					<div class="row pt-3">
 
-						<div class="col-12 col-md-12 col-xxl-6 d-flex order-3 order-xxl-2">
+						<div class="col-md-6 mt-1 col-xxl-6 d-flex order-3 order-xxl-2">
 							<div class="card flex-fill w-100">
-								<div class="card-header">
+								<div class="card-header bg-primary-2">
 
 									<h5 class="card-title mb-0">Recent Notification</h5>
 								</div>
@@ -99,6 +100,41 @@
 											{%endfor%}
 										</tbody>
 									</table>
+								</div>
+								<div class="card-header">
+									<a href="/notifications">View More Notifications</a>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6 mt-1">
+							<div class="card flex-fill w-100">
+								<div class="card-header bg-primary-2">
+
+									<h5 class="card-title mb-0">Recommendations</h5>
+								</div>
+								<div class="card-body px-4">
+
+									{%if recommendations%}
+									<table class=" table">
+
+										<tbody>
+											{% for note in recommendations%}
+											<tr>
+												<td>{{note.notification_category}}</td>
+												<td>{{note.time_created}}</td>
+												<td>{{note.message}}</td>
+											</tr>
+											{%endfor%}
+										</tbody>
+									</table>
+									{%else%}
+									<div class="text-center muted">
+										<h6>No Recommendations So far!!</h6>
+									</div>
+									{%endif%}
+								</div>
+								<div class="card-header">
+									<a href="/recommendations">View More Recommendations</a>
 								</div>
 							</div>
 						</div>
@@ -206,7 +242,7 @@
 			})
 			$("#graph-type").change(function (e) {
 				var element = $(e.target), graph_type = element.val(), chart = element.parents(".chart-container").first();
-			
+
 				var existingChart = Chart.getChart(chart.find("canvas").attr("id"));
 				// Update the chart configuration to change the chart type
 				existingChart.config.type = graph_type;
@@ -232,7 +268,7 @@
 						'Last 7 Days': [moment().subtract(6, 'days'), moment()],
 						'Last 30 Days': [moment().subtract(29, 'days'), moment()],
 						'This Month': [moment().startOf('month'), moment().endOf('month')],
-						
+
 						'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
 						'This Year': [moment().startOf('year'), moment().endOf('year')]
 					}

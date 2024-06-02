@@ -23,22 +23,19 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(datastore=user_datastore)
 
 
-
-
 @user_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
     # Check if there are existing users in the database
     admin_role = Role.query.filter_by(name="super").first()
-    
+
     if admin_role:
         admin_users_count = admin_role.users.count()
         if admin_users_count > 0:
             return redirect(url_for('security.login'))
-        
 
     if request.method == 'POST':
         # Retrieve form data
-        
+
         password = request.form['password']
         cpassword = request.form['confirmpassword']
         if password != cpassword:
@@ -56,7 +53,6 @@ def setup():
         add_or_update_option("company_name", company)
         add_or_update_option("company_location", location)
         add_or_update_option("company_admin_user", email)
-        
 
         try:
             # Check if roles already exist before adding
@@ -78,12 +74,12 @@ def setup():
             # print([r.to_dict() for r in [user_role, super_role, admin_role]])
             db.session.commit()
             # Create the initial user if it doesn't already exist
-            if not user_datastore.find_user(email=email,case_insensitive=True):
-                user=user_datastore.create_user(first_name=first_name,
+            if not user_datastore.find_user(email=email, case_insensitive=True):
+                user = user_datastore.create_user(first_name=first_name,
                                                   last_name=last_name,
                                                   email=email,
-                                                  password=hash_password(password),roles=[user_role, super_role, admin_role])
-                
+                                                  password=hash_password(password), roles=[user_role, super_role, admin_role])
+
                 db.session.commit()
                 login_user(user)
                 return redirect(url_for('/'))
@@ -114,15 +110,15 @@ def view_user_information(email: str, id: int):
         return jsonify({'error': 'User not found'}), 404
 
     if request.method == 'GET':
-        
-        return render_template("user.html",user=user), 200
+
+        return render_template("user.html", user=user), 200
     elif request.method == 'DELETE':
 
         # make sure there is atleast 1 admin left after deleting
         admin_role = Role.query.filter_by(name="super").first()
         if admin_role:
             admin_users_count = admin_role.users.count()
-            if admin_users_count <2 and 'super' in user.roles:
+            if admin_users_count < 2 and 'super' in user.roles:
                 return jsonify({'message': 'Atleast one account should left for an super to operate'}), 404
         # Make sure user doesnt remove themeselves
         if user == current_user:
@@ -146,24 +142,59 @@ def view_user_information(email: str, id: int):
 @roles_required('admin')
 def add_new_user():
     email = request.form['email']
-    password=request.form['password']
-    first_name=request.form['first_name']
-    last_name=request.form['last_name']
-    role=Role.query.filter_by(name=request.form['role']).first()
+    password = request.form['password']
+    first_name = request.form['first_name']
+    last_name = request.form['last_name']
+    role = Role.query.filter_by(name=request.form['role']).first()
 
-    
     try:
-        invite_user = user_datastore.create_user(roles=[role],email=email,first_name=first_name,last_name=last_name,password=password, active=False)
+        invite_user = user_datastore.create_user(
+            roles=[role], email=email, first_name=first_name, last_name=last_name, password=password, active=False)
         user_datastore.commit()
+        id = invite_user.get_id()
         token = invite_user.get_auth_token()
         domain = current_app.config.get("SYSTEM_DOMAIN")
-        msg = f"You have been invited, continue create your account  {domain}/comfirn_user/{token}"
+        msg = f"You have been invited, continue create your account  {domain}/activate/{id}/{token}"
         if not send_notification_mail("Create Accout", msg, [email]):
             user_datastore.delete_user(invite_user)
             user_datastore.commit()
-            return "Failed to add new user, email servicee failed",5000
+            return "Failed to add new user, email servicee failed", 5000
         flash('Invitation sent successfully!')
         # return redirect(url_for('admin_dashboard'))
         return "Done", 200
     except Exception as e:
         return f"Error {e}", 500
+
+@user_bp.route('/activate/<id>/<token>',methods=['GET'])
+def activate_user(id, token):
+    try:
+        user = user_datastore.find_user(id=id)
+        print(user.email)
+        if user.verify_auth_token(token):
+            user.active = True
+            db.session.commit()
+            flash('Your account has been activated!', 'success')
+            return redirect(url_for('login'))  # Redirect to login page
+        else:
+            flash('Invalid token or expired token.', 'danger')
+            return redirect(url_for('index'))  # Redirect to homepage
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        return redirect(url_for('index'))
+    
+@user_bp.route('/update_user',methods=['POST'])
+@login_required
+def update_user():
+    data=request.get_json()
+    try:
+        
+      user=User.query.where(User.id==data['id']).first()
+      del data["id"]
+      user=user.values(**data)
+      db.session.execute(user)
+      return "Done",200
+    except Exception as e:
+      print(f'An exception occurred {e}')
+      return "Failed to update",500
+
+
