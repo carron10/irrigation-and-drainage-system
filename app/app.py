@@ -63,7 +63,7 @@ from threading import Thread
 import schedule
 from app.utils import (
     generate_unique_string, add_notification, send_irrigation_stop_start_email,
-    send_notification_mail, get_admin_user, get_super_and_admin_users_emails,get_recommendations)
+    send_notification_mail, get_admin_user, get_super_and_admin_users_emails, get_recommendations)
 from app.user_routes import user_bp, security, user_datastore
 from flask_mailman import Mail, EmailMessage
 app = create_app()
@@ -89,6 +89,7 @@ mail = Mail(app)
 
 @app.before_request
 def before_request_handler():
+    "Before a request check that the Website setup have been already or not!"
     if request.path == '/login':
         super_role = Role.query.filter_by(name="super").first()
         if super_role:
@@ -98,9 +99,8 @@ def before_request_handler():
         else:
             return redirect(url_for('user_bp.setup'))
 
+
 # Function to execute when one visit /api/notifications
-
-
 @app.route("/api/notifications", methods=["GET"])
 def get_notifications():
     """To get notifications
@@ -142,9 +142,12 @@ def get_history(for_):
     echological = ['Temperature', 'Humidity', 'SoilMoisture']
     results = []
     interval = request.args.get('interval')
+
+    # check if the interval is accepted or not
     if not (interval in ['daily', 'hourly', 'monthly', 'yearly', 'quarterly']):
         return "Interval should be one of daily,hourly,monthly or yearly"
 
+    # metric should be sum or averge
     metric = request.args.get('metric')
     metric = 'sum' if not metric else metric
     if not (metric in ['sum', 'average']):
@@ -200,6 +203,7 @@ def get_history(for_):
     return formatted_results
 
 
+# Get or update the soil data
 @app.route("/api/soil_data", methods=["GET", "POST"])
 def get_soil_data():
     """Get or Update/Create soil data for specific fields
@@ -231,6 +235,7 @@ def get_soil_data():
         return redirect("/settings")
 
 
+# Get or update crop status
 @app.route("/api/crops_data", methods=["GET", "POST"])
 def get_crops_data():
     """Get or Update/Create crop infor for specific fields
@@ -292,6 +297,7 @@ def index():
     return pages("index")
 
 
+# docs pages
 @app.route("/docs")
 @app.route("/docs/")
 def doc_root():
@@ -305,8 +311,6 @@ def docs(filename):
 
 
 # Other pages
-
-
 @app.route("/<page>", methods=["GET"])
 @login_required
 def pages(page: str):
@@ -420,7 +424,7 @@ def pages(page: str):
     elif page == "notifications":
         all_notifications = Notifications.query.all()
         data["all_notifications"] = all_notifications
-    
+
     data["recommendations"] = get_recommendations()
     return render_template(
         page + ".html",
@@ -431,8 +435,14 @@ def pages(page: str):
     )
 
 
+# To add a schedule
 @app.route("/api/add_schedule", methods=["POST"])
 def add_irrigation_or_drainage_schedule():
+    """To add schedule in db
+
+    Returns:
+       results after adding
+    """
     data = request.form.to_dict()
     schedule_date = datetime.datetime.strptime(
         data["schedule_date"], "%Y-%m-%dT%H:%M")
@@ -574,6 +584,7 @@ def refresh_hardware_infor():
     return get_all_connected_sensors(True)
 
 
+# Websocket to get real time hardware infor
 @websocket.route("/client/live_hardware_infor")
 def refresh_hardware_infor_socket(ws):
     start_time = time.time()
@@ -583,6 +594,7 @@ def refresh_hardware_infor_socket(ws):
         for k, v in connected_devices_copy.items():
             if "ws" in connected_devices_copy[k]:
                 del connected_devices_copy[k]["ws"]
+
     ws.send(json.dumps(connected_devices_copy))
     while True:
         if end_time - start_time > 2:
@@ -604,10 +616,26 @@ def refresh_hardware_infor_socket(ws):
     #             func(data['data'],ws)
 
 
+# Add a schedule
 def add_schedule(task: Schedules):
+    """Receives a Schedule and checkif it is overdue or not, if not ,
+    it adds it to the python schedule instance. This is good as when starting the app, we check if there is any schedule that wasn't executed
+    and then execute it..
+
+    Args:
+        task (Schedules): Schedule model
+    """
+
+    # get the duration of the task
     duration = task.duration
+
+    # is irrigation/drainage
     what = task.for_
+
+    # date to start the irrigation/drainage
     schedule_date = task.schedule_date
+
+    # calculate stop date
     stop_date = schedule_date + timedelta(minutes=duration)
     # Add the start scheduler in scheduler
     current_date = datetime.datetime.now()
@@ -616,16 +644,14 @@ def add_schedule(task: Schedules):
     start_in_days = (schedule_date - current_date).days
     stop_in_days = (stop_date - current_date).days
 
-    # print(
-    #     f"New Job Days {stop_in_days}  {start_in_days} start=={schedule_date.strftime(time_format)} stop=={stop_date.strftime(time_format)}"
-    # )
-
+    # Start in days is the number of days from today untill the task executed
     start_in_days = 1 if start_in_days == 0 else start_in_days
     stop_in_days = 1 if stop_in_days == 0 else stop_in_days
 
+    # if the start in days is negative, the schedule is missed
     if start_in_days < 0:
-        task.status=3
-        query=update(Schedules).where(Schedules.id==task.id)
+        task.status = 3
+        query = update(Schedules).where(Schedules.id == task.id)
         db.session.execute(query)
         db.session.commit()
         # Notify the users about missed scheduler
@@ -635,6 +661,7 @@ def add_schedule(task: Schedules):
                                get_super_and_admin_users_emails())
 
     else:
+        # add task to schedule
         scheduler.every(start_in_days).days.at(schedule_date.strftime(time_format)).do(
             start_stop_irrigation_and_drainage,
             what=what,
@@ -650,6 +677,8 @@ def add_schedule(task: Schedules):
             call_back_fun=stop_call_back,
             call_back_args=task,
         )
+
+        # Notify users for the schedule
         msg = f"{what} was successfully scheduled at {schedule_date}"
         add_notification(msg)
         send_notification_mail("New Schedule!!", msg,
@@ -659,7 +688,7 @@ def add_schedule(task: Schedules):
 
 def start_call_back(scheduled_task: Schedules):
     """Function to be called after irrigation or drainage is started through an auto scheduler,
-    this function will updated the database on the status of an irrigation
+    this function will updated the database on the status of an irrigation, and then notify users that the irrigation/drainage started
 
     Args:
         scheduled_task (Schedules): Schedules instance from DB_
@@ -667,11 +696,15 @@ def start_call_back(scheduled_task: Schedules):
     Returns:
         CancelJob: Cancel job, not to continue running
     """
+
+    # mark the task as executed
     scheduled_task.status = 1
-    note = Notifications(
-        f"{scheduled_task.for_} has started at {scheduled_task.schedule_date} succesfully"
-    )
-    db.session.add(note)
+    # note = Notifications(
+    #     f"{scheduled_task.for_} has started at {scheduled_task.schedule_date} succesfully"
+    # )
+    # db.session.add(note)
+
+    # update database
     field_query = update(FieldZone).where(
         FieldZone.id == scheduled_task.field_id)
     if scheduled_task.for_ == "irrigation":
@@ -680,6 +713,8 @@ def start_call_back(scheduled_task: Schedules):
         field_query = field_query.values(drainage_status=True)
     db.session.execute(field_query)
     db.session.commit()
+
+    # send notification to the users
     current_time = datetime.datetime.now()
     add_notification(
         f"Scheduled {scheduled_task.for_} started  successfully at {current_time}")
@@ -689,10 +724,17 @@ def start_call_back(scheduled_task: Schedules):
 
 
 # check if irr or drainage is on
-def is_on(what):
+def is_on(what: str) -> bool:
+    """check if irrigation/drainage is currently running or not
+
+    Args:
+        what (str):irrigation/drainage
+
+    Returns:
+        bool: is on or not
+    """
     with app.app_context():
         fields = FieldZone.query.all()
-
         if what == "irrigation":
             for field in fields:
                 if field.irrigation_status:
@@ -704,10 +746,18 @@ def is_on(what):
         return False
 
 
-def update_field_status(data):
-    with app.app_context():
-        what, status = data["what"], data["status"]
+def update_field_status(data:dict):
+    """Updates the field status about the irrigation/drainage statuses
 
+    Args:
+        data (dict): _description_
+    """
+    with app.app_context():
+        
+        #what(irrigation/drainage), status(started/stoped)
+        what, status = data["what"], data["status"]
+        
+        #Update the database
         field_query = update(FieldZone).where(FieldZone.name == "Entire Field")
         if what == "irrigation":
             field_query = field_query.values(irrigation_status=status)
@@ -716,6 +766,8 @@ def update_field_status(data):
 
         db.session.execute(field_query)
         db.session.commit()
+        
+        #notify users
         action = "started" if status else "stopped"
         current_time = datetime.datetime.now()
         add_notification(f"{what} {action}  successfully at {current_time}")
@@ -723,12 +775,26 @@ def update_field_status(data):
             print("Failed to send email for irrigation start")
 
 
-def start_auto_scheduler_checker(what):
-    soil_value = get_sensor_value("SoilMoisture")
-    print("Last Values", soil_value, what)
 
+def start_auto_scheduler_checker(what:str):
+    """This is the function to be executed periodical, like each and every minutes to check the current value of the 
+    soil moisture, it start at the moment the auto-scheduler is turned on, and stops if toff
+
+    Args:
+        what (str): irrigation or drainage
+    """
+    
+    #get the current soil moisture value
+    soil_value = get_sensor_value("SoilMoisture")
+
+    #if the value is not None
     if soil_value != None:
+        
+        #check if irrigation is started(assume what=irrigation)
         is_started = is_on(what)
+        
+        #start irrigation if value is less than 48
+        #if what=drainage, stop it when value is less that 48
         if soil_value < 48:
             if (what == 'irrigation' and (not is_started)):
                 start_stop_irrigation_and_drainage(
@@ -767,17 +833,19 @@ def stop_call_back(scheduled_task: Schedules):
     """Function to be called after irrigation or drainage is started through an auto scheduler,
     it will then updted the status of the scheduler in the DB
     Args:
-        scheduled_task (Schedules): Schedules instance from DB_
+        scheduled_task (Schedules): Schedules instance from DB_, this is a task which was stopped
 
     Returns:
         CancelJob: Cancel job, not to continue running
     """
     scheduled_task.status = 0
+    
+    #get the stop datetime
     stop_date = scheduled_task.schedule_date + timedelta(
         minutes=scheduled_task.duration
     )
-    note = Notifications(f"{scheduled_task.for_} has ended  at {stop_date}")
-    db.session.add(note)
+    
+   #update the db
     field_query = update(FieldZone).where(
         FieldZone.id == scheduled_task.field_id)
     if scheduled_task.for_ == "irrigation":
@@ -787,66 +855,72 @@ def stop_call_back(scheduled_task: Schedules):
     db.session.execute(field_query)
     db.session.commit()
 
-    current_time = datetime.datetime.now()
+    
+    #Notify users about the stoped irrigation or drainage
     add_notification(
-        f"Scheduled {scheduled_task.for_} stopped  successfully at {current_time}")
+        f"Scheduled {scheduled_task.for_} stopped  successfully at {stop_date}")
     if send_irrigation_stop_start_email(scheduled_task.for_, False):
         print("Failed to send email for irrigation stop")
+        
+    #Cancel the job, since executed
     return schedule.CancelJob
 
 
 def run_pending_schedules():
-    """To run Irrigation, Drainage many more schedules"""
+    """This  function is executed when the app starts, it checks if there are  any schedules in the database. """
     # Get schedules that are in database a run add them on
     with app.app_context():
+        
+        #get the schedules with status=0 (meaning not executed already)
         schedules = Schedules.query.filter_by(status=0).all()
         for schedule in schedules:
             add_schedule(schedule)
-
+        
+        #Check if the irrigation auto schedule is on 
         irr_auto = db.session.query(Options).filter(
             Options.option_name == "irrigation_auto_schedule").first()
-        # Options.query.get({"option_name": "irrigation_auto_schedule"})
+        
+        #If the irrigation auto schedule is on, start the auto scheduler...
         irrigation_auto_schedule = irr_auto.option_value == "ON" if irr_auto else False
         if irrigation_auto_schedule:
-            print("Autor started")
+            #here we add the task such that the function start_auto_scheduler_checker, will be called each and every second, to start or stop irrigation
             scheduler.every().seconds.do(
                 start_auto_scheduler_checker, what="irrigation"
             ).tag("auto_irrigation_job")
 
-        # Options.query.get({"option_name": "drainage_auto_schedule"})
+        #check auto-schedule for drainage
         drainage_auto = db.session.query(Options).filter(
             Options.option_name == "drainage_auto_schedule").first()
         drainage_auto_schedule = (
             drainage_auto.option_value == "ON" if drainage_auto else False
         )
+        
+        #if drainage is on, set the function start_auto_scheduler_checker to be executed after each and every second
         if drainage_auto_schedule:
             scheduler.every().seconds.do(
                 start_auto_scheduler_checker, what="drainage"
             ).tag("auto_drainage_job")
 
 
+
+######
+######This will be executed only, when starting the app
+######
 with app.app_context():
+    
+    #create tables if not created already
     db.create_all()
+    
+    #add the websocket instance for micro-controler
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
+    
+    #generate sample data
     build_sample_db(user_bp, user_datastore)
+    
+    #update db for chnages
     db.session.commit()
+    #store the data_store and security to be accessible in other parts of the app
     app.config['USER_DATA_STORE'] = user_datastore
     app.config['SECURITY'] = security
     app.config['SCHEDULER'] = scheduler
 
-
-# Flag to indicate if the thread is running
-# thread_running = True
-
-# Global reference to the thread
-# mythread = None
-
-# @app.teardown_appcontext
-# def shutdown_thread(exception):
-#     global thread_running, mythread
-#     print("App shut dpwn")
-#     # Stop the thread
-#     thread_running = False
-#     # Wait for the thread to exit
-#     if mythread and mythread.is_alive():
-#         mythread.join()

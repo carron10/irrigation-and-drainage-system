@@ -25,6 +25,11 @@ security = Security(datastore=user_datastore)
 
 @user_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
+    """To setup the website on first visit
+
+    Returns:
+        _type_: redirect to  login
+    """
     # Check if there are existing users in the database
     admin_role = Role.query.filter_by(name="super").first()
 
@@ -94,16 +99,20 @@ def setup():
     return render_template('setup.html')
 
 
-# Redirect regular users attempting to access the registration page
-# @user_bp.route('/register', methods=['GET', 'POST'])
-# def register():
-#     return redirect('/')  # Redirect to another page
-
 
 @user_bp.route("/user/<email>/<int:id>", methods=['GET', 'DELETE'])
 @login_required
 @roles_required('admin')
 def view_user_information(email: str, id: int):
+    """To get the user information
+
+    Args:
+        email (str): user email
+        id (int): id
+
+    Returns:
+        template: html/json
+    """
     user = User.query.filter_by(email=email, id=id).first()
 
     if not user:
@@ -137,6 +146,8 @@ def view_user_information(email: str, id: int):
         return jsonify({'message': 'User deleted successfully'}), 200
 
 
+
+##Add new user in db
 @user_bp.route('/api/add_new_user', methods=['POST'])
 @login_required
 @roles_required('admin')
@@ -165,6 +176,8 @@ def add_new_user():
     except Exception as e:
         return f"Error {e}", 500
 
+
+##activate the user, after they click the link in the email
 @user_bp.route('/activate/<id>/<token>',methods=['GET'])
 def activate_user(id, token):
     try:

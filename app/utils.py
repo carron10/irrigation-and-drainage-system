@@ -30,10 +30,17 @@ from flask import current_app
 from flask_mailman import Mail, EmailMessage
 import pandas as pd
 import numpy as np
+
 generated_strings = set()
-
-
 def generate_unique_string(length=10):
+    """To generate unique string 
+
+    Args:
+        length (int, optional): The length of string. Defaults to 10.
+
+    Returns:
+        str: unique string
+    """
     while True:
         random_string = ''.join(random.choices(
             string.ascii_uppercase + string.digits, k=length))
@@ -43,10 +50,20 @@ def generate_unique_string(length=10):
 
 
 def get_user_datastore() -> SQLAlchemyUserDatastore:
+    """To get and return the user data store that have been stored in app config
+
+    Returns:
+        SQLAlchemyUserDatastore: user data store, for user management
+    """
     return current_app.config['USER_DATA_STORE']
 
 
-def get_admin_user():
+def get_admin_user()->User:
+    """To get the user used when setuping up the app
+
+    Returns:
+        User: admin user
+    """
     with current_app.app_context():
         admin_user_email = get_option("company_admin_user")
         if admin_user_email:
@@ -57,7 +74,15 @@ def get_admin_user():
         return None
 
 
-def get_option(name: str):
+def get_option(name: str)-> str:
+    """Get the option from the Options table
+
+    Args:
+        name (str):option to return
+
+    Returns:
+        str: option value or None if not found
+    """
     with current_app.app_context():
         option = db.session.get(Options, name)
         if not option:
@@ -65,8 +90,19 @@ def get_option(name: str):
         return option.option_value
 
 
-def add_or_update_option(name, value):
+def add_or_update_option(name, value)-> dict:
+    """Update an option in the database or create a new one if not exist
+
+    Args:
+        name (_type_): option name
+        value (_type_): option value
+
+    Returns:
+        dict: Option after adding to db
+    """
     with current_app.app_context():
+        
+        #check if alread exist
         option = db.session.get(Options, name)
         if not option:
             option = Options(option_name=name, option_value=value)
@@ -78,8 +114,16 @@ def add_or_update_option(name, value):
         return option.to_dict()
 
 
-def send_notification_mail(subject: str, notification_body: str, emails: list):
-    print("Email serveice was called", emails)
+def send_notification_mail(subject: str, notification_body: str, emails: list)->bool:
+    """To send email to given emails,
+
+    Args:
+        subject (str): Email subject
+        notification_body (str):Email body
+        emails (list): list of emails to send to
+    Returns:
+        bool: whether the email was sent or not
+    """
     if not isinstance(emails, list):
         emails = [emails]
     try:
@@ -128,31 +172,62 @@ def get_super_and_admin_users() -> set:
             return set()  # Return an empty set in case of error
 
 
-def send_irrigation_stop_start_email(what, status, emails=None):
+def send_irrigation_stop_start_email(what:str, status:bool, emails:list=None)-> bool:
+    """To send email to users when irrigation/drainage starts or stops
+
+    Args:
+        what (str): what was started irrigation/drainage
+        status (bool): indicate whether [what] was stopped or started
+        emails (list, optional): list of emails to send to. Defaults to None.
+
+    Returns:
+        bool: email was delivered or not
+    """
     current_time = datetime.datetime.now()
     if emails == None:
+        #get super and admin emails if emails not provideed
         emails = get_super_and_admin_users_emails()
+    #is it started or stopped
     action = "started" if status else "Stopped"
     return send_notification_mail(f"{what} Updates!", f"This is to notify you that {what} has {action} at {current_time}", emails)
 
 
+##########################################
+#  FUNCTIONS TO HANDLE ML RECOMMENDATIONS#
+##########################################
+
+
 ml_model = None
+
+#Load the model from file
 with open("KNN_MODLE.pkl", 'rb') as fl:
     ml_model = pickle.load(fl)
 
+#Load the crops from file
 with open("Crop_categories.pkl", 'rb') as fl:
     crop_categories = pickle.load(fl)
 
+#Load the Soil types
+#The ML can only able to predict given any from these
 with open("SOIL_categories.pkl", 'rb') as fl:
     soil_categories = pickle.load(fl)
 
 
-def get_crop_cat_code(CROP):
+def get_crop_cat_code(CROP)->int:
+    """get crop category code from categories
+
+    Args:
+        CROP (_type_): Crop to get the code for
+
+    Returns:
+        int: crop code
+    """
     crop_code = crop_categories.cat.codes[crop_categories == CROP].iloc[0]
     return crop_code
 
 
-def get_soil_cat_code(soil):
+def get_soil_cat_code(soil)-> int:
+    
     soil_code = soil_categories.cat.codes[soil_categories == soil]
     if len(soil_code)>0:
         return soil_code.iloc[0]
@@ -165,11 +240,20 @@ def get_crop_name(code):
 
 
 def ml_model_predict(data:pd.DataFrame):
+    """Predict given the data and return the prediction
+
+    Args:
+        data (pd.DataFrame): data containing the features...
+    Returns:
+        array:array of predicted values
+    """
     res=ml_model.predict(np.array(data))
     return res
 
 
 def create_update_recommendations():
+    """create new recommendations or update the already existing one
+    """
     with current_app.app_context():
         # Fetch SoilStatus objects from the database
         soils = SoilStatus.query.all()
@@ -218,14 +302,25 @@ def create_update_recommendations():
         db.session.commit()
 
 
-def get_recommendations():
+def get_recommendations()->Recommendation:
+    """Get recommendations from the database
+
+    Returns:
+        Recommendation: list of recormmendations
+    """
     with current_app.app_context():
+        #call the update first
         create_update_recommendations()
         recommendations = Recommendation.query.all()
         return recommendations
 
 
-def add_notification(msg):
+def add_notification(msg:str):
+    """Add a notification to
+
+    Args:
+        msg (str): msg to store
+    """
     with current_app.app_context():
         note = Notifications(msg)
         db.session.add(note)

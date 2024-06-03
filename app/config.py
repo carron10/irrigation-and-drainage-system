@@ -1,23 +1,30 @@
 import os
 import selectors
-# Create dummy secrey key so we can use sessions
+
+# Create dummy secrey key
 SECRET_KEY = '123456790'
+
+
 # Create in-memory database
 DATABASE_FILE = 'sample_db.sqlite'
+
+#or use postgress[for online app instance]
 SQLALCHEMY_DATABASE_URI = os.environ.get("POSTGRES_URL")
 if SQLALCHEMY_DATABASE_URI==None:
     SQLALCHEMY_DATABASE_URI="sqlite:///"+DATABASE_FILE
+    
+
 SQLALCHEMY_ECHO = False
 
 SERVER_PORT=5000
 SOCK_SERVER_OPTIONS={'ping_interval': 25}
-# Flask-Securit y config
+
+
+# Flask-Security config
 SECURITY_URL_PREFIX = "/"
 SECURITY_PASSWORD_HASH = "pbkdf2_sha512"
 SECURITY_PASSWORD_SALT = "ATGUOHAELKiubahiughaerGOJAEGj"
 
-
-# Flask-Security URLs, overridden because they don't put a / at the end
 
 # Flask-Security features
 SECURITY_REGISTERABLE =False
@@ -38,5 +45,5 @@ MAIL_USERNAME = 'noreply@tekon.co.zw'
 MAIL_PASSWORD = 'unAHqC3fLqGeF4X'
 MAIL_DEFAULT_SENDER="noreply@tekon.co.zw"
 
-#Configure the admin Email
+#Configure the domain name
 SYSTEM_DOMAIN="https://irrigation-and-drainage-system.onrender.com/"
