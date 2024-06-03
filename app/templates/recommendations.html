@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {%include 'head.html' %}
+</head>
+
+<body>
+    <div class="wrapper">
+        {%include 'sidebar.html'%}
+
+        <div class="main">
+
+            {%include 'navbar.html'%}
+
+
+            <main class="content">
+                <div class="container-fluid p-0">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <h1 class="h3 text-primary">Notifications</h1>
+                        </div>
+
+                    </div>
+
+                    <div class="py-2 px-1" style="background-color: rgba(255, 255, 255, 0.8);"
+                        id="notifications" role="tabpanel" titleledby="general1-list">
+
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">msg</th>
+                                    <th scope="col">Time Created</th>
+                                    <!-- <th scope="col">Status</th> -->
+                                    <th scope="col">Tag</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {%for notification in recommendations%}
+                                <tr id="{{notification.id}}">
+                                    <td scope="row">{{notification.id}}</td>
+                                    <td class="text-">{{notification.msg}}</td>
+                                    <td>{{notification.timestamp}}</td>
+                                    <!-- <td>{{notification.status}}</td> -->
+                                    <td>{{notification.tag}}</td>
+                                </tr>
+                                {%endfor%}
+                            </tbody>
+                        </table>
+
+                    </div>
+                    <div class="modal" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel"
+                        aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content rounded-0">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body ">
+                                    <!-- User registration form -->
+                                    <form id="addUserForm" class="needs-validation">
+                                        <div class="mb-3">
+                                            <label for="first_name" class="form-label">First Name</label>
+                                            <input type="text" class="form-control" id="first_name" name="firstName"
+                                                required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="lastName" class="form-label">Last Name</label>
+                                            <input type="text" class="form-control" id="last_name" name="last_name"
+                                                required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">email</label>
+                                            <input type="email" class="form-control" id="email" name="email" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="userRole" class="form-label">User Role</label>
+                                            <select class="form-select" id="userRole" name="userRole" required>
+                                                <option value="admin">Admin</option>
+                                                <option value="user">User</option>
+                                            </select>
+                                        </div>
+                                        <!-- Add more fields as needed -->
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-primary" onclick="addUser()">Add User</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            {%include "footer.html"%}
+        </div>
+    </div>
+
+
+
+
+    <script>
+
+
+        $(function () {
+            new DataTable('#notifications table');
+        })
+    </script>
+
+</body>
+
+</html>

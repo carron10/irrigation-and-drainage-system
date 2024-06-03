@@ -207,7 +207,7 @@ class Statistics(MyModel, SerializerMixin):
     history_type = Column(String(100))
     time_created = Column(DateTime(
         timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))
-    value = Column(Text, nullable=False)
+    value = Column(Integer, nullable=False)
 
 
 # To store data of a certain region/field zone
@@ -268,6 +268,21 @@ class Notifications(MyModel, SerializerMixin):
 
     def __init__(self, message) -> None:
         self.message = message
+
+
+    # Add more plant properties as needed (e.g., sunlight requirements, soil type)
+
+class Recommendation(MyModel,SerializerMixin):
+    id = Column(Integer, primary_key=True)
+    msg=Column(Text(),nullable=False)
+    status=Column(Boolean(),default=False)
+    tag=Column(String(50))
+    rank = Column(Integer)  # Optional: Rank the recommendations (1 being most recommended)
+    timestamp = Column(DateTime(timezone=True), server_default=datetime.now().strftime("%Y-%m-%dT%H:%M"))  # Record the timestamp of the recommendation
+
+
+
+
 
 def generate_sensor_data(months_back=3):
     """Generates sensor data for the last 'months_back' months, capturing every 30 minutes.

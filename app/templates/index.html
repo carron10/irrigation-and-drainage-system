@@ -88,6 +88,7 @@
 									<h5 class="card-title mb-0">Recent Notification</h5>
 								</div>
 								<div class="card-body px-4">
+									{%if notifications%}
 									<table class=" table">
 
 										<tbody>
@@ -100,6 +101,11 @@
 											{%endfor%}
 										</tbody>
 									</table>
+									{%else%}
+									<div class="text-center muted">
+										<h6>No notifications So far!!</h6>
+									</div>
+									{%endif%}
 								</div>
 								<div class="card-header">
 									<a href="/notifications">View More Notifications</a>
@@ -120,9 +126,9 @@
 										<tbody>
 											{% for note in recommendations%}
 											<tr>
-												<td>{{note.notification_category}}</td>
-												<td>{{note.time_created}}</td>
-												<td>{{note.message}}</td>
+												<td>{{note.tag}}</td>
+												<td>{{note.timestamp}}</td>
+												<td>{{note.msg}}</td>
 											</tr>
 											{%endfor%}
 										</tbody>

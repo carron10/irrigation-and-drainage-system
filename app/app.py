@@ -63,7 +63,7 @@ from threading import Thread
 import schedule
 from app.utils import (
     generate_unique_string, add_notification, send_irrigation_stop_start_email,
-    send_notification_mail, get_admin_user, get_super_and_admin_users_emails,get_super_and_admin_users)
+    send_notification_mail, get_admin_user, get_super_and_admin_users_emails,get_recommendations)
 from app.user_routes import user_bp, security, user_datastore
 from flask_mailman import Mail, EmailMessage
 app = create_app()
@@ -420,6 +420,8 @@ def pages(page: str):
     elif page == "notifications":
         all_notifications = Notifications.query.all()
         data["all_notifications"] = all_notifications
+    
+    data["recommendations"] = get_recommendations()
     return render_template(
         page + ".html",
         page=page,
