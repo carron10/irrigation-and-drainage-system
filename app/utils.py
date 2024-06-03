@@ -199,7 +199,7 @@ def create_update_recommendations():
             humidity_values = [int(r.value) for r in humidity_results]
         
             avg_humidity = np.mean(humidity_values)
-            soil_code=get_soil_cat_code(soil)
+            soil_code=get_soil_cat_code(soil.soil_type)
             if not soil_code:
                 continue
             # Prepare data for prediction
