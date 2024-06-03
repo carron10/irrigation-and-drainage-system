@@ -1,23 +1,23 @@
 #!/bin/bash
 
 # Update the repository (fetch and merge)
-echo "Updating repository..."
-git fetch upstream >/dev/null 2>&1  # Suppress output for cleaner status messages
-result_fetch=$?
+# echo "Updating repository..."
+# git fetch upstream >/dev/null 2>&1  # Suppress output for cleaner status messages
+# result_fetch=$?
 
-if [[ $result_fetch -eq 0 ]]; then
-  git merge upstream/main >/dev/null 2>&1
-  result_merge=$?
+# if [[ $result_fetch -eq 0 ]]; then
+#   git merge upstream/main >/dev/null 2>&1
+#   result_merge=$?
 
-  if [[ $result_merge -eq 0 ]]; then
-    echo "Repository updated successfully."
-  else
-    echo "Error: An error occurred during merge. Please review and resolve conflicts manually."
-    exit 1  # Exit with an error code for CI/CD integration
-  fi
-else
-  echo "Warning: Could not fetch updates from upstream. Are you connected to the internet?"
-fi
+#   if [[ $result_merge -eq 0 ]]; then
+#     echo "Repository updated successfully."
+#   else
+#     echo "Error: An error occurred during merge. Please review and resolve conflicts manually."
+#     exit 1  # Exit with an error code for CI/CD integration
+#   fi
+# else
+#   echo "Warning: Could not fetch updates from upstream. Are you connected to the internet?"
+# fi
 
 # Activate the virtual environment (replace with your actual path)
 echo "Activating virtual environment..."

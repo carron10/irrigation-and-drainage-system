@@ -209,7 +209,7 @@ def on_reconnect(ws, *args, **kwargs):
     seconds for the micro controller to reconnect, when it reconnect this function will be called
 
     Args:
-        ws (_type_): websocket instance
+        ws (Websocket): websocket instance
     """
     try:
         #update the old instance with the new one
