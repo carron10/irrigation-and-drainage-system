@@ -45,7 +45,7 @@
 							<div class="card flex-fill w-100">
 								<div class="card-header m-0 p-1">
 									<div class="h5 float-start">Irrigation</div>
-									<select class="float-end border bg-white" id="graph-type">
+									<select class="float-end border bg-white graph-type">
 										<option value="bar">bar</option>
 										<option selected value="line">Line</option>
 										<option value="scatter">Scatter</option>
@@ -63,7 +63,7 @@
 							<div class="card flex-fill w-100">
 								<div class="card-header m-0 p-1">
 									<div class="h5 float-start">Drainage</div>
-									<select class="float-end border bg-white" id="graph-type">
+									<select class="float-end border bg-white graph-type">
 										<option value="bar">bar</option>
 										<option selected value="line">Line</option>
 										<option value="scatter">Scatter</option>
@@ -246,7 +246,7 @@
 				var element = $(e.target), interval = element.val();
 				updateGraphs(start_date, end_date, interval)
 			})
-			$("#graph-type").change(function (e) {
+			$(".graph-type").change(function (e) {
 				var element = $(e.target), graph_type = element.val(), chart = element.parents(".chart-container").first();
 
 				var existingChart = Chart.getChart(chart.find("canvas").attr("id"));
