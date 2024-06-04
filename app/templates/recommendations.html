@@ -29,7 +29,7 @@
                         <table class="table table-striped" id="recommendation-table">
                             <thead>
                                 <tr>
-                                    <th scope="col">ID</th>
+                                    <!-- <th scope="col">ID</th> -->
                                     <th scope="col">msg</th>
                                     <th scope="col">Time Created</th>
                                     <!-- <th scope="col">Status</th> -->
@@ -39,7 +39,7 @@
                             <tbody>
                                 {%for notification in recommendations%}
                                 <tr id="{{notification.id}}">
-                                    <td scope="row">{{notification.id}}</td>
+                                    <!-- <td scope="row">{{notification.id}}</td> -->
                                     <td class="text-">{{notification.msg}}</td>
                                     <td>{{notification.timestamp}}</td>
                                     <!-- <td>{{notification.status}}</td> -->

@@ -380,19 +380,19 @@ def build_sample_db(app, user_datastore):
     soil_statuses = (
         SoilStatus(
             field=fields[0],
-            soil_type="Clay Soil",
+            soil_type="Sandy soil",
             soil_texture="Clay",
             gradient="2M",
         ),
         SoilStatus(
             field=fields[1],
-            soil_type="Loam Soil",
+            soil_type="Desert soils",
             soil_texture="loamy",
             gradient="3M",
         ),
         SoilStatus(
             field=fields[2],
-            soil_type="Sand Soil",
+            soil_type="Red soil",
             soil_texture="Sandy",
             gradient="4M",
         ),

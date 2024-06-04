@@ -295,8 +295,8 @@ def create_update_recommendations():
             recommended_crop = ml_model_predict(data_to_predict)
             recommended_crop=get_crop_name(recommended_crop[0])
             # Store recommendation in the database
-            recommendation = Recommendation(tag=f"{field}_crop_recommendation",
-                                            msg=f'It is recommended to plant {recommended_crop} in field zone {field}')
+            recommendation = Recommendation(tag=f"{field.name}_crop_recommendation",
+                                            msg=f'It is recommended to plant {recommended_crop} in field zone {field.name}')
             # db.session.add()
             data.append(recommendation)
         return data
