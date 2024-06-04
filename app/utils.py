@@ -312,7 +312,7 @@ def get_recommendations()->Recommendation:
     """
     # with current_app.app_context():
         #call the update first
-        return create_update_recommendations()
+    return create_update_recommendations()
         # recommendations = Recommendation.query.all()
         # return recommendations
 
