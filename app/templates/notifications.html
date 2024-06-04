@@ -26,7 +26,7 @@
                     <div class="py-2 px-1" style="background-color: rgba(255, 255, 255, 0.8);"
                         id="notifications" role="tabpanel" titleledby="general1-list">
 
-                        <table class="table table-striped">
+                        <table class="table table-striped" id="notifications-table">
                             <thead>
                                 <tr>
                                     <th scope="col">ID</th>
@@ -109,7 +109,7 @@
 
 
         $(function () {
-            new DataTable('#notifications table');
+            new DataTable('#notifications-table');
         })
     </script>
 

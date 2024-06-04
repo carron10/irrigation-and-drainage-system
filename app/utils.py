@@ -257,6 +257,7 @@ def create_update_recommendations():
     with current_app.app_context():
         # Fetch SoilStatus objects from the database
         soils = SoilStatus.query.all()
+        data=[]
         for soil in soils:
             # Get field from SoilStatus
             field = soil.field
@@ -296,10 +297,11 @@ def create_update_recommendations():
             # Store recommendation in the database
             recommendation = Recommendation(tag=f"{field}_crop_recommendation",
                                             msg=f'It is recommended to plant {recommended_crop} in field zone {field}')
-            db.session.add(recommendation)
-
+            # db.session.add()
+            data.append(recommendation)
+        return data
         # Commit changes to the database session
-        db.session.commit()
+        # db.session.commit()
 
 
 def get_recommendations()->Recommendation:
@@ -308,11 +310,11 @@ def get_recommendations()->Recommendation:
     Returns:
         Recommendation: list of recormmendations
     """
-    with current_app.app_context():
+    # with current_app.app_context():
         #call the update first
-        create_update_recommendations()
-        recommendations = Recommendation.query.all()
-        return recommendations
+        return create_update_recommendations()
+        # recommendations = Recommendation.query.all()
+        # return recommendations
 
 
 def add_notification(msg:str):
