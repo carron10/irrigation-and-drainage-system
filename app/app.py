@@ -4,6 +4,7 @@ import json
 import os
 import time
 from schedule import Scheduler
+import schedule
 from threading import Event
 import psycopg2
 from sqlalchemy import func
@@ -60,12 +61,14 @@ from app.models import (
 )
 from app.websocket.flask_sock import Sock
 from threading import Thread
-import schedule
 from app.utils import (
     generate_unique_string, add_notification, send_irrigation_stop_start_email,
     send_notification_mail, get_admin_user, get_super_and_admin_users_emails, get_recommendations)
 from app.user_routes import user_bp, security, user_datastore
+
 from flask_mailman import Mail, EmailMessage
+
+
 app = create_app()
 
 app.register_blueprint(user_bp)
@@ -84,9 +87,8 @@ db.init_app(app)
 # create mail object
 mail = Mail(app)
 
+
 # Before request check if the a setup have been done
-
-
 @app.before_request
 def before_request_handler():
     "Before a request check that the Website setup have been already or not!"
@@ -680,9 +682,12 @@ def add_schedule(task: Schedules):
 
         # Notify users for the schedule
         msg = f"{what} was successfully scheduled at {schedule_date}"
-        add_notification(msg)
-        send_notification_mail("New Schedule!!", msg,
-                               get_super_and_admin_users_emails())
+        add_notification(msg)  #add notification to db, to view in the db when users logs in
+
+        #send emails to the adminstrators
+        send_notification_mail("New Schedule!!", msg, get_super_and_admin_users_emails())
+
+         
     db.session.commit()
 
 
@@ -915,7 +920,7 @@ with app.app_context():
     websocket.init_app(application=app, data_base=db, schedule=scheduler)
     
     #generate sample data
-    build_sample_db(user_bp, user_datastore)
+    # build_sample_db(user_bp, user_datastore)
     
     #update db for chnages
     db.session.commit()
@@ -923,4 +928,8 @@ with app.app_context():
     app.config['USER_DATA_STORE'] = user_datastore
     app.config['SECURITY'] = security
     app.config['SCHEDULER'] = scheduler
+
+    # for f in get_recommendations():
+    #     print(f.msg)
+    # exit()
 

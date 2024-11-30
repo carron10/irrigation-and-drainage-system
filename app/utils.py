@@ -261,7 +261,7 @@ def create_update_recommendations():
         for soil in soils:
             # Get field from SoilStatus
             field = soil.field
-
+            print(field,field.name,field.id)
             # Calculate start date three months back from today
             today = datetime.date.today()
             start_date = today - relativedelta(months=3)
@@ -294,6 +294,9 @@ def create_update_recommendations():
             # Predict recommended crop using ML model
             recommended_crop = ml_model_predict(data_to_predict)
             recommended_crop=get_crop_name(recommended_crop[0])
+
+            field_name=field.name
+
             # Store recommendation in the database
             recommendation = Recommendation(tag=f"{field.name}_crop_recommendation",
                                             msg=f'It is recommended to plant {recommended_crop} in field zone {field.name}')
